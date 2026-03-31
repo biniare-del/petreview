@@ -1,0 +1,4 @@
+# 공개 배포에는 포함하면 안 되는 로컬 전용 설정 파일들
+config.local.js
+secrets.js
+
