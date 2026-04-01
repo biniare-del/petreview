@@ -7,8 +7,8 @@
 // =====================================================
 
 (function () {
-  const SUPABASE_URL = 'YOUR_SUPABASE_URL';        // 예: https://abcdefgh.supabase.co
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // eyJ... 로 시작하는 긴 문자열
+  const SUPABASE_URL = 'https://hguzornmqxayylmagook.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_V_W2cWncw9PB1omx7V1MgQ_7zUfv_da';
 
   if (SUPABASE_URL.startsWith('YOUR_') || SUPABASE_ANON_KEY.startsWith('YOUR_')) {
     console.warn(
