@@ -3,30 +3,7 @@ const CATEGORY_LABEL = {
   grooming: "미용샵",
 };
 
-let reviews = [
-  {
-    id: Date.now() - 2,
-    placeName: "마포사랑 동물병원",
-    category: "hospital",
-    region: "마포구",
-    visitDate: "2026-03-28",
-    serviceDetail: "피부 진료 + 약 처방",
-    totalPrice: 58000,
-    shortReview: "설명이 자세하고 과잉진료 느낌이 없었어요.",
-    receiptImage: "",
-  },
-  {
-    id: Date.now() - 1,
-    placeName: "포근포근 펫살롱",
-    category: "grooming",
-    region: "마포구",
-    visitDate: "2026-03-25",
-    serviceDetail: "목욕 + 부분 미용",
-    totalPrice: 45000,
-    shortReview: "아이가 스트레스 받지 않게 잘 케어해줬어요.",
-    receiptImage: "",
-  },
-];
+let reviews = [];
 
 let selectedSearchCategory = "hospital";
 
@@ -173,6 +150,71 @@ function renderReviewList() {
   els.reviewList.innerHTML = items;
 }
 
+// DB 행(snake_case) → 앱 객체(camelCase) 변환
+function rowToReview(row) {
+  return {
+    id: row.id,
+    placeName: row.place_name,
+    category: row.category,
+    region: row.region,
+    visitDate: row.visit_date,
+    serviceDetail: row.service_detail,
+    totalPrice: row.total_price,
+    shortReview: row.short_review,
+    receiptImage: row.receipt_image_url || "",
+  };
+}
+
+async function loadReviews() {
+  els.reviewList.innerHTML = '<p class="placeholder-text">리뷰를 불러오는 중...</p>';
+
+  const db = window.supabaseClient;
+  if (!db) {
+    reviews = [];
+    renderReviewList();
+    return;
+  }
+
+  const { data, error } = await db
+    .from("reviews")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[펫리뷰] 리뷰 로드 실패:", error);
+    els.reviewList.innerHTML =
+      '<p class="placeholder-text">리뷰를 불러오지 못했어요. (콘솔을 확인해 주세요)</p>';
+    return;
+  }
+
+  reviews = (data || []).map(rowToReview);
+  renderReviewList();
+}
+
+async function uploadReceiptImage(db, file) {
+  if (!file || file.size === 0) return "";
+
+  if (!db) {
+    // Supabase 미설정 시 로컬 blob URL로 폴백 (새로고침 시 사라짐)
+    return URL.createObjectURL(file);
+  }
+
+  const ext = file.name.split(".").pop() || "jpg";
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await db.storage
+    .from("receipts")
+    .upload(fileName, file, { contentType: file.type });
+
+  if (error) {
+    console.error("[펫리뷰] 이미지 업로드 실패:", error);
+    return "";
+  }
+
+  const { data: urlData } = db.storage.from("receipts").getPublicUrl(fileName);
+  return urlData.publicUrl;
+}
+
 function bindCategoryToggle() {
   els.categoryButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -196,29 +238,70 @@ function bindReceiptPreview() {
 }
 
 function bindReviewForm() {
-  els.reviewForm.addEventListener("submit", (event) => {
+  els.reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const formData = new FormData(els.reviewForm);
-    const file = formData.get("receipt-image");
-    const receiptImage = file && file.size > 0 ? URL.createObjectURL(file) : "";
+    const submitBtn = els.reviewForm.querySelector('[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "등록 중...";
 
-    const newReview = {
-      id: Date.now(),
-      placeName: String(formData.get("place-name")).trim(),
-      category: String(formData.get("place-category")),
-      region: String(formData.get("place-region")).trim(),
-      visitDate: String(formData.get("visit-date")),
-      serviceDetail: String(formData.get("service-detail")).trim(),
-      totalPrice: Number(formData.get("total-price")),
-      shortReview: String(formData.get("short-review")).trim(),
-      receiptImage,
-    };
+    try {
+      const formData = new FormData(els.reviewForm);
+      const file = formData.get("receipt-image");
+      const db = window.supabaseClient;
 
-    reviews = [newReview, ...reviews];
-    els.reviewForm.reset();
-    els.receiptPreview.innerHTML = "";
-    renderReviewList();
+      const receiptImageUrl = await uploadReceiptImage(db, file);
+
+      const newRow = {
+        place_name: String(formData.get("place-name")).trim(),
+        category: String(formData.get("place-category")),
+        region: String(formData.get("place-region")).trim(),
+        visit_date: String(formData.get("visit-date")),
+        service_detail: String(formData.get("service-detail")).trim(),
+        total_price: Number(formData.get("total-price")),
+        short_review: String(formData.get("short-review")).trim(),
+        receipt_image_url: receiptImageUrl,
+      };
+
+      if (db) {
+        const { data, error } = await db
+          .from("reviews")
+          .insert([newRow])
+          .select()
+          .single();
+
+        if (error) {
+          console.error("[펫리뷰] 리뷰 저장 실패:", error);
+          alert("리뷰 저장에 실패했어요. 다시 시도해 주세요.");
+          return;
+        }
+
+        reviews = [rowToReview(data), ...reviews];
+      } else {
+        // Supabase 미설정 시 메모리에만 추가 (새로고침 시 사라짐)
+        reviews = [
+          {
+            id: Date.now(),
+            placeName: newRow.place_name,
+            category: newRow.category,
+            region: newRow.region,
+            visitDate: newRow.visit_date,
+            serviceDetail: newRow.service_detail,
+            totalPrice: newRow.total_price,
+            shortReview: newRow.short_review,
+            receiptImage: receiptImageUrl,
+          },
+          ...reviews,
+        ];
+      }
+
+      els.reviewForm.reset();
+      els.receiptPreview.innerHTML = "";
+      renderReviewList();
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "리뷰 등록하기";
+    }
   });
 }
 
@@ -262,7 +345,7 @@ function init() {
   bindReviewFilters();
   bindSmoothScroll();
   void renderSearchResults();
-  renderReviewList();
+  void loadReviews();
 }
 
 init();
