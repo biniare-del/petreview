@@ -81,14 +81,8 @@
   // 배포 도메인(예: https://biniare-del.github.io, https://petreview.vercel.app)을
   // 등록해야 브라우저에서 정상 호출됩니다.
   async function searchPlacesKakao({ category, regionKeyword }) {
-    const categoryKeyword =
-      category === "grooming" ? "동물미용" : "동물병원";
-
-    const query = regionKeyword
-      ? `서울 ${regionKeyword} ${categoryKeyword}`
-      : `서울 ${categoryKeyword}`;
-
-    const params = new URLSearchParams({ query, size: "15" });
+    const params = new URLSearchParams({ category });
+    if (regionKeyword) params.set("region", regionKeyword);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -96,11 +90,8 @@
     let res;
     try {
       res = await fetch(
-        `https://dapi.kakao.com/v2/local/search/keyword.json?${params}`,
-        {
-          headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
-          signal: controller.signal,
-        }
+        `https://petreview.vercel.app/api/facilities?${params}`,
+        { signal: controller.signal }
       );
     } finally {
       clearTimeout(timeoutId);
@@ -111,18 +102,13 @@
     }
 
     const json = await res.json();
-    const documents = json?.documents ?? [];
+    const results = json?.results ?? [];
 
-    if (!documents.length) {
+    if (!results.length) {
       throw new Error("검색 결과가 없습니다.");
     }
 
-    return documents.map((doc) => ({
-      name: doc.place_name,
-      category,
-      region: extractGu(doc.address_name || doc.road_address_name || ""),
-      address: doc.road_address_name || doc.address_name || "",
-    }));
+    return results;
   }
 
   // ===== 공통 제공자 API =====
