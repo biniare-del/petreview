@@ -1,19 +1,27 @@
 (function () {
-  // 카카오 로컬 API로 동물병원/미용샵을 검색합니다.
-  // 모드: "kakao" (기본값) | "mock"
+  // 업체 검색은 /api/facilities Vercel 프록시를 경유합니다.
+  // 프록시가 카카오 로컬 API를 서버 사이드에서 호출하므로 API 키가 클라이언트에 노출되지 않습니다.
+  //
+  // 모드: "proxy" (기본값) | "mock"
   // 콘솔에서 window.PETREVIEW_DATA_MODE = "mock" 으로 강제 전환 가능합니다.
-
-  const KAKAO_REST_API_KEY = "9e5930005d619cae98c2d710200b768f";
+  //
+  // GitHub Pages에서 사용할 경우 Vercel 배포 URL을 지정하세요:
+  // window.PETREVIEW_PROXY_URL = "https://petreview.vercel.app";
 
   const MODE =
     typeof window.PETREVIEW_DATA_MODE === "string"
       ? window.PETREVIEW_DATA_MODE
-      : "kakao";
+      : "proxy";
+
+  const PROXY_BASE =
+    typeof window.PETREVIEW_PROXY_URL === "string"
+      ? window.PETREVIEW_PROXY_URL.replace(/\/$/, "")
+      : "";
 
   let lastSource = "unknown"; // "real" | "mock"
   let lastErrorMessage = "";
 
-  // ===== 모의(Mock) 데이터 – Kakao API 실패 시 폴백 =====
+  // ===== 모의(Mock) 데이터 – 프록시 실패 시 폴백 =====
   const mockFacilities = [
     {
       name: "마포사랑 동물병원",
@@ -71,58 +79,36 @@
     return "hospital";
   }
 
-  function extractGu(address) {
-    const match = String(address || "").match(/[가-힣]+구/);
-    return match ? match[0] : "";
-  }
+  // ===== /api/facilities 프록시 호출 =====
+  async function searchPlacesProxy({ category, regionKeyword }) {
+    const params = new URLSearchParams({ category });
+    if (regionKeyword) params.set("region", regionKeyword);
 
-  // ===== 카카오 로컬 API 키워드 검색 =====
-  // 카카오 개발자 콘솔(developers.kakao.com) → 내 애플리케이션 → 플랫폼 → Web에
-  // 배포 도메인(예: https://biniare-del.github.io, https://petreview.vercel.app)을
-  // 등록해야 브라우저에서 정상 호출됩니다.
-  async function searchPlacesKakao({ category, regionKeyword }) {
-    const categoryKeyword =
-      category === "grooming" ? "동물미용" : "동물병원";
-
-    const query = regionKeyword
-      ? `서울 ${regionKeyword} ${categoryKeyword}`
-      : `서울 ${categoryKeyword}`;
-
-    const params = new URLSearchParams({ query, size: "15" });
+    const url = `${PROXY_BASE}/api/facilities?${params.toString()}`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     let res;
     try {
-      res = await fetch(
-        `https://dapi.kakao.com/v2/local/search/keyword.json?${params}`,
-        {
-          headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
-          signal: controller.signal,
-        }
-      );
+      res = await fetch(url, { signal: controller.signal });
     } finally {
       clearTimeout(timeoutId);
     }
 
     if (!res.ok) {
-      throw new Error(`Kakao API HTTP ${res.status} ${res.statusText}`);
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `프록시 응답 오류: ${res.status}`);
     }
 
     const json = await res.json();
-    const documents = json?.documents ?? [];
+    const results = json?.results;
 
-    if (!documents.length) {
+    if (!Array.isArray(results) || results.length === 0) {
       throw new Error("검색 결과가 없습니다.");
     }
 
-    return documents.map((doc) => ({
-      name: doc.place_name,
-      category,
-      region: extractGu(doc.address_name || doc.road_address_name || ""),
-      address: doc.road_address_name || doc.address_name || "",
-    }));
+    return results;
   }
 
   // ===== 공통 제공자 API =====
@@ -130,9 +116,9 @@
     const normalizedCategory = normalizeCategory(category);
     const normalizedRegionKeyword = normalizeQuery(regionKeyword);
 
-    if (MODE === "kakao") {
+    if (MODE === "proxy") {
       try {
-        const result = await searchPlacesKakao({
+        const result = await searchPlacesProxy({
           category: normalizedCategory,
           regionKeyword: normalizedRegionKeyword,
         });
@@ -140,7 +126,7 @@
         lastErrorMessage = "";
         return result;
       } catch (e) {
-        console.warn("[펫리뷰] Kakao API 폴백(Mock)으로 전환:", e.message);
+        console.warn("[펫리뷰] 프록시 폴백(Mock)으로 전환:", e.message);
         lastSource = "mock";
         lastErrorMessage = e?.message ? String(e.message) : "unknown error";
       }
