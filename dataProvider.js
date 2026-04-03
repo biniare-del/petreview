@@ -38,14 +38,23 @@
   //   },
   // };
 
-  // 배포용 기본값은 "mock"입니다.
-  // (인증키를 코드에 넣으면 GitHub에 공개되어 보안 문제가 생기므로)
-  // 로컬에서만 원하면 콘솔에서 window 값으로 real을 켤 수 있습니다.
-  const DEFAULT_MODE = "mock";
+  // 기본 모드: "proxy" (Vercel 서버리스 함수를 통해 CORS 없이 실데이터 조회)
+  // "mock"  : 모의 데이터만 사용
+  // "real"  : 브라우저에서 Seoul API 직접 호출 (CORS 문제 발생 가능)
+  // "proxy" : /api/facilities Vercel 프록시 경유 (기본값)
+  const DEFAULT_MODE = "proxy";
   const MODE =
     typeof window.PETREVIEW_DATA_MODE === "string"
       ? window.PETREVIEW_DATA_MODE
       : DEFAULT_MODE;
+
+  // Vercel 프록시 엔드포인트 (같은 오리진이면 상대경로, 외부면 절대경로)
+  // GitHub Pages에서 사용할 경우 window.PETREVIEW_PROXY_URL 로 Vercel URL 지정:
+  // window.PETREVIEW_PROXY_URL = "https://petreview.vercel.app";
+  const PROXY_BASE =
+    typeof window.PETREVIEW_PROXY_URL === "string"
+      ? window.PETREVIEW_PROXY_URL.replace(/\/$/, "")
+      : "";
 
   // ===== 모의(Mock) 데이터 =====
   let lastSource = "unknown"; // "real" | "mock"
@@ -282,10 +291,56 @@
       .slice(0, 24);
   }
 
+  // ===== Vercel 프록시 호출 =====
+  async function searchPlacesProxy({ category, regionKeyword }) {
+    const params = new URLSearchParams({ category });
+    if (regionKeyword) params.set("region", regionKeyword);
+
+    const url = `${PROXY_BASE}/api/facilities?${params.toString()}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    let res;
+    try {
+      res = await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.error || `프록시 응답 오류: ${res.status}`);
+    }
+
+    const json = await res.json();
+    const results = json?.results;
+    if (!Array.isArray(results) || results.length === 0) {
+      throw new Error("프록시 결과가 비어 있습니다.");
+    }
+    return results;
+  }
+
   // ===== 공통 제공자 API =====
   async function searchPlaces({ category, regionKeyword }) {
     const normalizedCategory = normalizeCategory(category);
     const normalizedRegionKeyword = normalizeQuery(regionKeyword);
+
+    if (MODE === "proxy") {
+      try {
+        const result = await searchPlacesProxy({
+          category: normalizedCategory,
+          regionKeyword: normalizedRegionKeyword,
+        });
+        lastSource = "real";
+        lastErrorMessage = "";
+        return result;
+      } catch (e) {
+        console.warn("[펫리뷰] 프록시 폴백(Mock)으로 전환:", e.message);
+        lastSource = "mock";
+        lastErrorMessage = e?.message ? String(e.message) : "unknown error";
+      }
+    }
 
     if (MODE === "real") {
       try {
@@ -295,22 +350,19 @@
         });
         lastSource = "real";
         lastErrorMessage = "";
-        // 실데이터 파싱 매핑이 틀려 빈 배열이 나오는 경우가 있어서,
-        // 결과가 비면 UI가 비지 않도록 Mock으로 폴백합니다.
         if (!Array.isArray(result) || result.length === 0) {
           throw new Error("Real API 파싱 결과가 비어 있습니다.");
         }
         return result;
       } catch (e) {
-        console.warn("Real API 폴백(Mock)으로 전환:", e);
+        console.warn("[펫리뷰] Real API 폴백(Mock)으로 전환:", e.message);
         lastSource = "mock";
         lastErrorMessage = e?.message ? String(e.message) : "unknown error";
-        // 아래 mock 폴백은 UI가 죽지 않도록 하기 위한 안전장치입니다.
       }
     }
 
-    // mock
-    await sleep(250); // UI 깜빡임 방지용 딜레이
+    // mock 폴백
+    await sleep(250);
     return mockFacilities.filter((f) => {
       const categoryMatch = f.category === normalizedCategory;
       const regionMatch = containsByKeyword(f.region, normalizedRegionKeyword);
