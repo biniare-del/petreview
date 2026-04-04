@@ -33,38 +33,48 @@ export default async function handler(req, res) {
     ? `서울 ${region} ${categoryKeyword}`
     : `서울 ${categoryKeyword}`;
 
-  const params = new URLSearchParams({ query, size: "15" });
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-  let apiRes;
+  // 카카오 API는 페이지당 최대 15건, 최대 3페이지(45건)까지 수집
+  const allDocuments = [];
   try {
-    try {
-      apiRes = await fetch(
-        `https://dapi.kakao.com/v2/local/search/keyword.json?${params}`,
-        {
-          headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
-          signal: controller.signal,
-        }
-      );
-    } finally {
-      clearTimeout(timeoutId);
+    for (let page = 1; page <= 3; page++) {
+      const params = new URLSearchParams({ query, size: "15", page: String(page) });
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      let apiRes;
+      try {
+        apiRes = await fetch(
+          `https://dapi.kakao.com/v2/local/search/keyword.json?${params}`,
+          {
+            headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
+            signal: controller.signal,
+          }
+        );
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (!apiRes.ok) {
+        throw new Error(`Kakao API HTTP ${apiRes.status} ${apiRes.statusText}`);
+      }
+
+      const json = await apiRes.json();
+      const documents = json?.documents ?? [];
+      allDocuments.push(...documents);
+
+      // 마지막 페이지면 더 이상 요청하지 않음
+      if (json?.meta?.is_end) break;
     }
 
-    if (!apiRes.ok) {
-      throw new Error(`Kakao API HTTP ${apiRes.status} ${apiRes.statusText}`);
-    }
-
-    const json = await apiRes.json();
-    const documents = json?.documents ?? [];
-
-    const results = documents.map((doc) => ({
-      name: doc.place_name,
-      category,
-      region: extractGu(doc.address_name || doc.road_address_name || ""),
-      address: doc.road_address_name || doc.address_name || "",
-    }));
+    const results = allDocuments
+      .map((doc) => ({
+        name: doc.place_name,
+        category,
+        region: extractGu(doc.address_name || doc.road_address_name || ""),
+        address: doc.road_address_name || doc.address_name || "",
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
     return res.status(200).json({ results });

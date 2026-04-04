@@ -65,6 +65,8 @@ async function renderSearchResults() {
     return;
   }
 
+  facilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+
   const dataProvider = window.PetReviewDataProvider;
   const lastSource = dataProvider?.lastSource;
   const lastErrorMessage = dataProvider?.lastErrorMessage;
