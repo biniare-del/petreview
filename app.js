@@ -3,6 +3,13 @@ const CATEGORY_LABEL = {
   grooming: "미용샵",
 };
 
+const SERVICE_TAGS = {
+  hospital: ["기본진료", "접종", "사상충", "심장사상충", "중성화", "스케일링", "수술", "입원", "기타"],
+  grooming: ["전체미용", "부분미용", "목욕", "가위컷", "클리퍼컷", "위생미용", "기타"],
+};
+
+let selectedServiceTags = new Set();
+
 let reviews = [];
 let selectedSearchCategory = "hospital";
 let searchFacilities = [];
@@ -241,6 +248,7 @@ function bindCategoryToggle() {
       els.categoryButtons.forEach((item) => item.classList.remove("is-active"));
       btn.classList.add("is-active");
       document.body.dataset.theme = selectedSearchCategory === "grooming" ? "grooming" : "hospital";
+      renderServiceTags(selectedSearchCategory);
       if (hasSearched) void renderSearchResults();
     });
   });
@@ -317,7 +325,7 @@ function bindReviewForm() {
 
       els.reviewForm.reset();
       els.receiptPreview.innerHTML = "";
-      document.querySelectorAll(".tag-btn.is-selected").forEach((b) => b.classList.remove("is-selected"));
+      renderServiceTags(selectedSearchCategory);
       renderReviewList();
     } finally {
       submitBtn.disabled = false;
@@ -425,26 +433,37 @@ function bindPlaceNameAutocomplete() {
   });
 }
 
+function renderServiceTags(category) {
+  const group = document.getElementById("service-tag-group");
+  const detailInput = document.getElementById("service-detail");
+  if (!group) return;
+
+  selectedServiceTags.clear();
+  if (detailInput) detailInput.value = "";
+
+  const tags = SERVICE_TAGS[category] ?? SERVICE_TAGS.hospital;
+  group.innerHTML = tags
+    .map((tag) => `<button type="button" class="tag-btn" data-tag="${tag}">${tag}</button>`)
+    .join("");
+}
+
 function bindServiceTags() {
   const group = document.getElementById("service-tag-group");
   const detailInput = document.getElementById("service-detail");
   if (!group || !detailInput) return;
 
-  const selectedTags = new Set();
-
   group.addEventListener("click", (e) => {
     const btn = e.target.closest(".tag-btn");
     if (!btn) return;
     const tag = btn.dataset.tag;
-    if (selectedTags.has(tag)) {
-      selectedTags.delete(tag);
+    if (selectedServiceTags.has(tag)) {
+      selectedServiceTags.delete(tag);
       btn.classList.remove("is-selected");
     } else {
-      selectedTags.add(tag);
+      selectedServiceTags.add(tag);
       btn.classList.add("is-selected");
     }
-    // 선택된 태그를 직접 입력 필드에 반영
-    detailInput.value = [...selectedTags].join(", ");
+    detailInput.value = [...selectedServiceTags].join(", ");
   });
 }
 
@@ -490,6 +509,7 @@ function init() {
   bindReviewFilters();
   bindSmoothScroll();
   bindPlaceNameAutocomplete();
+  renderServiceTags("hospital");
   bindServiceTags();
   void loadReviews();
 }
