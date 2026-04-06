@@ -375,6 +375,64 @@ textarea {
   width: 100%;
 }
 
+/* 검색 결과 카드 병원명 말줄임 */
+.place-name-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* 검색 결과 페이지네이션 */
+.search-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 8px 0 4px;
+}
+
+.pagination-btn {
+  min-width: 90px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 112, 67, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(255, 112, 67, 0.4);
+}
+
+.pagination-btn:active:not(:disabled) {
+  transform: translateY(0);
+  opacity: 0.9;
+}
+
+.pagination-btn:disabled {
+  background: #e0d7d2;
+  box-shadow: none;
+  color: #aaaaaa;
+  cursor: not-allowed;
+}
+
+.page-info {
+  min-width: 60px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555555;
+}
+
 /* 자동완성 드롭다운 */
 .autocomplete-wrapper {
   position: relative;

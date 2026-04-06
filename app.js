@@ -4,8 +4,11 @@ const CATEGORY_LABEL = {
 };
 
 let reviews = [];
-
 let selectedSearchCategory = "hospital";
+let searchFacilities = [];
+let searchPage = 1;
+let hasSearched = false;
+const PAGE_SIZE = 10;
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -37,47 +40,21 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-async function renderSearchResults() {
-  els.searchResults.innerHTML =
-    '<p class="placeholder-text">업체 데이터를 불러오는 중...</p>';
-
-  const regionKeyword = els.searchRegion.value.trim();
-
-  let facilities = [];
-  try {
-    if (!window.PetReviewDataProvider?.searchPlaces) {
-      throw new Error("PetReviewDataProvider.searchPlaces를 찾을 수 없습니다.");
-    }
-    facilities = await window.PetReviewDataProvider.searchPlaces({
-      category: selectedSearchCategory,
-      regionKeyword,
-    });
-  } catch (err) {
-    console.error(err);
-    els.searchResults.innerHTML =
-      '<p class="placeholder-text">데이터를 불러오지 못했어요. (콘솔을 확인해 주세요)</p>';
-    return;
-  }
-
-  if (!facilities || facilities.length === 0) {
-    els.searchResults.innerHTML =
-      '<p class="placeholder-text">조건에 맞는 업체가 없어요. 다른 지역/업종으로 검색해 보세요.</p>';
-    return;
-  }
-
-  facilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+function renderSearchPage(page) {
+  searchPage = page;
+  const totalPages = Math.ceil(searchFacilities.length / PAGE_SIZE);
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = searchFacilities.slice(start, start + PAGE_SIZE);
 
   const dataProvider = window.PetReviewDataProvider;
-  const lastSource = dataProvider?.lastSource;
-  const lastErrorMessage = dataProvider?.lastErrorMessage;
   const dataNotice =
-    lastSource === "mock"
+    dataProvider?.lastSource === "mock"
       ? `<p class="helper-text">실데이터 요청에 실패해서 모의 데이터를 표시 중입니다.${
-          lastErrorMessage ? " (" + escapeHtml(lastErrorMessage) + ")" : ""
+          dataProvider.lastErrorMessage ? " (" + escapeHtml(dataProvider.lastErrorMessage) + ")" : ""
         }</p>`
       : "";
 
-  const cards = facilities
+  const cards = slice
     .map(
       (place) => `
       <article
@@ -88,20 +65,59 @@ async function renderSearchResults() {
         data-place-category="${escapeHtml(place.category)}"
         data-place-region="${escapeHtml(place.region)}"
       >
-        <h3>${escapeHtml(place.name)}</h3>
+        <h3 class="place-name-ellipsis">${escapeHtml(place.name)}</h3>
         <p>${CATEGORY_LABEL[place.category]} · 서울특별시 ${escapeHtml(place.region)}</p>
-        ${
-          place.address
-            ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>`
-            : ""
-        }
+        ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
         <p class="helper-text">클릭해서 리뷰 작성 폼에 채워 넣기</p>
-      </article>
-    `
+      </article>`
     )
     .join("");
 
-  els.searchResults.innerHTML = dataNotice + cards;
+  const pagination =
+    totalPages > 1
+      ? `<div class="search-pagination">
+          <button class="pagination-btn" id="page-prev" ${page <= 1 ? "disabled" : ""}>이전</button>
+          <span class="page-info">${page} / ${totalPages}</span>
+          <button class="pagination-btn" id="page-next" ${page >= totalPages ? "disabled" : ""}>다음</button>
+        </div>`
+      : "";
+
+  els.searchResults.innerHTML = dataNotice + cards + pagination;
+
+  document.getElementById("page-prev")?.addEventListener("click", () => renderSearchPage(searchPage - 1));
+  document.getElementById("page-next")?.addEventListener("click", () => renderSearchPage(searchPage + 1));
+}
+
+async function renderSearchResults() {
+  els.searchResults.innerHTML =
+    '<p class="placeholder-text">업체 데이터를 불러오는 중...</p>';
+
+  const regionKeyword = els.searchRegion.value.trim();
+
+  try {
+    if (!window.PetReviewDataProvider?.searchPlaces) {
+      throw new Error("PetReviewDataProvider.searchPlaces를 찾을 수 없습니다.");
+    }
+    searchFacilities = await window.PetReviewDataProvider.searchPlaces({
+      category: selectedSearchCategory,
+      regionKeyword,
+    });
+  } catch (err) {
+    console.error(err);
+    els.searchResults.innerHTML =
+      '<p class="placeholder-text">데이터를 불러오지 못했어요. (콘솔을 확인해 주세요)</p>';
+    return;
+  }
+
+  if (!searchFacilities || searchFacilities.length === 0) {
+    els.searchResults.innerHTML =
+      '<p class="placeholder-text">조건에 맞는 업체가 없어요. 다른 지역/업종으로 검색해 보세요.</p>';
+    return;
+  }
+
+  searchFacilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  hasSearched = true;
+  renderSearchPage(1);
 }
 
 function renderReceiptPreview(file) {
@@ -223,7 +239,7 @@ function bindCategoryToggle() {
       selectedSearchCategory = btn.dataset.category;
       els.categoryButtons.forEach((item) => item.classList.remove("is-active"));
       btn.classList.add("is-active");
-      void renderSearchResults();
+      if (hasSearched) void renderSearchResults();
     });
   });
 }
@@ -446,7 +462,6 @@ function init() {
   bindReviewFilters();
   bindSmoothScroll();
   bindPlaceNameAutocomplete();
-  void renderSearchResults();
   void loadReviews();
 }
 
