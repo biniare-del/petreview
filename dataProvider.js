@@ -16,7 +16,7 @@
   const PROXY_BASE =
     typeof window.PETREVIEW_PROXY_URL === "string"
       ? window.PETREVIEW_PROXY_URL.replace(/\/$/, "")
-      : "";
+      : "https://petreview.vercel.app";
 
   let lastSource = "unknown"; // "real" | "mock"
   let lastErrorMessage = "";
