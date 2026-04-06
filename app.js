@@ -68,6 +68,7 @@ function renderSearchPage(page) {
         <h3 class="place-name-ellipsis">${escapeHtml(place.name)}</h3>
         <p>${CATEGORY_LABEL[place.category]} · 서울특별시 ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
+        ${place.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(place.phone)}">📞 ${escapeHtml(place.phone)}</a></p>` : ""}
         <p class="helper-text">클릭해서 리뷰 작성 폼에 채워 넣기</p>
       </article>`
     )
@@ -239,6 +240,7 @@ function bindCategoryToggle() {
       selectedSearchCategory = btn.dataset.category;
       els.categoryButtons.forEach((item) => item.classList.remove("is-active"));
       btn.classList.add("is-active");
+      document.body.dataset.theme = selectedSearchCategory === "grooming" ? "grooming" : "hospital";
       if (hasSearched) void renderSearchResults();
     });
   });
@@ -315,6 +317,7 @@ function bindReviewForm() {
 
       els.reviewForm.reset();
       els.receiptPreview.innerHTML = "";
+      document.querySelectorAll(".tag-btn.is-selected").forEach((b) => b.classList.remove("is-selected"));
       renderReviewList();
     } finally {
       submitBtn.disabled = false;
@@ -422,6 +425,29 @@ function bindPlaceNameAutocomplete() {
   });
 }
 
+function bindServiceTags() {
+  const group = document.getElementById("service-tag-group");
+  const detailInput = document.getElementById("service-detail");
+  if (!group || !detailInput) return;
+
+  const selectedTags = new Set();
+
+  group.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tag-btn");
+    if (!btn) return;
+    const tag = btn.dataset.tag;
+    if (selectedTags.has(tag)) {
+      selectedTags.delete(tag);
+      btn.classList.remove("is-selected");
+    } else {
+      selectedTags.add(tag);
+      btn.classList.add("is-selected");
+    }
+    // 선택된 태그를 직접 입력 필드에 반영
+    detailInput.value = [...selectedTags].join(", ");
+  });
+}
+
 function bindReviewFilters() {
   els.filterCategory.addEventListener("change", renderReviewList);
   els.filterRegion.addEventListener("change", renderReviewList);
@@ -437,6 +463,8 @@ function bindSmoothScroll() {
 
 function bindSearchResultsSelection() {
   els.searchResults.addEventListener("click", (event) => {
+    // 전화 링크 클릭 시 폼으로 이동하지 않음
+    if (event.target.closest(".place-phone-link")) return;
     const card = event.target.closest(".search-place-card");
     if (!card) return;
 
@@ -462,6 +490,7 @@ function init() {
   bindReviewFilters();
   bindSmoothScroll();
   bindPlaceNameAutocomplete();
+  bindServiceTags();
   void loadReviews();
 }
 

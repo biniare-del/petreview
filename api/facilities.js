@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   const region = String(req.query.region || "").trim();
   const keyword = String(req.query.keyword || "").trim();
 
-  const categoryKeyword = category === "grooming" ? "동물미용" : "동물병원";
+  const categoryKeyword = category === "grooming" ? "애견미용" : "동물병원";
   // keyword 파라미터가 있으면 카테고리 키워드를 붙여 필터링 (자동완성용), 없으면 기존 방식
   const query = keyword
     ? `${keyword} ${categoryKeyword}`
@@ -79,6 +79,7 @@ export default async function handler(req, res) {
         category,
         region: extractGu(doc.address_name || doc.road_address_name || ""),
         address: doc.road_address_name || doc.address_name || "",
+        phone: doc.phone || "",
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 

@@ -480,6 +480,119 @@ textarea {
   margin-top: 2px;
 }
 
+/* 전화번호 링크 */
+.place-phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: 600;
+}
+.place-phone-link:hover {
+  text-decoration: underline;
+}
+
+/* 진료항목 태그 버튼 */
+.service-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tag-btn {
+  padding: 6px 14px;
+  border: 1.5px solid #e0d7d2;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666666;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tag-btn.is-selected {
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  border-color: transparent;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+body[data-theme="grooming"] .tag-btn.is-selected {
+  background: linear-gradient(135deg, #f472b6, #a855f7);
+}
+
+/* 미용샵(grooming) 테마 */
+body[data-theme="grooming"] {
+  background-color: #fdf4ff;
+}
+
+body[data-theme="grooming"] .primary-btn,
+body[data-theme="grooming"] .pagination-btn:not(:disabled) {
+  background: linear-gradient(135deg, #f472b6, #a855f7);
+  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.35);
+}
+
+body[data-theme="grooming"] .primary-btn:hover,
+body[data-theme="grooming"] .pagination-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 15px rgba(168, 85, 247, 0.4);
+}
+
+body[data-theme="grooming"] .toggle-btn.is-active {
+  background-color: #f472b6;
+}
+
+body[data-theme="grooming"] .category-toggle {
+  background-color: #fce7f3;
+}
+
+body[data-theme="grooming"] .logo-icon {
+  background: linear-gradient(135deg, #f9a8d4, #f472b6);
+}
+
+body[data-theme="grooming"] input:focus,
+body[data-theme="grooming"] select:focus,
+body[data-theme="grooming"] textarea:focus {
+  border-color: #f472b6;
+  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.18);
+}
+
+body[data-theme="grooming"] .site-nav a:hover {
+  background-color: rgba(244, 114, 182, 0.12);
+  color: #c026d3;
+}
+
+body[data-theme="grooming"] .card {
+  border-color: #f5d0fe;
+  background-color: #fdf4ff;
+}
+
+body[data-theme="grooming"] .hero-pet-card {
+  background: linear-gradient(145deg, #fce7f3, #f9a8d4);
+  box-shadow: 0 10px 30px rgba(244, 114, 182, 0.35);
+}
+
+body[data-theme="grooming"] .hero-pet-info span {
+  color: #7e1d6b;
+}
+
+body[data-theme="grooming"] .hero-pet-info strong {
+  color: #6b0f5d;
+}
+
+body[data-theme="grooming"] .autocomplete-dropdown li:hover,
+body[data-theme="grooming"] .autocomplete-dropdown li.is-active {
+  background-color: #fce7f3;
+}
+
+body[data-theme="grooming"] .place-phone-link {
+  color: #c026d3;
+}
+
 /* 푸터 */
 .site-footer {
   padding: 18px 16px 26px;

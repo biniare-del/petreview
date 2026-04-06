@@ -196,13 +196,26 @@
         </div>
         <!-- 진료/미용 정보 -->
         <div class="form-group">
-          <label for="service-detail">진료/미용 항목</label>
+          <label>진료/미용 항목 선택 <span class="helper-text" style="display:inline">(중복 선택 가능)</span></label>
+          <div class="service-tag-group" id="service-tag-group">
+            <button type="button" class="tag-btn" data-tag="기본진료">기본진료</button>
+            <button type="button" class="tag-btn" data-tag="접종">접종</button>
+            <button type="button" class="tag-btn" data-tag="사상충">사상충</button>
+            <button type="button" class="tag-btn" data-tag="심장사상충">심장사상충</button>
+            <button type="button" class="tag-btn" data-tag="중성화">중성화</button>
+            <button type="button" class="tag-btn" data-tag="스케일링">스케일링</button>
+            <button type="button" class="tag-btn" data-tag="수술">수술</button>
+            <button type="button" class="tag-btn" data-tag="입원">입원</button>
+            <button type="button" class="tag-btn" data-tag="기타">기타</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="service-detail">진료/미용 항목 직접 입력 <span class="helper-text" style="display:inline">(선택 시 자동 입력)</span></label>
           <input
             type="text"
             id="service-detail"
             name="service-detail"
             placeholder="예: 건강검진 + 심장사상충 예방 주사"
-            required
           />
         </div>
         <div class="form-row">
