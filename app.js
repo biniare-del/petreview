@@ -28,6 +28,9 @@ const els = {
   reviewForm: document.getElementById("review-form"),
   receiptInput: document.getElementById("receipt-image"),
   receiptPreview: document.getElementById("receipt-preview"),
+  petPhotoInput: document.getElementById("pet-photo"),
+  petPhotoPreview: document.getElementById("pet-photo-preview"),
+  ocrStatus: document.getElementById("ocr-status"),
   reviewList: document.getElementById("review-list"),
   filterCategory: document.getElementById("filter-category"),
   filterRegion: document.getElementById("filter-region"),
@@ -128,14 +131,54 @@ async function renderSearchResults() {
   renderSearchPage(1);
 }
 
-function renderReceiptPreview(file) {
-  if (!file) {
-    els.receiptPreview.innerHTML = "";
-    return;
-  }
+function renderImagePreview(file, previewEl) {
+  if (!file || !previewEl) return;
+  const url = URL.createObjectURL(file);
+  previewEl.innerHTML = `<img src="${url}" alt="미리보기" />`;
+}
 
-  const previewUrl = URL.createObjectURL(file);
-  els.receiptPreview.innerHTML = `<img src="${previewUrl}" alt="영수증 미리보기" />`;
+async function runOcr(file) {
+  const status = els.ocrStatus;
+  if (!status) return;
+
+  status.hidden = false;
+  status.className = "ocr-status is-loading";
+  status.textContent = "🔍 영수증 분석 중...";
+
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const res = await fetch("https://petreview.vercel.app/api/ocr", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    if (!res.ok) throw new Error("OCR API 오류");
+
+    const { date, amount } = await res.json();
+
+    if (date) document.getElementById("visit-date").value = date;
+    if (amount) document.getElementById("total-price").value = amount;
+
+    if (date || amount) {
+      status.className = "ocr-status is-success";
+      status.textContent = "✅ 날짜·금액 자동 입력 완료! 확인 후 수정하세요.";
+    } else {
+      status.className = "ocr-status is-error";
+      status.textContent = "⚠️ 자동 인식 실패, 직접 입력해주세요.";
+    }
+  } catch (err) {
+    console.warn("[OCR]", err);
+    status.className = "ocr-status is-error";
+    status.textContent = "⚠️ 자동 인식 실패, 직접 입력해주세요.";
+  }
 }
 
 function renderReviewList() {
@@ -154,22 +197,26 @@ function renderReviewList() {
     return;
   }
 
-  const items = filtered
+  // 영수증 인증 리뷰 상단 노출
+  const sorted = [...filtered].sort((a, b) => b.isVerified - a.isVerified);
+
+  const items = sorted
     .map(
       (review) => `
-      <article class="card">
-        <h3>${escapeHtml(review.placeName)} <small>(${CATEGORY_LABEL[review.category]})</small></h3>
+      <article class="card${review.isVerified ? " card--verified" : ""}">
+        <div class="review-card-header">
+          <h3>${escapeHtml(review.placeName)} <small>(${CATEGORY_LABEL[review.category]})</small></h3>
+          ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
+        </div>
         <p>지역: 서울특별시 ${escapeHtml(review.region)} · 방문일: ${escapeHtml(review.visitDate)}</p>
         <p>항목: ${escapeHtml(review.serviceDetail)}</p>
         <p>실결제: ₩ ${formatPrice(review.totalPrice)}</p>
         <p>후기: ${escapeHtml(review.shortReview)}</p>
-        ${
-          review.receiptImage
-            ? `<img src="${review.receiptImage}" alt="업로드된 영수증" style="max-width: 140px; border-radius: 10px;" />`
-            : ""
-        }
-      </article>
-    `
+        <div class="review-images">
+          ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
+          ${review.receiptImage ? `<img src="${escapeHtml(review.receiptImage)}" alt="영수증" class="review-thumb" />` : ""}
+        </div>
+      </article>`
     )
     .join("");
 
@@ -178,6 +225,7 @@ function renderReviewList() {
 
 // DB 행(snake_case) → 앱 객체(camelCase) 변환
 function rowToReview(row) {
+  const storagePath = row.receipt_image_url || "";
   return {
     id: row.id,
     placeName: row.place_name,
@@ -187,7 +235,10 @@ function rowToReview(row) {
     serviceDetail: row.service_detail,
     totalPrice: row.total_price,
     shortReview: row.short_review,
-    receiptImage: row.receipt_image_url || "",
+    receiptPath: storagePath,            // 저장 경로 (private 버킷용)
+    receiptImage: storagePath.startsWith("http") ? storagePath : "", // signed URL 생성 전 임시
+    petPhoto: row.pet_photo_url || "",
+    isVerified: row.is_verified || false,
   };
 }
 
@@ -204,6 +255,7 @@ async function loadReviews() {
   const { data, error } = await db
     .from("reviews")
     .select("*")
+    .order("is_verified", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -213,17 +265,29 @@ async function loadReviews() {
     return;
   }
 
-  reviews = (data || []).map(rowToReview);
+  const rawReviews = (data || []).map(rowToReview);
+
+  // private 버킷 영수증: 서명된 URL 생성 (1시간 유효)
+  await Promise.all(
+    rawReviews
+      .filter((r) => r.receiptPath && !r.receiptPath.startsWith("http"))
+      .map(async (r) => {
+        const { data: signed } = await db.storage
+          .from("receipts")
+          .createSignedUrl(r.receiptPath, 3600);
+        r.receiptImage = signed?.signedUrl || "";
+      })
+  );
+
+  reviews = rawReviews;
   renderReviewList();
 }
 
+// 영수증: private 버킷에 업로드 → 파일 경로 반환 (공개 URL 아님)
 async function uploadReceiptImage(db, file) {
   if (!file || file.size === 0) return "";
 
-  if (!db) {
-    // Supabase 미설정 시 로컬 blob URL로 폴백 (새로고침 시 사라짐)
-    return URL.createObjectURL(file);
-  }
+  if (!db) return URL.createObjectURL(file); // 폴백
 
   const ext = file.name.split(".").pop() || "jpg";
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -233,11 +297,33 @@ async function uploadReceiptImage(db, file) {
     .upload(fileName, file, { contentType: file.type });
 
   if (error) {
-    console.error("[펫리뷰] 이미지 업로드 실패:", error);
+    console.error("[펫리뷰] 영수증 업로드 실패:", error);
     return "";
   }
 
-  const { data: urlData } = db.storage.from("receipts").getPublicUrl(fileName);
+  // private 버킷: 파일 경로만 저장 (로드 시 signed URL 생성)
+  return fileName;
+}
+
+// 반려동물 사진: public 버킷에 업로드 → 공개 URL 반환
+async function uploadPetPhoto(db, file) {
+  if (!file || file.size === 0) return "";
+
+  if (!db) return URL.createObjectURL(file);
+
+  const ext = file.name.split(".").pop() || "jpg";
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await db.storage
+    .from("pet-photos")
+    .upload(fileName, file, { contentType: file.type });
+
+  if (error) {
+    console.error("[펫리뷰] 반려동물 사진 업로드 실패:", error);
+    return "";
+  }
+
+  const { data: urlData } = db.storage.from("pet-photos").getPublicUrl(fileName);
   return urlData.publicUrl;
 }
 
@@ -261,7 +347,17 @@ function bindSearch() {
 function bindReceiptPreview() {
   els.receiptInput.addEventListener("change", (event) => {
     const file = event.target.files?.[0];
-    renderReceiptPreview(file);
+    if (!file) return;
+    renderImagePreview(file, els.receiptPreview);
+    void runOcr(file);
+  });
+}
+
+function bindPetPhotoPreview() {
+  els.petPhotoInput?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    renderImagePreview(file, els.petPhotoPreview);
   });
 }
 
@@ -275,10 +371,14 @@ function bindReviewForm() {
 
     try {
       const formData = new FormData(els.reviewForm);
-      const file = formData.get("receipt-image");
+      const receiptFile = formData.get("receipt-image");
+      const petPhotoFile = formData.get("pet-photo");
       const db = window.supabaseClient;
 
-      const receiptImageUrl = await uploadReceiptImage(db, file);
+      const [receiptPath, petPhotoUrl] = await Promise.all([
+        uploadReceiptImage(db, receiptFile),
+        uploadPetPhoto(db, petPhotoFile),
+      ]);
 
       const newRow = {
         place_name: String(formData.get("place-name")).trim(),
@@ -288,7 +388,9 @@ function bindReviewForm() {
         service_detail: String(formData.get("service-detail")).trim(),
         total_price: Number(formData.get("total-price")),
         short_review: String(formData.get("short-review")).trim(),
-        receipt_image_url: receiptImageUrl,
+        receipt_image_url: receiptPath,
+        pet_photo_url: petPhotoUrl || null,
+        is_verified: !!receiptPath,
       };
 
       if (db) {
@@ -306,7 +408,6 @@ function bindReviewForm() {
 
         reviews = [rowToReview(data), ...reviews];
       } else {
-        // Supabase 미설정 시 메모리에만 추가 (새로고침 시 사라짐)
         reviews = [
           {
             id: Date.now(),
@@ -317,7 +418,10 @@ function bindReviewForm() {
             serviceDetail: newRow.service_detail,
             totalPrice: newRow.total_price,
             shortReview: newRow.short_review,
-            receiptImage: receiptImageUrl,
+            receiptPath: receiptPath,
+            receiptImage: receiptPath.startsWith("http") ? receiptPath : "",
+            petPhoto: petPhotoUrl,
+            isVerified: newRow.is_verified,
           },
           ...reviews,
         ];
@@ -325,6 +429,8 @@ function bindReviewForm() {
 
       els.reviewForm.reset();
       els.receiptPreview.innerHTML = "";
+      if (els.petPhotoPreview) els.petPhotoPreview.innerHTML = "";
+      if (els.ocrStatus) els.ocrStatus.hidden = true;
       renderServiceTags(selectedSearchCategory);
       renderReviewList();
     } finally {
@@ -505,6 +611,7 @@ function init() {
   bindSearchResultsSelection();
   bindSearch();
   bindReceiptPreview();
+  bindPetPhotoPreview();
   bindReviewForm();
   bindReviewFilters();
   bindSmoothScroll();
