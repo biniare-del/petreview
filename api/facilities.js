@@ -27,16 +27,22 @@ export default async function handler(req, res) {
   const category =
     req.query.category === "grooming" ? "grooming" : "hospital";
   const region = String(req.query.region || "").trim();
+  const keyword = String(req.query.keyword || "").trim();
 
   const categoryKeyword = category === "grooming" ? "동물미용" : "동물병원";
-  const query = region
+  // keyword 파라미터가 있으면 직접 사용 (자동완성용), 없으면 기존 방식
+  const query = keyword
+    ? keyword
+    : region
     ? `서울 ${region} ${categoryKeyword}`
     : `서울 ${categoryKeyword}`;
 
-  // 카카오 API는 페이지당 최대 15건, 최대 3페이지(45건)까지 수집
+  // keyword 직접 검색 시 1페이지만, 지역 목록 조회 시 최대 3페이지(45건)
+  const maxPages = keyword ? 1 : 3;
+
   const allDocuments = [];
   try {
-    for (let page = 1; page <= 3; page++) {
+    for (let page = 1; page <= maxPages; page++) {
       const params = new URLSearchParams({ query, size: "15", page: String(page) });
 
       const controller = new AbortController();

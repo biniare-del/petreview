@@ -307,6 +307,105 @@ function bindReviewForm() {
   });
 }
 
+function bindPlaceNameAutocomplete() {
+  const input = els.placeNameInput;
+  const dropdown = document.getElementById("place-name-dropdown");
+  if (!input || !dropdown) return;
+
+  let debounceTimer = null;
+  let currentResults = [];
+  let activeIndex = -1;
+
+  function hideDropdown() {
+    dropdown.hidden = true;
+    dropdown.innerHTML = "";
+    activeIndex = -1;
+    currentResults = [];
+  }
+
+  function selectItem(place) {
+    input.value = place.name;
+    if (place.region) els.placeRegionInput.value = place.region;
+    if (place.category) els.placeCategorySelect.value = place.category;
+    hideDropdown();
+  }
+
+  function renderDropdown(places) {
+    if (!places.length) { hideDropdown(); return; }
+    currentResults = places.slice(0, 8);
+    dropdown.innerHTML = currentResults
+      .map((p, i) => `
+        <li data-idx="${i}" role="option">
+          <div class="autocomplete-name">${escapeHtml(p.name)}</div>
+          <div class="autocomplete-meta">${
+            [p.region ? `서울 ${escapeHtml(p.region)}` : "", escapeHtml(p.address || "")]
+              .filter(Boolean).join(" · ")
+          }</div>
+        </li>`)
+      .join("");
+    dropdown.hidden = false;
+  }
+
+  async function fetchSuggestions(keyword) {
+    const category = els.placeCategorySelect.value || "hospital";
+    const url = `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(category)}&keyword=${encodeURIComponent(keyword)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json?.results ?? [];
+  }
+
+  input.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    const val = input.value.trim();
+    if (val.length < 2) { hideDropdown(); return; }
+    debounceTimer = setTimeout(async () => {
+      try {
+        const places = await fetchSuggestions(val);
+        renderDropdown(places);
+      } catch {
+        hideDropdown();
+      }
+    }, 300);
+  });
+
+  dropdown.addEventListener("mousedown", (e) => {
+    const li = e.target.closest("li[data-idx]");
+    if (!li) return;
+    e.preventDefault();
+    const idx = Number(li.dataset.idx);
+    if (currentResults[idx]) selectItem(currentResults[idx]);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (dropdown.hidden) return;
+    const items = dropdown.querySelectorAll("li");
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      if (currentResults[activeIndex]) selectItem(currentResults[activeIndex]);
+      return;
+    } else if (e.key === "Escape") {
+      hideDropdown();
+      return;
+    }
+    items.forEach((item, i) =>
+      item.classList.toggle("is-active", i === activeIndex)
+    );
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+      hideDropdown();
+    }
+  });
+}
+
 function bindReviewFilters() {
   els.filterCategory.addEventListener("change", renderReviewList);
   els.filterRegion.addEventListener("change", renderReviewList);
@@ -346,6 +445,7 @@ function init() {
   bindReviewForm();
   bindReviewFilters();
   bindSmoothScroll();
+  bindPlaceNameAutocomplete();
   void renderSearchResults();
   void loadReviews();
 }

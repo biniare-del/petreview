@@ -118,13 +118,17 @@
         <div class="form-row">
           <div class="form-group">
             <label for="place-name">업체 이름</label>
-            <input
-              type="text"
-              id="place-name"
-              name="place-name"
-              placeholder="예: 펫프렌즈 동물병원"
-              required
-            />
+            <div class="autocomplete-wrapper" id="place-name-wrapper">
+              <input
+                type="text"
+                id="place-name"
+                name="place-name"
+                placeholder="예: 펫프렌즈 동물병원"
+                autocomplete="off"
+                required
+              />
+              <ul class="autocomplete-dropdown" id="place-name-dropdown" hidden role="listbox"></ul>
+            </div>
           </div>
           <div class="form-group">
             <label for="place-category">업종</label>
