@@ -685,8 +685,9 @@ function init() {
   // PetAuth 초기화
   window.PetAuth?.init((event) => {
     updateHeaderAuth();
-    // 로그인 후 모달 자동 닫기
-    if (event === "SIGNED_IN") closeLoginModal();
+    // SIGNED_IN: 모달에서 로그인
+    // INITIAL_SESSION: OAuth 리다이렉트 후 페이지 재로드 시 세션 복원
+    if (event === "SIGNED_IN" || event === "INITIAL_SESSION") closeLoginModal();
   }).then(() => updateHeaderAuth());
 
   bindLoginModal();

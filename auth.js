@@ -12,13 +12,8 @@
       const db = window.supabaseClient;
       if (!db) return;
 
-      // 현재 세션 복원 (OAuth 리다이렉트 코드 교환 포함)
-      const { data: { session } } = await db.auth.getSession();
-      if (session?.user) {
-        this.currentUser = session.user;
-        this.currentProfile = await this._fetchProfile(session.user.id);
-      }
-
+      // onAuthStateChange를 getSession()보다 먼저 등록해야
+      // OAuth 리다이렉트 후 SIGNED_IN 이벤트를 놓치지 않는다.
       db.auth.onAuthStateChange(async (event, session) => {
         this.currentUser = session?.user ?? null;
         this.currentProfile = session?.user
@@ -26,6 +21,13 @@
           : null;
         onAuthChange?.(event, session);
       });
+
+      // OAuth 코드 교환 및 현재 세션 확인 (PKCE: URL의 code 파라미터 처리)
+      const { data: { session } } = await db.auth.getSession();
+      if (session?.user) {
+        this.currentUser = session.user;
+        this.currentProfile = await this._fetchProfile(session.user.id);
+      }
     },
 
     async _fetchProfile(userId) {

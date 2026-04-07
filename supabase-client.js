@@ -19,6 +19,11 @@
     return;
   }
 
-  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      detectSessionInUrl: true,  // OAuth 리다이렉트 후 URL의 코드 자동 감지
+      flowType: 'pkce',          // 정적 사이트(GitHub Pages)에 안전한 PKCE 플로우
+    },
+  });
   console.info('[펫리뷰] Supabase 연결됨.');
 })();
