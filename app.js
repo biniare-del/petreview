@@ -682,13 +682,14 @@ function bindLoginModal() {
 }
 
 function init() {
-  // PetAuth 초기화
+  // PetAuth 초기화 — 실패해도 나머지 앱 기능은 정상 동작
   window.PetAuth?.init((event) => {
     updateHeaderAuth();
-    // SIGNED_IN: 모달에서 로그인
-    // INITIAL_SESSION: OAuth 리다이렉트 후 페이지 재로드 시 세션 복원
+    // 로그인 완료 시 모달 닫기 (모달이 열려 있는 경우에만 실질적으로 동작)
     if (event === "SIGNED_IN" || event === "INITIAL_SESSION") closeLoginModal();
-  }).then(() => updateHeaderAuth());
+  })
+  .then(() => updateHeaderAuth())
+  .catch(() => updateHeaderAuth()); // 오류 발생해도 헤더는 렌더링
 
   bindLoginModal();
   // 초기 로그인 버튼 클릭 이벤트 (헤더 auth 영역)
