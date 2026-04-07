@@ -318,11 +318,13 @@ function bindReceiptPreview() {
 
     renderImagePreview(file, els.receiptPreview);
 
-    // 업로드 완료 표시
-    if (els.ocrStatus) {
-      els.ocrStatus.className = "ocr-status is-success";
-      els.ocrStatus.textContent = "✅ 영수증 인증 접수 완료. 검수 후 인증 처리됩니다.";
-    }
+    // 4초 후 완료 문구로 전환
+    setTimeout(() => {
+      if (els.ocrStatus) {
+        els.ocrStatus.className = "ocr-status is-success";
+        els.ocrStatus.textContent = "✅ 영수증 인증 접수 완료. 검수 후 인증 처리됩니다.";
+      }
+    }, 4000);
   });
 }
 
