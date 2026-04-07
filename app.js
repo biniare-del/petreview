@@ -302,18 +302,26 @@ function bindSearch() {
 }
 
 function bindReceiptPreview() {
-  els.receiptInput.addEventListener("change", (event) => {
+  els.receiptInput.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
       if (els.ocrStatus) els.ocrStatus.hidden = true;
       return;
     }
-    renderImagePreview(file, els.receiptPreview);
-    // 영수증 파일 선택 시 인증 완료 표시
+
+    // 업로드 중 표시
     if (els.ocrStatus) {
       els.ocrStatus.hidden = false;
+      els.ocrStatus.className = "ocr-status is-loading";
+      els.ocrStatus.textContent = "영수증 분석 중...";
+    }
+
+    renderImagePreview(file, els.receiptPreview);
+
+    // 업로드 완료 표시
+    if (els.ocrStatus) {
       els.ocrStatus.className = "ocr-status is-success";
-      els.ocrStatus.textContent = "✅ 영수증 인증 완료";
+      els.ocrStatus.textContent = "✅ 영수증 인증 접수 완료. 검수 후 인증 처리됩니다.";
     }
   });
 }
