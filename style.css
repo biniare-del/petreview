@@ -1091,6 +1091,56 @@ body[data-theme="grooming"] .place-phone-link {
   .category-card-name { font-size: 15px; }
 }
 
+/* ===== 배너 슬롯 ===== */
+.banner-slot {
+  margin: 12px 0 0;
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: center;
+  background: #f5f0eb;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-slot[hidden] {
+  display: none !important;
+}
+
+.banner-img {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+/* ===== 우수협력병원/이벤트 고정 카드 ===== */
+.featured-place-card {
+  border-color: #ffd59e;
+  background: linear-gradient(160deg, #fffbf0, #fff8e8);
+  position: relative;
+}
+
+.featured-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.featured-tag.tag-event {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #fff;
+}
+
 /* 푸터 */
 .site-footer {
   padding: 18px 16px 26px;
