@@ -19,13 +19,23 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { imageBase64, mimeType } = req.body ?? {};
+  const { imageBase64: rawBase64, mimeType: rawMime } = req.body ?? {};
+
+  // data URL 접두사 실수로 포함된 경우 제거
+  const imageBase64 = typeof rawBase64 === "string" && rawBase64.includes(",")
+    ? rawBase64.split(",")[1]
+    : rawBase64;
+
+  // Anthropic 지원 포맷: image/jpeg, image/png, image/gif, image/webp 만 허용
+  const ALLOWED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  const mimeType = ALLOWED_MIME.includes(rawMime) ? rawMime : "image/jpeg";
+
   if (!imageBase64) {
-    console.error("[ocr] imageBase64 없음 - 요청 body:", JSON.stringify(req.body ?? {}).slice(0, 200));
+    console.error("[ocr] imageBase64 없음 - rawMime:", rawMime, "body keys:", Object.keys(req.body ?? {}));
     return res.status(400).json({ error: "imageBase64 required" });
   }
 
-  console.log(`[ocr] 요청 수신 - mimeType: ${mimeType}, base64 길이: ${imageBase64.length}`);
+  console.log(`[ocr] 요청 수신 - rawMime: ${rawMime} → 사용 mimeType: ${mimeType}, base64 길이: ${imageBase64.length}`);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -69,7 +79,14 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(`[ocr] Anthropic API 오류 - status: ${response.status}, body: ${errText}`);
+      let errJson = null;
+      try { errJson = JSON.parse(errText); } catch {}
+      console.error(
+        `[ocr] Anthropic API ${response.status} 에러`,
+        "\n  type:", errJson?.error?.type,
+        "\n  message:", errJson?.error?.message,
+        "\n  full body:", errText
+      );
       return res.status(200).json({ date: null, amount: null });
     }
 
