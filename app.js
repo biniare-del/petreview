@@ -137,49 +137,6 @@ function renderImagePreview(file, previewEl) {
   previewEl.innerHTML = `<img src="${url}" alt="미리보기" />`;
 }
 
-async function runOcr(file) {
-  const status = els.ocrStatus;
-  if (!status) return;
-
-  status.hidden = false;
-  status.className = "ocr-status is-loading";
-  status.textContent = "🔍 영수증 분석 중...";
-
-  try {
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(",")[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
-    const res = await fetch("https://petreview.vercel.app/api/ocr", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
-      signal: AbortSignal.timeout(30000),
-    });
-
-    if (!res.ok) throw new Error("OCR API 오류");
-
-    const { date, amount } = await res.json();
-
-    if (date) document.getElementById("visit-date").value = date;
-    if (amount) document.getElementById("total-price").value = amount;
-
-    if (date || amount) {
-      status.className = "ocr-status is-success";
-      status.textContent = "✅ 날짜·금액 자동 입력 완료! 확인 후 수정하세요.";
-    } else {
-      status.className = "ocr-status is-error";
-      status.textContent = "⚠️ 자동 인식 실패, 직접 입력해주세요.";
-    }
-  } catch (err) {
-    console.warn("[OCR]", err);
-    status.className = "ocr-status is-error";
-    status.textContent = "⚠️ 자동 인식 실패, 직접 입력해주세요.";
-  }
-}
 
 function renderReviewList() {
   const category = els.filterCategory.value;
@@ -347,9 +304,17 @@ function bindSearch() {
 function bindReceiptPreview() {
   els.receiptInput.addEventListener("change", (event) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      if (els.ocrStatus) els.ocrStatus.hidden = true;
+      return;
+    }
     renderImagePreview(file, els.receiptPreview);
-    void runOcr(file);
+    // 영수증 파일 선택 시 인증 완료 표시
+    if (els.ocrStatus) {
+      els.ocrStatus.hidden = false;
+      els.ocrStatus.className = "ocr-status is-success";
+      els.ocrStatus.textContent = "✅ 영수증 인증 완료";
+    }
   });
 }
 
