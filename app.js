@@ -15,7 +15,7 @@ let selectedSearchCategory = "hospital";
 let searchFacilities = [];
 let searchPage = 1;
 let hasSearched = false;
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -95,8 +95,14 @@ function renderSearchPage(page) {
 
   els.searchResults.innerHTML = dataNotice + cards + pagination;
 
-  document.getElementById("page-prev")?.addEventListener("click", () => renderSearchPage(searchPage - 1));
-  document.getElementById("page-next")?.addEventListener("click", () => renderSearchPage(searchPage + 1));
+  document.getElementById("page-prev")?.addEventListener("click", () => {
+    renderSearchPage(searchPage - 1);
+    document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  document.getElementById("page-next")?.addEventListener("click", () => {
+    renderSearchPage(searchPage + 1);
+    document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 async function renderSearchResults() {
