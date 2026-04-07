@@ -375,6 +375,533 @@ textarea {
   width: 100%;
 }
 
+/* 영수증 인증 뱃지 */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.review-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.review-card-header h3 {
+  margin: 0;
+}
+
+.card--verified {
+  border-color: #bbf7d0;
+  background: linear-gradient(160deg, #f0fdf4, #ffffff);
+}
+
+.review-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.review-thumb {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* OCR 상태 표시 */
+.ocr-status {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ocr-status.is-loading {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.ocr-status.is-success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.ocr-status.is-error {
+  background: #fff1f2;
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+}
+
+/* 검색 결과 카드 병원명 말줄임 */
+.place-name-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* 검색 결과 페이지네이션 */
+.search-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 8px 0 4px;
+}
+
+.pagination-btn {
+  min-width: 90px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 112, 67, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(255, 112, 67, 0.4);
+}
+
+.pagination-btn:active:not(:disabled) {
+  transform: translateY(0);
+  opacity: 0.9;
+}
+
+.pagination-btn:disabled {
+  background: #e0d7d2;
+  box-shadow: none;
+  color: #aaaaaa;
+  cursor: not-allowed;
+}
+
+.page-info {
+  min-width: 60px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555555;
+}
+
+/* 자동완성 드롭다운 */
+.autocomplete-wrapper {
+  position: relative;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 200;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #e0d7d2;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.autocomplete-dropdown li {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 2px 4px;
+  transition: background-color 0.1s ease;
+}
+
+.autocomplete-dropdown li:hover,
+.autocomplete-dropdown li.is-active {
+  background-color: #fff2eb;
+}
+
+.autocomplete-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+}
+
+.autocomplete-meta {
+  font-size: 12px;
+  color: #999999;
+  margin-top: 2px;
+}
+
+/* 전화번호 링크 */
+.place-phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: 600;
+}
+.place-phone-link:hover {
+  text-decoration: underline;
+}
+
+/* 진료항목 태그 버튼 */
+.service-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tag-btn {
+  padding: 6px 14px;
+  border: 1.5px solid #e0d7d2;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666666;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tag-btn.is-selected {
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  border-color: transparent;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+body[data-theme="grooming"] .tag-btn.is-selected {
+  background: linear-gradient(135deg, #f472b6, #a855f7);
+}
+
+/* 미용샵(grooming) 테마 */
+body[data-theme="grooming"] {
+  background-color: #fdf4ff;
+}
+
+body[data-theme="grooming"] .primary-btn,
+body[data-theme="grooming"] .pagination-btn:not(:disabled) {
+  background: linear-gradient(135deg, #f472b6, #a855f7);
+  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.35);
+}
+
+body[data-theme="grooming"] .primary-btn:hover,
+body[data-theme="grooming"] .pagination-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 15px rgba(168, 85, 247, 0.4);
+}
+
+body[data-theme="grooming"] .toggle-btn.is-active {
+  background-color: #f472b6;
+}
+
+body[data-theme="grooming"] .category-toggle {
+  background-color: #fce7f3;
+}
+
+body[data-theme="grooming"] .logo-icon {
+  background: linear-gradient(135deg, #f9a8d4, #f472b6);
+}
+
+body[data-theme="grooming"] input:focus,
+body[data-theme="grooming"] select:focus,
+body[data-theme="grooming"] textarea:focus {
+  border-color: #f472b6;
+  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.18);
+}
+
+body[data-theme="grooming"] .site-nav a:hover {
+  background-color: rgba(244, 114, 182, 0.12);
+  color: #c026d3;
+}
+
+body[data-theme="grooming"] .card {
+  border-color: #f5d0fe;
+  background-color: #fdf4ff;
+}
+
+body[data-theme="grooming"] .hero-pet-card {
+  background: linear-gradient(145deg, #fce7f3, #f9a8d4);
+  box-shadow: 0 10px 30px rgba(244, 114, 182, 0.35);
+}
+
+body[data-theme="grooming"] .hero-pet-info span {
+  color: #7e1d6b;
+}
+
+body[data-theme="grooming"] .hero-pet-info strong {
+  color: #6b0f5d;
+}
+
+body[data-theme="grooming"] .autocomplete-dropdown li:hover,
+body[data-theme="grooming"] .autocomplete-dropdown li.is-active {
+  background-color: #fce7f3;
+}
+
+body[data-theme="grooming"] .place-phone-link {
+  color: #c026d3;
+}
+
+/* ===== 헤더 인증 영역 ===== */
+.header-auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.auth-login-btn {
+  padding: 7px 16px;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(255, 112, 67, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.auth-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(255, 112, 67, 0.4);
+}
+
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ff8a65;
+}
+
+.header-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-auth-link {
+  font-size: 13px;
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.header-auth-link:hover {
+  background-color: rgba(255, 112, 67, 0.1);
+}
+
+.header-logout-btn {
+  padding: 5px 12px;
+  background: transparent;
+  color: #999;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.header-logout-btn:hover {
+  color: #ff5252;
+  border-color: #ff5252;
+}
+
+/* ===== 로그인 모달 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 360px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #aaa;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.modal-close:hover {
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.modal-logo {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.modal-title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  color: #222;
+}
+
+.modal-desc {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #777;
+  text-align: center;
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-kakao,
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.08s ease;
+}
+
+.btn-kakao {
+  background: #FEE500;
+  color: #3C1E1E;
+}
+
+.btn-google {
+  background: #ffffff;
+  color: #333;
+  border: 1.5px solid #ddd;
+}
+
+.btn-kakao:hover,
+.btn-google:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.btn-kakao:active,
+.btn-google:active {
+  transform: translateY(0);
+}
+
+.auth-btn-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.modal-notice {
+  margin: 18px 0 0;
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+}
+
+/* ===== 단골 병원 즐겨찾기 버튼 ===== */
+.favorite-btn {
+  padding: 5px 12px;
+  background: transparent;
+  color: #ff7043;
+  border: 1.5px solid #ff7043;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.favorite-btn:hover {
+  background: #ff7043;
+  color: #fff;
+}
+
+.favorite-btn.is-saved {
+  background: #ff7043;
+  color: #fff;
+}
+
 /* 푸터 */
 .site-footer {
   padding: 18px 16px 26px;

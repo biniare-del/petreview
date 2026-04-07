@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>마이페이지 – 펫리뷰</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .mypage-container { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+    .mypage-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0 0; }
+    .mypage-tab {
+      padding: 8px 18px; border: none; border-radius: 999px; font-size: 14px;
+      font-weight: 600; cursor: pointer; background: #f0ebe6; color: #888;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .mypage-tab.is-active { background: linear-gradient(135deg, #ff8a65, #ff7043); color: #fff; }
+    .mypage-panel { display: none; margin-top: 24px; }
+    .mypage-panel.is-active { display: block; }
+    .mypage-card {
+      background: #fff; border-radius: 16px; padding: 18px 20px;
+      margin-bottom: 12px; border: 1px solid #f0e8e2;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .mypage-card h3 { margin: 0 0 6px; font-size: 16px; }
+    .mypage-card p { margin: 4px 0; font-size: 13px; color: #666; }
+    .btn-delete {
+      padding: 5px 12px; background: transparent; color: #e57373;
+      border: 1.5px solid #e57373; border-radius: 999px;
+      font-size: 12px; cursor: pointer; font-weight: 600;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .btn-delete:hover { background: #e57373; color: #fff; }
+    .card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .pet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+    .pet-card {
+      background: #fff; border-radius: 18px; padding: 16px;
+      border: 1px solid #f0e8e2; text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .pet-avatar {
+      width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+      background: #ffe1d5; display: flex; align-items: center; justify-content: center;
+      font-size: 36px; margin: 0 auto 10px;
+    }
+    .pet-avatar img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
+    .pet-card h4 { margin: 0 0 4px; font-size: 15px; }
+    .pet-card p { margin: 2px 0; font-size: 12px; color: #888; }
+    .add-pet-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #fff8f5; border: 2px dashed #ffb998; border-radius: 18px;
+      padding: 24px 16px; cursor: pointer; color: #ff8a65; font-size: 13px; font-weight: 600;
+      transition: background 0.15s ease;
+    }
+    .add-pet-btn:hover { background: #fff0e8; }
+    .add-pet-btn .plus-icon { font-size: 28px; margin-bottom: 8px; }
+    .profile-form { max-width: 400px; }
+    .profile-avatar-area { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .profile-avatar-big {
+      width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+      background: linear-gradient(135deg, #ff8a65, #ff7043);
+      color: #fff; font-size: 32px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .profile-avatar-big img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
+    .modal-overlay { z-index: 1000; }
+    .pet-modal { max-width: 380px; }
+    #pet-form .form-group { margin-bottom: 14px; }
+    #pet-form label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 600; color: #555; }
+    #pet-form input, #pet-form select {
+      width: 100%; padding: 8px 10px; font-size: 14px;
+      border-radius: 10px; border: 1px solid #e0d7d2; background: #fffdfb; outline: none;
+    }
+    .alert-banner {
+      padding: 16px 20px; background: #fff8e1; border-radius: 12px;
+      color: #7c5a00; font-size: 14px; border: 1px solid #ffe082;
+      text-align: center; margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-area">
+      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+        <div class="logo-icon">🐾</div>
+        <div class="logo-text">
+          <h1>펫리뷰</h1>
+          <p>영수증으로 인증하는 진짜 동물병원·미용샵 리뷰</p>
+        </div>
+      </a>
+    </div>
+    <nav class="site-nav">
+      <a href="index.html">홈으로</a>
+    </nav>
+    <div class="header-auth" id="header-auth">
+      <button class="auth-login-btn" id="login-btn">로그인</button>
+    </div>
+  </header>
+
+  <div class="mypage-container" id="mypage-root">
+    <div class="alert-banner" id="login-required-banner" hidden>
+      로그인이 필요한 페이지입니다. <a href="index.html">홈으로 돌아가기</a>
+    </div>
+
+    <div id="mypage-content" hidden>
+      <h2 style="margin:0 0 4px;">마이페이지</h2>
+      <p style="margin:0;font-size:14px;color:#888;" id="mypage-greeting"></p>
+
+      <div class="mypage-tabs">
+        <button class="mypage-tab is-active" data-tab="reviews">내 리뷰</button>
+        <button class="mypage-tab" data-tab="favorites">단골병원</button>
+        <button class="mypage-tab" data-tab="pets">마이펫</button>
+        <button class="mypage-tab" data-tab="profile">프로필</button>
+      </div>
+
+      <!-- 내 리뷰 -->
+      <div class="mypage-panel is-active" id="panel-reviews">
+        <div id="my-reviews-list"><p class="placeholder-text">불러오는 중...</p></div>
+      </div>
+
+      <!-- 단골병원 -->
+      <div class="mypage-panel" id="panel-favorites">
+        <div id="favorites-list"><p class="placeholder-text">불러오는 중...</p></div>
+      </div>
+
+      <!-- 마이펫 -->
+      <div class="mypage-panel" id="panel-pets">
+        <div class="pet-grid" id="pets-grid">
+          <p class="placeholder-text">불러오는 중...</p>
+        </div>
+      </div>
+
+      <!-- 프로필 -->
+      <div class="mypage-panel" id="panel-profile">
+        <div class="mypage-card profile-form">
+          <div class="profile-avatar-area">
+            <div class="profile-avatar-big" id="profile-avatar-big">?</div>
+            <div>
+              <p style="margin:0 0 4px;font-size:13px;color:#666;">닉네임</p>
+              <p id="profile-nickname-display" style="margin:0;font-weight:600;font-size:16px;"></p>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="profile-nickname">닉네임 변경</label>
+            <input type="text" id="profile-nickname" placeholder="새 닉네임 입력" maxlength="20" />
+          </div>
+          <button class="primary-btn" id="save-profile-btn" style="margin-top:8px;">저장하기</button>
+          <p class="helper-text" id="profile-save-msg" style="margin-top:8px;"></p>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn-delete" id="logout-btn-profile">로그아웃</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 펫 추가 모달 -->
+  <div class="modal-overlay" id="pet-modal" hidden>
+    <div class="modal pet-modal">
+      <button class="modal-close" id="pet-modal-close">✕</button>
+      <h2 class="modal-title" style="font-size:18px;">반려동물 등록</h2>
+      <form id="pet-form" style="margin-top:16px;">
+        <div class="form-group">
+          <label for="pet-name">이름 *</label>
+          <input type="text" id="pet-name" placeholder="예: 뭉치" required maxlength="20" />
+        </div>
+        <div class="form-group">
+          <label for="pet-species">종류</label>
+          <select id="pet-species">
+            <option value="">선택 안 함</option>
+            <option value="강아지">강아지</option>
+            <option value="고양이">고양이</option>
+            <option value="토끼">토끼</option>
+            <option value="햄스터">햄스터</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pet-age">나이 (세)</label>
+          <input type="number" id="pet-age" min="0" max="50" placeholder="예: 3" />
+        </div>
+        <div class="form-group">
+          <label for="pet-photo-input">사진 (선택)</label>
+          <input type="file" id="pet-photo-input" accept="image/*" capture="environment" />
+        </div>
+        <div style="margin-top:16px;">
+          <button type="submit" class="primary-btn" style="width:100%;">등록하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <small>© 2026 펫리뷰 · 실제 영수증 기반 반려동물 리뷰 플랫폼</small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="mypage.js"></script>
+</body>
+</html>
