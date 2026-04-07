@@ -66,21 +66,33 @@ body {
 .site-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .site-nav a {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 700;
   text-decoration: none;
-  color: #555555;
-  padding: 6px 10px;
+  color: #e06438;
+  padding: 7px 15px;
   border-radius: 999px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  border: 1.5px solid rgba(255, 138, 101, 0.45);
+  background-color: rgba(255, 138, 101, 0.07);
+  letter-spacing: -0.1px;
+  transition: background-color 0.18s ease, color 0.18s ease,
+    border-color 0.18s ease, box-shadow 0.18s ease, transform 0.08s ease;
 }
 
 .site-nav a:hover {
-  background-color: rgba(255, 138, 101, 0.12);
-  color: #e06438;
+  background-color: rgba(255, 138, 101, 0.16);
+  color: #c94e20;
+  border-color: #ff8a65;
+  box-shadow: 0 2px 8px rgba(255, 112, 67, 0.2);
+  transform: translateY(-1px);
+}
+
+.site-nav a:active {
+  transform: translateY(0);
 }
 
 /* 메인 컨테이너 */
@@ -637,9 +649,17 @@ body[data-theme="grooming"] textarea:focus {
   box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.18);
 }
 
-body[data-theme="grooming"] .site-nav a:hover {
-  background-color: rgba(244, 114, 182, 0.12);
+body[data-theme="grooming"] .site-nav a {
   color: #c026d3;
+  border-color: rgba(244, 114, 182, 0.45);
+  background-color: rgba(244, 114, 182, 0.07);
+}
+
+body[data-theme="grooming"] .site-nav a:hover {
+  background-color: rgba(244, 114, 182, 0.16);
+  color: #a21caf;
+  border-color: #f472b6;
+  box-shadow: 0 2px 8px rgba(244, 114, 182, 0.2);
 }
 
 body[data-theme="grooming"] .card {

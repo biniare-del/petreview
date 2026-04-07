@@ -13,6 +13,64 @@ let selectedServiceTags = new Set();
 let reviews = [];
 let selectedSearchCategory = "hospital";
 let searchFacilities = [];
+
+// ===== 리뷰 폼 임시 저장 (로그인 리다이렉트 전후 데이터 유지) =====
+const FORM_DRAFT_KEY = "petreview_form_draft";
+
+function saveFormDraft() {
+  try {
+    const draft = {
+      placeName:     document.getElementById("place-name")?.value ?? "",
+      placeCategory: document.getElementById("place-category")?.value ?? "hospital",
+      placeRegion:   document.getElementById("place-region")?.value ?? "",
+      visitDate:     document.getElementById("visit-date")?.value ?? "",
+      serviceDetail: document.getElementById("service-detail")?.value ?? "",
+      totalPrice:    document.getElementById("total-price")?.value ?? "",
+      shortReview:   document.getElementById("short-review")?.value ?? "",
+      serviceTags:   [...selectedServiceTags],
+    };
+    sessionStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(draft));
+  } catch { /* ignore */ }
+}
+
+function restoreFormDraft() {
+  const raw = sessionStorage.getItem(FORM_DRAFT_KEY);
+  if (!raw) return;
+  sessionStorage.removeItem(FORM_DRAFT_KEY);
+  try {
+    const d = JSON.parse(raw);
+    // 폼 값 복원
+    if (d.placeName)     document.getElementById("place-name").value = d.placeName;
+    if (d.placeCategory) document.getElementById("place-category").value = d.placeCategory;
+    if (d.placeRegion)   document.getElementById("place-region").value = d.placeRegion;
+    if (d.visitDate)     document.getElementById("visit-date").value = d.visitDate;
+    if (d.serviceDetail) document.getElementById("service-detail").value = d.serviceDetail;
+    if (d.totalPrice)    document.getElementById("total-price").value = d.totalPrice;
+    if (d.shortReview)   document.getElementById("short-review").value = d.shortReview;
+
+    // 카테고리 테마/토글 복원
+    if (d.placeCategory) {
+      selectedSearchCategory = d.placeCategory;
+      document.body.dataset.theme = d.placeCategory === "grooming" ? "grooming" : "hospital";
+      els.categoryButtons.forEach((btn) =>
+        btn.classList.toggle("is-active", btn.dataset.category === d.placeCategory)
+      );
+      renderServiceTags(d.placeCategory);
+    }
+
+    // 서비스 태그 복원
+    if (d.serviceTags?.length) {
+      selectedServiceTags = new Set(d.serviceTags);
+      document.querySelectorAll(".tag-btn").forEach((btn) =>
+        btn.classList.toggle("is-selected", selectedServiceTags.has(btn.dataset.tag))
+      );
+    }
+
+    // 복원 후 폼 섹션으로 스크롤
+    document.getElementById("review-form-section")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch { /* ignore */ }
+}
 let searchPage = 1;
 let hasSearched = false;
 const PAGE_SIZE = 5;
@@ -623,9 +681,16 @@ function bindSearchResultsSelection() {
     const placeCategory = card.dataset.placeCategory || selectedSearchCategory;
     const placeRegion = card.dataset.placeRegion || "";
 
+    // 카드 데이터를 폼에 먼저 채움 (로그인 필요 시 저장 대상이 되도록)
     els.placeNameInput.value = placeName;
     els.placeCategorySelect.value = placeCategory;
     els.placeRegionInput.value = placeRegion;
+
+    // 비로그인 상태에서 업체 선택 시 로그인 요구
+    if (!window.PetAuth?.isLoggedIn()) {
+      openLoginModal(); // saveFormDraft() 포함
+      return;
+    }
 
     const formSection = document.getElementById("review-form-section");
     formSection?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -664,7 +729,10 @@ function updateHeaderAuth() {
 // ===== 로그인 모달 =====
 function openLoginModal() {
   const modal = document.getElementById("login-modal");
-  if (modal) modal.hidden = false;
+  if (modal) {
+    saveFormDraft(); // 로그인 리다이렉트 전에 폼 내용 저장
+    modal.hidden = false;
+  }
 }
 
 function closeLoginModal() {
@@ -707,6 +775,15 @@ function init() {
   renderServiceTags("hospital");
   bindServiceTags();
   void loadReviews();
+
+  // 방문일: 오늘 이후 날짜 선택 불가
+  const visitDateInput = document.getElementById("visit-date");
+  if (visitDateInput) {
+    visitDateInput.max = new Date().toISOString().slice(0, 10);
+  }
+
+  // 로그인 리다이렉트 후 돌아온 경우 폼 내용 복원
+  restoreFormDraft();
 }
 
 init();
