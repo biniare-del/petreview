@@ -11,7 +11,8 @@ const SERVICE_TAGS = {
 let selectedServiceTags = new Set();
 
 let reviews = [];
-let selectedSearchCategory = "hospital";
+let selectedSearchCategory = "hospital";  // 검색 탭용
+let formCategory = "hospital";            // 리뷰 폼 업종 (독립)
 let searchFacilities = [];
 
 // ===== 리뷰 폼 임시 저장 (로그인 리다이렉트 전후 데이터 유지) =====
@@ -19,9 +20,12 @@ const FORM_DRAFT_KEY = "petreview_form_draft";
 
 function saveFormDraft() {
   try {
+    const step2Visible = !document.getElementById("form-step-2")?.hidden;
     const draft = {
+      pendingOpenForm: true,
+      formCategory:  formCategory,
+      formStep:      step2Visible ? 2 : 1,
       placeName:     document.getElementById("place-name")?.value ?? "",
-      placeCategory: document.getElementById("place-category")?.value ?? "hospital",
       placeRegion:   document.getElementById("place-region")?.value ?? "",
       visitDate:     document.getElementById("visit-date")?.value ?? "",
       serviceDetail: document.getElementById("service-detail")?.value ?? "",
@@ -39,36 +43,29 @@ function restoreFormDraft() {
   sessionStorage.removeItem(FORM_DRAFT_KEY);
   try {
     const d = JSON.parse(raw);
-    // 폼 값 복원
-    if (d.placeName)     document.getElementById("place-name").value = d.placeName;
-    if (d.placeCategory) document.getElementById("place-category").value = d.placeCategory;
-    if (d.placeRegion)   document.getElementById("place-region").value = d.placeRegion;
-    if (d.visitDate)     document.getElementById("visit-date").value = d.visitDate;
-    if (d.serviceDetail) document.getElementById("service-detail").value = d.serviceDetail;
-    if (d.totalPrice)    document.getElementById("total-price").value = d.totalPrice;
-    if (d.shortReview)   document.getElementById("short-review").value = d.shortReview;
+    if (!d.pendingOpenForm) return;
 
-    // 카테고리 테마/토글 복원
-    if (d.placeCategory) {
-      selectedSearchCategory = d.placeCategory;
-      document.body.dataset.theme = d.placeCategory === "grooming" ? "grooming" : "hospital";
-      els.categoryButtons.forEach((btn) =>
-        btn.classList.toggle("is-active", btn.dataset.category === d.placeCategory)
-      );
-      renderServiceTags(d.placeCategory);
-    }
-
-    // 서비스 태그 복원
-    if (d.serviceTags?.length) {
-      selectedServiceTags = new Set(d.serviceTags);
-      document.querySelectorAll(".tag-btn").forEach((btn) =>
-        btn.classList.toggle("is-selected", selectedServiceTags.has(btn.dataset.tag))
-      );
-    }
-
-    // 복원 후 폼 섹션으로 스크롤
+    // 폼 섹션으로 스크롤
     document.getElementById("review-form-section")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // step 2 였으면 업종 선택 후 폼 복원
+    if (d.formStep === 2 && d.formCategory) {
+      selectFormCategory(d.formCategory);
+      if (d.placeName)     document.getElementById("place-name").value = d.placeName;
+      if (d.placeRegion)   document.getElementById("place-region").value = d.placeRegion;
+      if (d.visitDate)     document.getElementById("visit-date").value = d.visitDate;
+      if (d.serviceDetail) document.getElementById("service-detail").value = d.serviceDetail;
+      if (d.totalPrice)    document.getElementById("total-price").value = d.totalPrice;
+      if (d.shortReview)   document.getElementById("short-review").value = d.shortReview;
+      if (d.serviceTags?.length) {
+        selectedServiceTags = new Set(d.serviceTags);
+        document.querySelectorAll(".tag-btn").forEach((btn) =>
+          btn.classList.toggle("is-selected", selectedServiceTags.has(btn.dataset.tag))
+        );
+      }
+    }
+    // step 1이면 그냥 스크롤만 (카드 표시 상태 유지)
   } catch { /* ignore */ }
 }
 let searchPage = 1;
@@ -125,16 +122,7 @@ function renderSearchPage(page) {
   const cards = slice
     .map(
       (place) => `
-      <article
-        class="card search-place-card"
-        role="button"
-        tabindex="0"
-        data-place-name="${escapeHtml(place.name)}"
-        data-place-category="${escapeHtml(place.category)}"
-        data-place-region="${escapeHtml(place.region)}"
-        data-place-address="${escapeHtml(place.address || "")}"
-        data-place-phone="${escapeHtml(place.phone || "")}"
-      >
+      <article class="card search-place-card">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
           <button class="favorite-btn" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">♡ 단골</button>
@@ -142,7 +130,6 @@ function renderSearchPage(page) {
         <p>${CATEGORY_LABEL[place.category]} · 서울특별시 ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
         ${place.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(place.phone)}">📞 ${escapeHtml(place.phone)}</a></p>` : ""}
-        <p class="helper-text">클릭해서 리뷰 작성 폼에 채워 넣기</p>
       </article>`
     )
     .join("");
@@ -629,12 +616,8 @@ function bindReviewFilters() {
   els.filterRegion.addEventListener("change", renderReviewList);
 }
 
-function bindSmoothScroll() {
-  if (!els.ctaButton) return;
-  els.ctaButton.addEventListener("click", () => {
-    const target = document.querySelector(els.ctaButton.dataset.scrollTarget);
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+function bindCtaButton() {
+  document.getElementById("cta-review-btn")?.addEventListener("click", openReviewForm);
 }
 
 function bindSearchResultsSelection() {
@@ -674,26 +657,7 @@ function bindSearchResultsSelection() {
       return;
     }
 
-    const card = event.target.closest(".search-place-card");
-    if (!card) return;
-
-    const placeName = card.dataset.placeName || "";
-    const placeCategory = card.dataset.placeCategory || selectedSearchCategory;
-    const placeRegion = card.dataset.placeRegion || "";
-
-    // 카드 데이터를 폼에 먼저 채움 (로그인 필요 시 저장 대상이 되도록)
-    els.placeNameInput.value = placeName;
-    els.placeCategorySelect.value = placeCategory;
-    els.placeRegionInput.value = placeRegion;
-
-    // 비로그인 상태에서 업체 선택 시 로그인 요구
-    if (!window.PetAuth?.isLoggedIn()) {
-      openLoginModal(); // saveFormDraft() 포함
-      return;
-    }
-
-    const formSection = document.getElementById("review-form-section");
-    formSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // 카드 클릭으로 폼 채우는 기능 제거됨 (리뷰 작성은 CTA 버튼으로만)
   });
 }
 
@@ -726,6 +690,64 @@ function updateHeaderAuth() {
   }
 }
 
+// ===== 리뷰 폼 플로우 =====
+
+// CTA 버튼 → 로그인 체크 → 폼 step 1 열기
+function openReviewForm() {
+  if (!window.PetAuth?.isLoggedIn()) {
+    openLoginModal(); // saveFormDraft() 포함 → 로그인 후 복원
+    return;
+  }
+  document.getElementById("review-form-section")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  showFormStep(1);
+}
+
+function showFormStep(step) {
+  document.getElementById("form-step-1").hidden = step !== 1;
+  document.getElementById("form-step-2").hidden = step !== 2;
+}
+
+// 업종 카드 선택 → step 2 표시 + 테마 + 서비스 태그 설정
+function selectFormCategory(category) {
+  formCategory = category;
+
+  // hidden input 값 설정
+  const catInput = document.getElementById("place-category");
+  if (catInput) catInput.value = category;
+
+  // 폼 영역 테마
+  const step2 = document.getElementById("form-step-2");
+  if (step2) step2.dataset.formTheme = category;
+
+  // 선택 업종 뱃지 렌더링
+  const badge = document.getElementById("form-selected-category");
+  if (badge) {
+    const label = category === "grooming" ? "✂️ 미용샵" : "🏥 동물병원";
+    badge.innerHTML = `
+      <span class="form-category-badge ${category}">${label}</span>
+      <button type="button" class="form-category-change-btn" id="form-category-change-btn">
+        업종 변경
+      </button>`;
+    document.getElementById("form-category-change-btn")
+      ?.addEventListener("click", () => {
+        showFormStep(1);
+      });
+  }
+
+  // 서비스 태그 재렌더링
+  renderServiceTags(category);
+  showFormStep(2);
+}
+
+function bindCategorySelection() {
+  document.getElementById("form-step-1")?.addEventListener("click", (e) => {
+    const card = e.target.closest(".category-card[data-category]");
+    if (!card) return;
+    selectFormCategory(card.dataset.category);
+  });
+}
+
 // ===== 로그인 모달 =====
 function openLoginModal() {
   const modal = document.getElementById("login-modal");
@@ -753,16 +775,20 @@ function init() {
   // PetAuth 초기화 — 실패해도 나머지 앱 기능은 정상 동작
   window.PetAuth?.init((event) => {
     updateHeaderAuth();
-    // 로그인 완료 시 모달 닫기 (모달이 열려 있는 경우에만 실질적으로 동작)
-    if (event === "SIGNED_IN" || event === "INITIAL_SESSION") closeLoginModal();
+    if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      closeLoginModal();
+      // 로그인 완료 후 대기 중이던 폼 복원
+      if (window.PetAuth?.isLoggedIn()) restoreFormDraft();
+    }
   })
   .then(() => updateHeaderAuth())
-  .catch(() => updateHeaderAuth()); // 오류 발생해도 헤더는 렌더링
+  .catch(() => updateHeaderAuth());
 
   bindLoginModal();
-  // 초기 로그인 버튼 클릭 이벤트 (헤더 auth 영역)
   document.getElementById("login-btn")?.addEventListener("click", openLoginModal);
 
+  bindCtaButton();
+  bindCategorySelection();
   bindCategoryToggle();
   bindSearchResultsSelection();
   bindSearch();
@@ -770,9 +796,7 @@ function init() {
   bindPetPhotoPreview();
   bindReviewForm();
   bindReviewFilters();
-  bindSmoothScroll();
   bindPlaceNameAutocomplete();
-  renderServiceTags("hospital");
   bindServiceTags();
   void loadReviews();
 
@@ -781,9 +805,6 @@ function init() {
   if (visitDateInput) {
     visitDateInput.max = new Date().toISOString().slice(0, 10);
   }
-
-  // 로그인 리다이렉트 후 돌아온 경우 폼 내용 복원
-  restoreFormDraft();
 }
 
 init();

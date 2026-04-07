@@ -36,8 +36,8 @@
           실제 방문자의 영수증만 리뷰로 남길 수 있어,  
           진짜 진료비와 후기를 한 눈에 확인할 수 있어요.
         </p>
-        <button class="primary-btn" type="button" data-scroll-target="#review-form-section">
-          내 영수증으로 리뷰 남기기
+        <button class="primary-btn hero-cta-btn" type="button" id="cta-review-btn">
+          리뷰 작성하기 →
         </button>
       </div>
       <div class="hero-visual" aria-hidden="true">
@@ -111,15 +111,38 @@
         <p class="placeholder-text">검색 조건을 입력하고 "검색하기"를 눌러 주세요.</p>
       </div>
     </section>
-    <!-- 2. 영수증 업로드 + 리뷰 작성 섹션 -->
+    <!-- 2. 리뷰 작성 섹션 -->
     <section id="review-form-section" class="section review-form-section" aria-label="리뷰 작성">
       <header class="section-header">
-        <h2>영수증으로 리뷰 남기기</h2>
-        <p>방문한 동물병원 또는 미용샵의 영수증을 업로드하고 솔직한 후기를 남겨주세요.</p>
+        <h2>리뷰 작성하기</h2>
+        <p>방문한 동물병원·미용샵의 영수증으로 솔직한 후기를 남겨주세요.</p>
       </header>
-      <form id="review-form" class="review-form">
-        <!-- 업장 정보 -->
-        <div class="form-row">
+
+      <!-- Step 1: 업종 선택 -->
+      <div id="form-step-1" class="form-step">
+        <p class="form-step-hint">어떤 업종의 리뷰를 작성하시겠어요?</p>
+        <div class="category-cards">
+          <button type="button" class="category-card" data-category="hospital">
+            <span class="category-card-icon">🏥</span>
+            <strong class="category-card-name">동물병원</strong>
+            <span class="category-card-desc">진료비 · 수술 · 건강검진</span>
+          </button>
+          <button type="button" class="category-card" data-category="grooming">
+            <span class="category-card-icon">✂️</span>
+            <strong class="category-card-name">미용샵</strong>
+            <span class="category-card-desc">목욕 · 미용 · 가위컷</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: 폼 작성 (업종 선택 후 표시) -->
+      <div id="form-step-2" hidden>
+        <!-- 선택 업종 표시 + 변경 버튼 -->
+        <div class="form-selected-category" id="form-selected-category"></div>
+        <form id="review-form" class="review-form">
+          <!-- 업종은 hidden input으로 (step 1에서 설정) -->
+          <input type="hidden" id="place-category" name="place-category" />
+          <!-- 업장 정보 -->
           <div class="form-group">
             <label for="place-name">업체 이름</label>
             <div class="autocomplete-wrapper" id="place-name-wrapper">
@@ -127,22 +150,13 @@
                 type="text"
                 id="place-name"
                 name="place-name"
-                placeholder="예: 펫프렌즈 동물병원"
+                placeholder="업체명 검색 (자동완성)"
                 autocomplete="off"
                 required
               />
               <ul class="autocomplete-dropdown" id="place-name-dropdown" hidden role="listbox"></ul>
             </div>
           </div>
-          <div class="form-group">
-            <label for="place-category">업종</label>
-            <select id="place-category" name="place-category" required>
-              <option value="">선택해주세요</option>
-              <option value="hospital">동물병원</option>
-              <option value="grooming">미용샵</option>
-            </select>
-          </div>
-        </div>
         <!-- 지역/방문일 -->
         <div class="form-row">
           <div class="form-group">
@@ -251,13 +265,14 @@
             required
           ></textarea>
         </div>
-        <!-- 제출 버튼 -->
-        <div class="form-actions">
-          <button type="submit" class="primary-btn">
-            리뷰 등록하기
-          </button>
-        </div>
-      </form>
+          <!-- 제출 버튼 -->
+          <div class="form-actions">
+            <button type="submit" class="primary-btn">
+              리뷰 등록하기
+            </button>
+          </div>
+        </form>
+      </div><!-- /form-step-2 -->
     </section>
     <!-- 3. 리뷰 목록 섹션 -->
     <section id="review-list-section" class="section review-list-section" aria-label="리뷰 목록">
