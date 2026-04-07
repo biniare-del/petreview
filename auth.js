@@ -27,18 +27,7 @@
       const db = window.supabaseClient;
       if (!db) return;
 
-      // onAuthStateChange를 getSession()보다 먼저 등록
-      // (OAuth 리다이렉트 후 SIGNED_IN 이벤트 누락 방지)
-      db.auth.onAuthStateChange(async (event, session) => {
-        this.currentUser = session?.user ?? null;
-        this.currentProfile = session?.user
-          ? await this._fetchProfile(session.user.id)
-          : null;
-        onAuthChange?.(event, session);
-      });
-
-      // getSession(): URL의 ?code= 를 처리하고 세션 반환
-      // 실패해도 사이트 이용에는 영향 없도록 try-catch
+      // 1. 먼저 getSession()으로 현재 세션 확인 (URL의 ?code= 교환 포함)
       try {
         const { data: { session }, error } = await db.auth.getSession();
         if (error) {
@@ -53,6 +42,17 @@
         // 코드 교환 성공/실패 관계없이 URL 파라미터 정리
         cleanOAuthParams();
       }
+
+      // 2. 이후 상태 변화 감지 (로그인/로그아웃)
+      // getSession() 이후에 등록하므로 INITIAL_SESSION 의 빈 세션으로
+      // currentUser 가 null 로 덮어쓰이는 문제를 방지
+      db.auth.onAuthStateChange(async (event, session) => {
+        this.currentUser = session?.user ?? null;
+        this.currentProfile = session?.user
+          ? await this._fetchProfile(session.user.id)
+          : null;
+        onAuthChange?.(event, session);
+      });
     },
 
     async _fetchProfile(userId) {

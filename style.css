@@ -758,6 +758,11 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 /* ===== 로그인 모달 ===== */
+/* hidden 속성이 CSS display 값에 의해 덮어쓰이지 않도록 명시 */
+.modal-overlay[hidden] {
+  display: none !important;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
