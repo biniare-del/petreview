@@ -38,7 +38,10 @@
     async signInWithKakao() {
       await window.supabaseClient?.auth.signInWithOAuth({
         provider: "kakao",
-        options: { redirectTo: SITE_URL },
+        options: {
+          redirectTo: SITE_URL,
+          scopes: "profile_nickname",
+        },
       });
     },
 
