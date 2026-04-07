@@ -21,8 +21,11 @@ export default async function handler(req, res) {
 
   const { imageBase64, mimeType } = req.body ?? {};
   if (!imageBase64) {
+    console.error("[ocr] imageBase64 없음 - 요청 body:", JSON.stringify(req.body ?? {}).slice(0, 200));
     return res.status(400).json({ error: "imageBase64 required" });
   }
+
+  console.log(`[ocr] 요청 수신 - mimeType: ${mimeType}, base64 길이: ${imageBase64.length}`);
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -65,19 +68,32 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error("[ocr] Anthropic API 오류:", response.status, err);
+      const errText = await response.text();
+      console.error(`[ocr] Anthropic API 오류 - status: ${response.status}, body: ${errText}`);
       return res.status(200).json({ date: null, amount: null });
     }
 
     const json = await response.json();
     const text = json?.content?.[0]?.text?.trim() ?? "";
+    console.log("[ocr] Claude 응답 텍스트:", text);
 
     // JSON 블록 추출 (```json ... ``` 혹은 {} 형태 모두 처리)
     const match = text.match(/\{[\s\S]*?\}/);
-    if (!match) return res.status(200).json({ date: null, amount: null });
+    if (!match) {
+      console.error("[ocr] JSON 블록 추출 실패 - 원문:", text);
+      return res.status(200).json({ date: null, amount: null });
+    }
 
-    const parsed = JSON.parse(match[0]);
+    let parsed;
+    try {
+      parsed = JSON.parse(match[0]);
+    } catch (parseErr) {
+      console.error("[ocr] JSON 파싱 실패 - match:", match[0], "error:", parseErr.message);
+      return res.status(200).json({ date: null, amount: null });
+    }
+
+    console.log("[ocr] 파싱 결과:", parsed);
+
     const date = typeof parsed.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date)
       ? parsed.date
       : null;
@@ -85,9 +101,10 @@ export default async function handler(req, res) {
       ? Math.round(parsed.amount)
       : null;
 
+    console.log(`[ocr] 최종 결과 - date: ${date}, amount: ${amount}`);
     return res.status(200).json({ date, amount });
   } catch (err) {
-    console.error("[ocr] 처리 실패:", err.message);
+    console.error("[ocr] 처리 중 예외 발생:", err.message, err.stack);
     return res.status(200).json({ date: null, amount: null });
   }
 }
