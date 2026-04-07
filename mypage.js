@@ -1,0 +1,334 @@
+(function () {
+  "use strict";
+
+  function escapeHtml(v) {
+    return String(v ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  const CATEGORY_LABEL = { hospital: "동물병원", grooming: "미용샵" };
+
+  // ===== 탭 전환 =====
+  function bindTabs() {
+    document.querySelectorAll(".mypage-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".mypage-tab").forEach((b) => b.classList.remove("is-active"));
+        document.querySelectorAll(".mypage-panel").forEach((p) => p.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        const panel = document.getElementById("panel-" + btn.dataset.tab);
+        if (panel) panel.classList.add("is-active");
+        if (btn.dataset.tab === "favorites") loadFavorites();
+        if (btn.dataset.tab === "pets") loadPets();
+      });
+    });
+  }
+
+  // ===== 내 리뷰 =====
+  async function loadMyReviews() {
+    const container = document.getElementById("my-reviews-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!db || !userId) { container.innerHTML = '<p class="placeholder-text">리뷰를 불러올 수 없습니다.</p>'; return; }
+
+    const { data, error } = await db
+      .from("reviews")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data?.length) {
+      container.innerHTML = '<p class="placeholder-text">작성한 리뷰가 없습니다.</p>';
+      return;
+    }
+
+    container.innerHTML = data.map((r) => `
+      <div class="mypage-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <h3>${escapeHtml(r.place_name)} <small style="color:#aaa;font-size:13px;">(${CATEGORY_LABEL[r.category] ?? r.category})</small></h3>
+          ${r.is_verified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
+        </div>
+        <p>지역: 서울특별시 ${escapeHtml(r.region)} · 방문일: ${escapeHtml(r.visit_date ?? "")}</p>
+        <p>항목: ${escapeHtml(r.service_detail ?? "")}</p>
+        <p>결제: ₩ ${Number(r.total_price ?? 0).toLocaleString("ko-KR")}</p>
+        <p>후기: ${escapeHtml(r.short_review ?? "")}</p>
+        <div class="card-actions">
+          <button class="btn-delete" data-review-id="${escapeHtml(r.id)}">삭제</button>
+        </div>
+      </div>`).join("");
+
+    container.querySelectorAll(".btn-delete[data-review-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("리뷰를 삭제하시겠습니까?")) return;
+        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.reviewId);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        btn.closest(".mypage-card").remove();
+        if (!container.querySelector(".mypage-card"))
+          container.innerHTML = '<p class="placeholder-text">작성한 리뷰가 없습니다.</p>';
+      });
+    });
+  }
+
+  // ===== 단골병원 =====
+  async function loadFavorites() {
+    const container = document.getElementById("favorites-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!db || !userId) { container.innerHTML = '<p class="placeholder-text">불러올 수 없습니다.</p>'; return; }
+
+    const { data, error } = await db
+      .from("favorites")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data?.length) {
+      container.innerHTML = '<p class="placeholder-text">저장된 단골병원이 없습니다.</p>';
+      return;
+    }
+
+    container.innerHTML = data.map((f) => `
+      <div class="mypage-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <h3>${escapeHtml(f.place_name)}</h3>
+          <button class="btn-delete" data-fav-id="${escapeHtml(f.id)}">삭제</button>
+        </div>
+        <p>${CATEGORY_LABEL[f.category] ?? f.category} · 서울특별시 ${escapeHtml(f.region ?? "")}</p>
+        ${f.address ? `<p class="helper-text">주소: ${escapeHtml(f.address)}</p>` : ""}
+        ${f.phone ? `<p><a href="tel:${escapeHtml(f.phone)}" style="color:#ff7043;font-weight:600;text-decoration:none;">📞 ${escapeHtml(f.phone)}</a></p>` : ""}
+      </div>`).join("");
+
+    container.querySelectorAll(".btn-delete[data-fav-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("단골병원 목록에서 삭제하시겠습니까?")) return;
+        const { error: delErr } = await db.from("favorites").delete().eq("id", btn.dataset.favId);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        btn.closest(".mypage-card").remove();
+        if (!container.querySelector(".mypage-card"))
+          container.innerHTML = '<p class="placeholder-text">저장된 단골병원이 없습니다.</p>';
+      });
+    });
+  }
+
+  // ===== 마이펫 =====
+  async function loadPets() {
+    const grid = document.getElementById("pets-grid");
+    if (!grid) return;
+    grid.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!db || !userId) { grid.innerHTML = '<p class="placeholder-text">불러올 수 없습니다.</p>'; return; }
+
+    const { data, error } = await db
+      .from("pets")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    const cards = (data || []).map((pet) => `
+      <div class="pet-card" data-pet-id="${escapeHtml(pet.id)}">
+        <div class="pet-avatar">
+          ${pet.photo_url ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />` : "🐾"}
+        </div>
+        <h4>${escapeHtml(pet.name)}</h4>
+        <p>${escapeHtml(pet.species ?? "")}</p>
+        ${pet.age != null ? `<p>${pet.age}세</p>` : ""}
+        <div class="card-actions" style="justify-content:center;margin-top:8px;">
+          <button class="btn-delete" data-pet-id="${escapeHtml(pet.id)}">삭제</button>
+        </div>
+      </div>`).join("");
+
+    grid.innerHTML = cards + `
+      <button class="add-pet-btn" id="add-pet-btn">
+        <span class="plus-icon">➕</span>
+        반려동물 등록
+      </button>`;
+
+    grid.querySelectorAll(".btn-delete[data-pet-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("반려동물을 삭제하시겠습니까?")) return;
+        const { error: delErr } = await db.from("pets").delete().eq("id", btn.dataset.petId);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        await loadPets();
+      });
+    });
+
+    document.getElementById("add-pet-btn")?.addEventListener("click", openPetModal);
+  }
+
+  // ===== 펫 추가 모달 =====
+  function openPetModal() {
+    document.getElementById("pet-modal").hidden = false;
+    document.getElementById("pet-form").reset();
+  }
+
+  function closePetModal() {
+    document.getElementById("pet-modal").hidden = true;
+  }
+
+  function bindPetModal() {
+    document.getElementById("pet-modal-close")?.addEventListener("click", closePetModal);
+    document.getElementById("pet-modal")?.addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) closePetModal();
+    });
+
+    document.getElementById("pet-form")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const db = window.supabaseClient;
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!db || !userId) return;
+
+      const submitBtn = e.target.querySelector('[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "등록 중...";
+
+      try {
+        const name = document.getElementById("pet-name").value.trim();
+        const species = document.getElementById("pet-species").value;
+        const age = document.getElementById("pet-age").value;
+        const photoFile = document.getElementById("pet-photo-input").files?.[0];
+
+        let photoUrl = null;
+        if (photoFile) {
+          const ext = photoFile.name.split(".").pop() || "jpg";
+          const fileName = `${userId}/${Date.now()}.${ext}`;
+          const { error: upErr } = await db.storage.from("pet-photos").upload(fileName, photoFile, { contentType: photoFile.type });
+          if (!upErr) {
+            const { data: urlData } = db.storage.from("pet-photos").getPublicUrl(fileName);
+            photoUrl = urlData.publicUrl;
+          }
+        }
+
+        const { error } = await db.from("pets").insert([{
+          user_id: userId,
+          name,
+          species: species || null,
+          age: age ? Number(age) : null,
+          photo_url: photoUrl,
+        }]);
+
+        if (error) { alert("등록 실패: " + error.message); return; }
+        closePetModal();
+        await loadPets();
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "등록하기";
+      }
+    });
+  }
+
+  // ===== 프로필 =====
+  async function loadProfile() {
+    const auth = window.PetAuth;
+    if (!auth) return;
+
+    const name = auth.getDisplayName();
+    const avatar = auth.getAvatarUrl();
+
+    const greetingEl = document.getElementById("mypage-greeting");
+    if (greetingEl) greetingEl.textContent = `안녕하세요, ${name}님!`;
+
+    const nicknameDisplay = document.getElementById("profile-nickname-display");
+    if (nicknameDisplay) nicknameDisplay.textContent = name;
+
+    const avatarBig = document.getElementById("profile-avatar-big");
+    if (avatarBig) {
+      avatarBig.innerHTML = avatar
+        ? `<img src="${escapeHtml(avatar)}" alt="프로필" />`
+        : escapeHtml(name[0] || "?");
+    }
+
+    const nicknameInput = document.getElementById("profile-nickname");
+    if (nicknameInput) nicknameInput.value = auth.currentProfile?.nickname ?? "";
+  }
+
+  function bindProfile() {
+    document.getElementById("save-profile-btn")?.addEventListener("click", async () => {
+      const db = window.supabaseClient;
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!db || !userId) return;
+
+      const nickname = document.getElementById("profile-nickname")?.value.trim();
+      if (!nickname) { document.getElementById("profile-save-msg").textContent = "닉네임을 입력해주세요."; return; }
+
+      const { error } = await db.from("profiles").upsert({ id: userId, nickname });
+      const msg = document.getElementById("profile-save-msg");
+      if (error) {
+        msg.textContent = "저장 실패: " + error.message;
+        msg.style.color = "#e57373";
+      } else {
+        msg.textContent = "저장되었습니다!";
+        msg.style.color = "#22c55e";
+        if (window.PetAuth.currentProfile) window.PetAuth.currentProfile.nickname = nickname;
+        document.getElementById("profile-nickname-display").textContent = nickname;
+        updateHeaderAuth();
+      }
+    });
+
+    document.getElementById("logout-btn-profile")?.addEventListener("click", async () => {
+      await window.PetAuth?.signOut();
+      window.location.href = "index.html";
+    });
+  }
+
+  // ===== 헤더 인증 =====
+  function updateHeaderAuth() {
+    const area = document.getElementById("header-auth");
+    if (!area) return;
+    const auth = window.PetAuth;
+    if (!auth?.isLoggedIn()) {
+      area.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>`;
+      return;
+    }
+    const name = auth.getDisplayName();
+    const avatar = auth.getAvatarUrl();
+    const avatarHtml = avatar
+      ? `<img src="${escapeHtml(avatar)}" class="header-avatar" alt="프로필" />`
+      : `<span class="header-avatar-placeholder">${escapeHtml(name[0] || "?")}</span>`;
+    area.innerHTML = `
+      ${avatarHtml}
+      <span class="header-username">${escapeHtml(name)}</span>
+      <button class="header-logout-btn" id="header-logout-btn">로그아웃</button>`;
+    document.getElementById("header-logout-btn")?.addEventListener("click", async () => {
+      await auth.signOut();
+      window.location.href = "index.html";
+    });
+  }
+
+  // ===== 초기화 =====
+  async function init() {
+    await window.PetAuth?.init((event) => {
+      if (event === "SIGNED_OUT") window.location.href = "index.html";
+      updateHeaderAuth();
+    });
+
+    updateHeaderAuth();
+
+    const isLoggedIn = window.PetAuth?.isLoggedIn();
+    const requiredBanner = document.getElementById("login-required-banner");
+    const content = document.getElementById("mypage-content");
+
+    if (!isLoggedIn) {
+      if (requiredBanner) requiredBanner.hidden = false;
+      if (content) content.hidden = true;
+      return;
+    }
+
+    if (content) content.hidden = false;
+    if (requiredBanner) requiredBanner.hidden = true;
+
+    await loadProfile();
+    bindTabs();
+    bindPetModal();
+    bindProfile();
+    await loadMyReviews();
+  }
+
+  init();
+})();

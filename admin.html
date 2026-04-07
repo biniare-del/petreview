@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>관리자 – 펫리뷰</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-container { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
+    .admin-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0 0; }
+    .admin-tab {
+      padding: 8px 18px; border: none; border-radius: 999px; font-size: 14px;
+      font-weight: 600; cursor: pointer; background: #f0ebe6; color: #888;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .admin-tab.is-active { background: linear-gradient(135deg, #ff8a65, #ff7043); color: #fff; }
+    .admin-panel { display: none; margin-top: 24px; }
+    .admin-panel.is-active { display: block; }
+    .admin-card {
+      background: #fff; border-radius: 16px; padding: 16px 20px;
+      margin-bottom: 12px; border: 1px solid #f0e8e2;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .admin-card h3 { margin: 0 0 6px; font-size: 15px; }
+    .admin-card p { margin: 3px 0; font-size: 13px; color: #666; }
+    .card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .btn-approve {
+      padding: 5px 14px; background: #22c55e; color: #fff;
+      border: none; border-radius: 999px; font-size: 12px;
+      cursor: pointer; font-weight: 600;
+      transition: opacity 0.15s ease;
+    }
+    .btn-approve:hover { opacity: 0.85; }
+    .btn-reject {
+      padding: 5px 14px; background: transparent; color: #e57373;
+      border: 1.5px solid #e57373; border-radius: 999px;
+      font-size: 12px; cursor: pointer; font-weight: 600;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .btn-reject:hover { background: #e57373; color: #fff; }
+    .btn-delete {
+      padding: 5px 12px; background: transparent; color: #e57373;
+      border: 1.5px solid #e57373; border-radius: 999px;
+      font-size: 12px; cursor: pointer; font-weight: 600;
+    }
+    .btn-delete:hover { background: #e57373; color: #fff; }
+    .receipt-thumb-admin {
+      max-width: 140px; max-height: 140px; border-radius: 10px;
+      object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      display: block; margin-top: 8px;
+    }
+    .badge-pending {
+      display: inline-block; padding: 2px 10px; background: #fef3c7;
+      color: #92400e; border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .badge-approved {
+      display: inline-block; padding: 2px 10px; background: #dcfce7;
+      color: #166534; border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .badge-rejected {
+      display: inline-block; padding: 2px 10px; background: #fee2e2;
+      color: #991b1b; border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .user-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .user-info { flex: 1; min-width: 160px; }
+    .alert-banner {
+      padding: 16px 20px; background: #fff1f2; border-radius: 12px;
+      color: #9f1239; font-size: 14px; border: 1px solid #fecdd3;
+      text-align: center; margin-top: 24px;
+    }
+    .stats-row {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .stat-card {
+      flex: 1 1 120px; background: #fff; border-radius: 14px; padding: 14px 16px;
+      border: 1px solid #f0e8e2; text-align: center;
+    }
+    .stat-card .stat-num { font-size: 26px; font-weight: 700; color: #ff7043; }
+    .stat-card .stat-label { font-size: 12px; color: #999; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-area">
+      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+        <div class="logo-icon">🐾</div>
+        <div class="logo-text">
+          <h1>펫리뷰</h1>
+          <p>관리자 페이지</p>
+        </div>
+      </a>
+    </div>
+    <nav class="site-nav">
+      <a href="index.html">홈으로</a>
+    </nav>
+    <div class="header-auth" id="header-auth">
+      <button class="auth-login-btn" id="login-btn">로그인</button>
+    </div>
+  </header>
+
+  <div class="admin-container">
+    <div class="alert-banner" id="access-denied-banner" hidden>
+      접근 권한이 없습니다. 관리자 계정으로 로그인해주세요. <a href="index.html">홈으로</a>
+    </div>
+
+    <div id="admin-content" hidden>
+      <h2 style="margin:0 0 4px;">관리자 대시보드</h2>
+      <p style="margin:0 0 20px;font-size:14px;color:#888;">영수증 검수 및 콘텐츠 관리</p>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-pending">-</div>
+          <div class="stat-label">검수 대기</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-reviews">-</div>
+          <div class="stat-label">전체 리뷰</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-users">-</div>
+          <div class="stat-label">가입 회원</div>
+        </div>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="admin-tab is-active" data-tab="receipts">영수증 검수</button>
+        <button class="admin-tab" data-tab="reviews">리뷰 관리</button>
+        <button class="admin-tab" data-tab="users">회원 관리</button>
+      </div>
+
+      <!-- 영수증 검수 -->
+      <div class="admin-panel is-active" id="panel-receipts">
+        <div id="receipts-list"><p class="placeholder-text">불러오는 중...</p></div>
+      </div>
+
+      <!-- 리뷰 관리 -->
+      <div class="admin-panel" id="panel-reviews">
+        <div id="all-reviews-list"><p class="placeholder-text">불러오는 중...</p></div>
+      </div>
+
+      <!-- 회원 관리 -->
+      <div class="admin-panel" id="panel-users">
+        <div id="users-list"><p class="placeholder-text">불러오는 중...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <small>© 2026 펫리뷰 · 실제 영수증 기반 반려동물 리뷰 플랫폼</small>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

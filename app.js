@@ -74,8 +74,13 @@ function renderSearchPage(page) {
         data-place-name="${escapeHtml(place.name)}"
         data-place-category="${escapeHtml(place.category)}"
         data-place-region="${escapeHtml(place.region)}"
+        data-place-address="${escapeHtml(place.address || "")}"
+        data-place-phone="${escapeHtml(place.phone || "")}"
       >
-        <h3 class="place-name-ellipsis">${escapeHtml(place.name)}</h3>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+          <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
+          <button class="favorite-btn" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">♡ 단골</button>
+        </div>
         <p>${CATEGORY_LABEL[place.category]} · 서울특별시 ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
         ${place.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(place.phone)}">📞 ${escapeHtml(place.phone)}</a></p>` : ""}
@@ -346,6 +351,12 @@ function bindReviewForm() {
   els.reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
+    // 로그인 필요
+    if (!window.PetAuth?.isLoggedIn()) {
+      openLoginModal();
+      return;
+    }
+
     const submitBtn = els.reviewForm.querySelector('[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = "등록 중...";
@@ -372,6 +383,7 @@ function bindReviewForm() {
         receipt_image_url: receiptPath,
         pet_photo_url: petPhotoUrl || null,
         is_verified: !!receiptPath,
+        user_id: window.PetAuth?.currentUser?.id ?? null,
       };
 
       if (db) {
@@ -568,9 +580,42 @@ function bindSmoothScroll() {
 }
 
 function bindSearchResultsSelection() {
-  els.searchResults.addEventListener("click", (event) => {
+  els.searchResults.addEventListener("click", async (event) => {
     // 전화 링크 클릭 시 폼으로 이동하지 않음
     if (event.target.closest(".place-phone-link")) return;
+
+    // 단골 버튼 클릭 처리
+    const favBtn = event.target.closest(".favorite-btn");
+    if (favBtn) {
+      event.stopPropagation();
+      if (!window.PetAuth?.isLoggedIn()) {
+        openLoginModal();
+        return;
+      }
+      const db = window.supabaseClient;
+      const userId = window.PetAuth.currentUser.id;
+      const placeName = favBtn.dataset.favName;
+      if (favBtn.classList.contains("is-saved")) {
+        await db.from("favorites").delete().eq("user_id", userId).eq("place_name", placeName);
+        favBtn.classList.remove("is-saved");
+        favBtn.textContent = "♡ 단골";
+      } else {
+        const { error } = await db.from("favorites").insert([{
+          user_id: userId,
+          place_name: placeName,
+          category: favBtn.dataset.favCategory,
+          region: favBtn.dataset.favRegion,
+          address: favBtn.dataset.favAddress,
+          phone: favBtn.dataset.favPhone,
+        }]);
+        if (!error) {
+          favBtn.classList.add("is-saved");
+          favBtn.textContent = "♥ 단골";
+        }
+      }
+      return;
+    }
+
     const card = event.target.closest(".search-place-card");
     if (!card) return;
 
@@ -587,7 +632,67 @@ function bindSearchResultsSelection() {
   });
 }
 
+// ===== 헤더 인증 UI =====
+function updateHeaderAuth() {
+  const area = document.getElementById("header-auth");
+  if (!area) return;
+
+  if (window.PetAuth?.isLoggedIn()) {
+    const name = window.PetAuth.getDisplayName();
+    const avatar = window.PetAuth.getAvatarUrl();
+    const avatarHtml = avatar
+      ? `<img src="${escapeHtml(avatar)}" class="header-avatar" alt="프로필" />`
+      : `<span class="header-avatar-placeholder">${escapeHtml(name[0] || "?")}</span>`;
+    const adminLink = window.PetAuth.isAdmin()
+      ? `<a href="admin.html" class="header-auth-link">관리자</a>`
+      : "";
+    area.innerHTML = `
+      ${avatarHtml}
+      <span class="header-username">${escapeHtml(name)}</span>
+      <a href="mypage.html" class="header-auth-link">마이페이지</a>
+      ${adminLink}
+      <button class="header-logout-btn" id="logout-btn">로그아웃</button>`;
+    document.getElementById("logout-btn")?.addEventListener("click", async () => {
+      await window.PetAuth.signOut();
+    });
+  } else {
+    area.innerHTML = `<button class="auth-login-btn" id="login-btn">로그인</button>`;
+    document.getElementById("login-btn")?.addEventListener("click", openLoginModal);
+  }
+}
+
+// ===== 로그인 모달 =====
+function openLoginModal() {
+  const modal = document.getElementById("login-modal");
+  if (modal) modal.hidden = false;
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById("login-modal");
+  if (modal) modal.hidden = true;
+}
+
+function bindLoginModal() {
+  document.getElementById("modal-close")?.addEventListener("click", closeLoginModal);
+  document.getElementById("login-modal")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeLoginModal();
+  });
+  document.getElementById("btn-kakao")?.addEventListener("click", () => window.PetAuth?.signInWithKakao());
+  document.getElementById("btn-google")?.addEventListener("click", () => window.PetAuth?.signInWithGoogle());
+}
+
 function init() {
+  // PetAuth 초기화
+  window.PetAuth?.init((event) => {
+    updateHeaderAuth();
+    // 로그인 후 모달 자동 닫기
+    if (event === "SIGNED_IN") closeLoginModal();
+  }).then(() => updateHeaderAuth());
+
+  bindLoginModal();
+  // 초기 로그인 버튼 클릭 이벤트 (헤더 auth 영역)
+  document.getElementById("login-btn")?.addEventListener("click", openLoginModal);
+
   bindCategoryToggle();
   bindSearchResultsSelection();
   bindSearch();

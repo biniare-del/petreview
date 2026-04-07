@@ -669,6 +669,239 @@ body[data-theme="grooming"] .place-phone-link {
   color: #c026d3;
 }
 
+/* ===== 헤더 인증 영역 ===== */
+.header-auth {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.auth-login-btn {
+  padding: 7px 16px;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(255, 112, 67, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.auth-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(255, 112, 67, 0.4);
+}
+
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ff8a65;
+}
+
+.header-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-username {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-auth-link {
+  font-size: 13px;
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.header-auth-link:hover {
+  background-color: rgba(255, 112, 67, 0.1);
+}
+
+.header-logout-btn {
+  padding: 5px 12px;
+  background: transparent;
+  color: #999;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.header-logout-btn:hover {
+  color: #ff5252;
+  border-color: #ff5252;
+}
+
+/* ===== 로그인 모달 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 360px;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #aaa;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.modal-close:hover {
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.modal-logo {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.modal-title {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  color: #222;
+}
+
+.modal-desc {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #777;
+  text-align: center;
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-kakao,
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.08s ease;
+}
+
+.btn-kakao {
+  background: #FEE500;
+  color: #3C1E1E;
+}
+
+.btn-google {
+  background: #ffffff;
+  color: #333;
+  border: 1.5px solid #ddd;
+}
+
+.btn-kakao:hover,
+.btn-google:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.btn-kakao:active,
+.btn-google:active {
+  transform: translateY(0);
+}
+
+.auth-btn-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.modal-notice {
+  margin: 18px 0 0;
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+}
+
+/* ===== 단골 병원 즐겨찾기 버튼 ===== */
+.favorite-btn {
+  padding: 5px 12px;
+  background: transparent;
+  color: #ff7043;
+  border: 1.5px solid #ff7043;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.favorite-btn:hover {
+  background: #ff7043;
+  color: #fff;
+}
+
+.favorite-btn.is-saved {
+  background: #ff7043;
+  color: #fff;
+}
+
 /* 푸터 */
 .site-footer {
   padding: 18px 16px 26px;
