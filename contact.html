@@ -23,6 +23,11 @@
     <div class="header-auth" id="header-auth">
       <button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>
     </div>
+    <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
+    <div class="header-mobile-nav" id="header-mobile-nav">
+      <a href="index.html" class="mobile-nav-link">홈으로</a>
+      <div id="mobile-auth-content"></div>
+    </div>
   </header>
 
   <div class="contact-container">
@@ -72,21 +77,52 @@
   <script src="supabase-client.js"></script>
   <script src="auth.js"></script>
   <script>
-    // 헤더 인증 UI 업데이트
+    function escH(v) {
+      return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+    }
+    let _hbBound = false;
+    function bindHamburger() {
+      if (_hbBound) return;
+      const btn = document.getElementById("header-hamburger-btn");
+      const nav = document.getElementById("header-mobile-nav");
+      if (!btn || !nav) return;
+      _hbBound = true;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = nav.classList.toggle("is-open");
+        btn.setAttribute("aria-expanded", open);
+        btn.textContent = open ? "✕" : "☰";
+      });
+      document.addEventListener("click", (e) => {
+        if (nav.classList.contains("is-open") && !nav.contains(e.target) && e.target !== btn) {
+          nav.classList.remove("is-open");
+          btn.setAttribute("aria-expanded", "false");
+          btn.textContent = "☰";
+        }
+      });
+    }
     function updateContactHeaderAuth() {
       const area = document.getElementById("header-auth");
       if (!area) return;
+      bindHamburger();
       const auth = window.PetAuth;
       if (!auth?.isLoggedIn()) {
         area.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>`;
+        const el = document.getElementById("mobile-auth-content");
+        if (el) el.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'" style="margin-top:8px;">로그인</button>`;
         return;
       }
       const name = auth.getDisplayName();
       const avatar = auth.getAvatarUrl();
       const avatarHtml = avatar
-        ? `<img src="${String(avatar).replaceAll('"','&quot;')}" class="header-avatar" alt="프로필" />`
-        : `<span class="header-avatar-placeholder">${(name[0] || "?")}</span>`;
-      area.innerHTML = `${avatarHtml}<span class="header-username">${name}</span>`;
+        ? `<img src="${escH(avatar)}" class="header-avatar" alt="프로필" />`
+        : `<span class="header-avatar-placeholder">${escH(name[0] || "?")}</span>`;
+      area.innerHTML = `${avatarHtml}<span class="header-username">${escH(name)}</span>`;
+      const el = document.getElementById("mobile-auth-content");
+      if (el) el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0e8e2;">
+          ${avatarHtml}<span style="font-weight:600;font-size:14px;">${escH(name)}</span>
+        </div>`;
     }
     window.PetAuth?.init((event) => { updateContactHeaderAuth(); })
       .then(() => updateContactHeaderAuth())

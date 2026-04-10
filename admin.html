@@ -7,11 +7,17 @@
   <link rel="stylesheet" href="style.css" />
   <style>
     .admin-container { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
-    .admin-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0 0; }
+    .admin-tabs {
+      display: flex; gap: 8px; flex-wrap: nowrap;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; margin: 24px 0 0; padding-bottom: 2px;
+    }
+    .admin-tabs::-webkit-scrollbar { display: none; }
     .admin-tab {
       padding: 8px 18px; border: none; border-radius: 999px; font-size: 14px;
       font-weight: 600; cursor: pointer; background: #f0ebe6; color: #888;
       transition: background 0.15s ease, color 0.15s ease;
+      white-space: nowrap; flex-shrink: 0;
     }
     .admin-tab.is-active { background: linear-gradient(135deg, #ff8a65, #ff7043); color: #fff; }
     .admin-panel { display: none; margin-top: 24px; }
@@ -105,6 +111,11 @@
     </nav>
     <div class="header-auth" id="header-auth">
       <button class="auth-login-btn" id="login-btn">로그인</button>
+    </div>
+    <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
+    <div class="header-mobile-nav" id="header-mobile-nav">
+      <a href="index.html" class="mobile-nav-link">홈으로</a>
+      <div id="mobile-auth-content"></div>
     </div>
   </header>
 

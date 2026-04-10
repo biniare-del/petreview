@@ -458,13 +458,46 @@
     });
   }
 
+  // ===== 햄버거 메뉴 =====
+  let _hamburgerBound = false;
+  function bindHamburger() {
+    if (_hamburgerBound) return;
+    const btn = document.getElementById("header-hamburger-btn");
+    const nav = document.getElementById("header-mobile-nav");
+    if (!btn || !nav) return;
+    _hamburgerBound = true;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = nav.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", open);
+      btn.textContent = open ? "✕" : "☰";
+    });
+    document.addEventListener("click", (e) => {
+      if (nav.classList.contains("is-open") && !nav.contains(e.target) && e.target !== btn) {
+        nav.classList.remove("is-open");
+        btn.setAttribute("aria-expanded", "false");
+        btn.textContent = "☰";
+      }
+    });
+    nav.addEventListener("click", (e) => {
+      if (e.target.tagName === "A") {
+        nav.classList.remove("is-open");
+        btn.setAttribute("aria-expanded", "false");
+        btn.textContent = "☰";
+      }
+    });
+  }
+
   // ===== 헤더 인증 =====
   function updateHeaderAuth() {
     const area = document.getElementById("header-auth");
     if (!area) return;
     const auth = window.PetAuth;
+    bindHamburger();
     if (!auth?.isLoggedIn()) {
       area.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>`;
+      const el = document.getElementById("mobile-auth-content");
+      if (el) el.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'" style="margin-top:8px;">로그인</button>`;
       return;
     }
     const name = auth.getDisplayName();
@@ -480,6 +513,18 @@
       await auth.signOut();
       window.location.href = "index.html";
     });
+    const el = document.getElementById("mobile-auth-content");
+    if (el) {
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0e8e2;">
+          ${avatarHtml}<span style="font-weight:600;font-size:14px;">${escapeHtml(name)}</span>
+        </div>
+        <button class="mobile-logout-btn" id="mobile-logout-admin">로그아웃</button>`;
+      document.getElementById("mobile-logout-admin")?.addEventListener("click", async () => {
+        await auth.signOut();
+        window.location.href = "index.html";
+      });
+    }
   }
 
   // ===== 초기화 =====

@@ -921,6 +921,7 @@ async function loadBanner() {
 function updateHeaderAuth() {
   const area = document.getElementById("header-auth");
   if (!area) return;
+  bindHamburger();
 
   if (window.PetAuth?.isLoggedIn()) {
     const name = window.PetAuth.getDisplayName();
@@ -940,9 +941,23 @@ function updateHeaderAuth() {
     document.getElementById("logout-btn")?.addEventListener("click", async () => {
       await window.PetAuth.signOut();
     });
+    const mobileAdminLink = window.PetAuth.isAdmin()
+      ? `<a href="admin.html" class="mobile-nav-link">관리자 페이지</a>` : "";
+    updateMobileAuthArea(`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0e8e2;">
+        ${avatarHtml}<span style="font-weight:600;font-size:14px;">${escapeHtml(name)}</span>
+      </div>
+      <a href="mypage.html" class="mobile-nav-link">마이페이지</a>
+      ${mobileAdminLink}
+      <button class="mobile-logout-btn" id="mobile-logout-btn">로그아웃</button>`);
+    document.getElementById("mobile-logout-btn")?.addEventListener("click", async () => {
+      await window.PetAuth.signOut();
+    });
   } else {
     area.innerHTML = `<button class="auth-login-btn" id="login-btn">로그인</button>`;
     document.getElementById("login-btn")?.addEventListener("click", openLoginModal);
+    updateMobileAuthArea(`<button class="auth-login-btn" id="mobile-login-btn" style="margin-top:8px;">로그인</button>`);
+    document.getElementById("mobile-login-btn")?.addEventListener("click", openLoginModal);
   }
 }
 
@@ -1002,6 +1017,42 @@ function bindCategorySelection() {
     if (!card) return;
     selectFormCategory(card.dataset.category);
   });
+}
+
+// ===== 햄버거 메뉴 =====
+let _hamburgerBound = false;
+function bindHamburger() {
+  if (_hamburgerBound) return;
+  const btn = document.getElementById("header-hamburger-btn");
+  const nav = document.getElementById("header-mobile-nav");
+  if (!btn || !nav) return;
+  _hamburgerBound = true;
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = nav.classList.toggle("is-open");
+    btn.setAttribute("aria-expanded", open);
+    btn.textContent = open ? "✕" : "☰";
+  });
+  document.addEventListener("click", (e) => {
+    if (nav.classList.contains("is-open") && !nav.contains(e.target) && e.target !== btn) {
+      nav.classList.remove("is-open");
+      btn.setAttribute("aria-expanded", "false");
+      btn.textContent = "☰";
+    }
+  });
+  // 모바일 메뉴 내 링크 클릭 시 닫기
+  nav.addEventListener("click", (e) => {
+    if (e.target.tagName === "A") {
+      nav.classList.remove("is-open");
+      btn.setAttribute("aria-expanded", "false");
+      btn.textContent = "☰";
+    }
+  });
+}
+
+function updateMobileAuthArea(html) {
+  const el = document.getElementById("mobile-auth-content");
+  if (el) el.innerHTML = html;
 }
 
 // ===== 세션 만료 공통 처리 =====

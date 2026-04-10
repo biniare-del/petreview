@@ -25,6 +25,14 @@
     <div class="header-auth" id="header-auth">
       <button class="auth-login-btn" id="login-btn">로그인</button>
     </div>
+    <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
+    <!-- 모바일 드롭다운 메뉴 -->
+    <div class="header-mobile-nav" id="header-mobile-nav">
+      <a href="#search-section" class="mobile-nav-link">주변 업체 검색</a>
+      <a href="#review-form-section" class="mobile-nav-link">리뷰 작성</a>
+      <a href="#review-list-section" class="mobile-nav-link">리뷰 보기</a>
+      <div id="mobile-auth-content"></div>
+    </div>
   </header>
   <!-- 메인 컨테이너 -->
   <main class="main-container">
@@ -211,7 +219,6 @@
             id="receipt-image"
             name="receipt-image"
             accept="image/*"
-            capture="environment"
           />
           <p class="helper-text">개인정보(전화번호, 카드번호 등)는 가리고 업로드해 주세요.</p>
           <div id="ocr-status" class="ocr-status" hidden></div>
@@ -225,7 +232,6 @@
             id="pet-photo"
             name="pet-photo"
             accept="image/*"
-            capture="environment"
           />
           <div class="receipt-preview" id="pet-photo-preview"></div>
         </div>

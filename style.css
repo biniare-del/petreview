@@ -1231,6 +1231,64 @@ body[data-theme="grooming"] .place-phone-link {
   }
 }
 
+/* ===== 모바일 햄버거 메뉴 ===== */
+.header-hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  color: #ff7043;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.header-hamburger-btn:hover { background: rgba(255, 112, 67, 0.1); }
+
+.header-mobile-nav {
+  display: none;
+  width: 100%;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 0 4px;
+  border-top: 1px solid #f0e8e2;
+}
+.header-mobile-nav.is-open { display: flex; }
+
+.mobile-nav-link {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff7043;
+  text-decoration: none;
+  padding: 11px 4px;
+  border-bottom: 1px solid #f5f0eb;
+}
+.mobile-logout-btn {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  color: #999;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  width: fit-content;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.mobile-logout-btn:hover { color: #ff5252; border-color: #ff5252; }
+
+@media (max-width: 480px) {
+  .site-nav { display: none; }
+  .header-username { display: none; }
+  .header-auth-link { display: none; }
+  .header-logout-btn { display: none; }
+  .header-hamburger-btn { display: block; }
+  .search-controls .form-group { min-width: 0; width: 100%; }
+}
+
 /* ===== 리뷰 액션 (좋아요 / 신고) ===== */
 .review-actions {
   display: flex;
@@ -1288,6 +1346,8 @@ body[data-theme="grooming"] .place-phone-link {
   width: 100%;
   max-height: 85vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .detail-review-item {
