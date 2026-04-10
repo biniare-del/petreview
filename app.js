@@ -850,10 +850,12 @@ function bindSearchResultsSelection() {
         return;
       }
       const db = window.supabaseClient;
-      const userId = window.PetAuth.currentUser.id;
+      const userId = requireAuthUserId();
+      if (!userId) return;
       const placeName = favBtn.dataset.favName;
       if (favBtn.classList.contains("is-saved")) {
-        await db.from("favorites").delete().eq("user_id", userId).eq("place_name", placeName);
+        const { error: delErr } = await db.from("favorites").delete().eq("user_id", userId).eq("place_name", placeName);
+        if (delErr) { console.error("[펫리뷰] 단골 삭제 실패:", delErr.message); return; }
         favBtn.classList.remove("is-saved");
         userFavs.delete(placeName);
         favCounts[placeName] = Math.max(0, (favCounts[placeName] || 1) - 1);
@@ -1002,6 +1004,14 @@ function bindCategorySelection() {
   });
 }
 
+// ===== 세션 만료 공통 처리 =====
+// 로그인 필요 작업 전 userId 확인. 세션 만료 시 모달 열고 null 반환.
+function requireAuthUserId() {
+  const userId = window.PetAuth?.currentUser?.id;
+  if (!userId) { openLoginModal(); return null; }
+  return userId;
+}
+
 // ===== 로그인 모달 =====
 function openLoginModal() {
   const modal = document.getElementById("login-modal");
@@ -1058,11 +1068,13 @@ async function loadLikes() {
 async function handleLike(reviewId, btn) {
   const db = window.supabaseClient;
   if (!db) return;
-  const userId = window.PetAuth.currentUser.id;
+  const userId = requireAuthUserId();
+  if (!userId) return;
 
-  if (userLikedReviews.has(reviewId)) {
-    const { error } = await db.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
-    if (!error) {
+  try {
+    if (userLikedReviews.has(reviewId)) {
+      const { error } = await db.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
+      if (error) { console.error("[펫리뷰] 좋아요 취소 실패:", error.message); return; }
       userLikedReviews.delete(reviewId);
       reviewLikes[reviewId] = Math.max(0, (reviewLikes[reviewId] || 1) - 1);
       btn.classList.remove("is-liked");
@@ -1074,10 +1086,9 @@ async function handleLike(reviewId, btn) {
       } else {
         countEl?.remove();
       }
-    }
-  } else {
-    const { error } = await db.from("review_likes").insert([{ review_id: reviewId, user_id: userId }]);
-    if (!error) {
+    } else {
+      const { error } = await db.from("review_likes").insert([{ review_id: reviewId, user_id: userId }]);
+      if (error) { console.error("[펫리뷰] 좋아요 추가 실패:", error.message); return; }
       userLikedReviews.add(reviewId);
       reviewLikes[reviewId] = (reviewLikes[reviewId] || 0) + 1;
       const cnt = reviewLikes[reviewId];
@@ -1086,6 +1097,8 @@ async function handleLike(reviewId, btn) {
       if (countEl) countEl.textContent = cnt;
       else btn.insertAdjacentHTML("beforeend", ` <span class="like-count">${cnt}</span>`);
     }
+  } catch (err) {
+    console.error("[펫리뷰] 좋아요 처리 중 오류:", err);
   }
 }
 
@@ -1127,9 +1140,11 @@ function bindReportModal() {
     if (!reason) { alert("신고 사유를 선택해주세요."); return; }
     const db = window.supabaseClient;
     if (!db || !reportingReviewId) return;
+    const userId = requireAuthUserId();
+    if (!userId) { document.getElementById("report-modal").hidden = true; return; }
     const { error } = await db.from("review_reports").insert([{
       review_id: reportingReviewId,
-      user_id: window.PetAuth.currentUser.id,
+      user_id: userId,
       reason,
     }]);
     if (error) {
@@ -1189,15 +1204,25 @@ async function openPlaceDetail(place) {
     return;
   }
 
-  const { data, error } = await db
-    .from("reviews")
-    .select("*")
-    .eq("place_name", place.name)
-    .eq("is_verified", true)
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
+  let data;
+  try {
+    const { data: rows, error } = await db
+      .from("reviews")
+      .select("*")
+      .eq("place_name", place.name)
+      .eq("is_verified", true)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    data = rows;
+  } catch (err) {
+    console.error("[펫리뷰] 병원 상세 리뷰 로드 실패:", err);
+    document.getElementById("detail-reviews-list").innerHTML =
+      '<p class="placeholder-text">리뷰를 불러오지 못했습니다.</p>';
+    return;
+  }
 
-  if (error || !data?.length) {
+  if (!data?.length) {
     document.getElementById("detail-reviews-list").innerHTML =
       '<p class="placeholder-text">이 병원에 대한 인증된 리뷰가 없습니다.</p>';
     return;

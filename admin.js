@@ -349,7 +349,8 @@
     container.querySelectorAll(".toggle-banner-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const isActive = btn.dataset.active === "1";
-        await db.from("banners").update({ is_active: !isActive }).eq("id", btn.dataset.id);
+        const { error } = await db.from("banners").update({ is_active: !isActive }).eq("id", btn.dataset.id);
+        if (error) { alert("변경 실패: " + error.message); return; }
         loadBannersAdmin();
       });
     });
@@ -357,7 +358,8 @@
     container.querySelectorAll(".delete-banner-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("배너를 삭제하시겠습니까?")) return;
-        await db.from("banners").delete().eq("id", btn.dataset.id);
+        const { error } = await db.from("banners").delete().eq("id", btn.dataset.id);
+        if (error) { alert("삭제 실패: " + error.message); return; }
         loadBannersAdmin();
       });
     });
@@ -398,7 +400,8 @@
     container.querySelectorAll(".toggle-fp-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const isActive = btn.dataset.active === "1";
-        await db.from("featured_places").update({ is_active: !isActive }).eq("id", btn.dataset.id);
+        const { error } = await db.from("featured_places").update({ is_active: !isActive }).eq("id", btn.dataset.id);
+        if (error) { alert("변경 실패: " + error.message); return; }
         loadFeaturedAdmin();
       });
     });
@@ -406,7 +409,8 @@
     container.querySelectorAll(".delete-fp-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("고정 노출 업체를 삭제하시겠습니까?")) return;
-        await db.from("featured_places").delete().eq("id", btn.dataset.id);
+        const { error } = await db.from("featured_places").delete().eq("id", btn.dataset.id);
+        if (error) { alert("삭제 실패: " + error.message); return; }
         loadFeaturedAdmin();
       });
     });
