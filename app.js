@@ -74,6 +74,7 @@ const PAGE_SIZE = 5;
 let featuredPlaces = [];   // featured_places 테이블 (우수협력병원/이벤트)
 let favCounts = {};        // { place_name: count }
 let userFavs = new Set();  // 현재 유저가 즐겨찾기한 place_name 집합
+let geoState = 'pending';  // 'pending' | 'granted' | 'denied'
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -423,8 +424,70 @@ function bindCategoryToggle() {
   });
 }
 
+function updateSearchBtn() {
+  const btn = els.searchButton;
+  const region = els.searchRegion;
+  if (!btn || !region) return;
+  btn.disabled = geoState === 'denied' && !region.value;
+}
+
 function bindSearch() {
-  els.searchButton.addEventListener("click", () => void renderSearchResults());
+  els.searchButton.addEventListener("click", () => {
+    if (geoState === 'denied' && !els.searchRegion.value) {
+      const geoStatus = document.getElementById("geo-status");
+      if (geoStatus) {
+        geoStatus.textContent = "구를 선택해주세요";
+        geoStatus.className = "geo-status is-error";
+        setTimeout(() => {
+          geoStatus.textContent = "";
+          geoStatus.className = "geo-status";
+        }, 3000);
+      }
+      return;
+    }
+    void renderSearchResults();
+  });
+}
+
+async function initGeolocation() {
+  const geoStatus = document.getElementById("geo-status");
+
+  if (!navigator.geolocation) {
+    geoState = 'denied';
+    updateSearchBtn();
+    els.searchRegion?.addEventListener("change", updateSearchBtn);
+    return;
+  }
+
+  if (geoStatus) geoStatus.textContent = "📍 위치 확인 중...";
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      if (geoStatus) geoStatus.textContent = "";
+      geoState = 'granted';
+      try {
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ko`,
+          { signal: AbortSignal.timeout(5000) }
+        );
+        const data = await res.json();
+        const gu = data.address?.borough || data.address?.city_district;
+        if (gu && els.searchRegion) {
+          const match = Array.from(els.searchRegion.options).find(o => o.value === gu);
+          if (match) els.searchRegion.value = gu;
+        }
+      } catch { /* ignore */ }
+      updateSearchBtn();
+    },
+    () => {
+      if (geoStatus) geoStatus.textContent = "";
+      geoState = 'denied';
+      updateSearchBtn();
+      els.searchRegion?.addEventListener("change", updateSearchBtn);
+    },
+    { timeout: 8000 }
+  );
 }
 
 function bindReceiptPreview() {
@@ -969,6 +1032,7 @@ function init() {
   bindServiceTags();
   void loadReviews();
   void loadBanner();
+  void initGeolocation();
 
   // 방문일: 오늘 이후 날짜 선택 불가
   const visitDateInput = document.getElementById("visit-date");

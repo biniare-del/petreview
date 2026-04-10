@@ -1177,6 +1177,29 @@ body[data-theme="grooming"] .place-phone-link {
   color: #fff;
 }
 
+/* ===== 위치정보 상태 ===== */
+.geo-status {
+  font-size: 12px;
+  color: #999;
+  margin: 4px 0 0;
+  min-height: 16px;
+}
+
+.geo-status.is-error {
+  color: #e53e3e;
+  font-weight: 600;
+}
+
+/* 비활성 검색 버튼 */
+.primary-btn:disabled {
+  background: #e0d7d2;
+  box-shadow: none;
+  color: #aaaaaa;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 1;
+}
+
 /* 푸터 */
 .site-footer {
   padding: 18px 16px 26px;
