@@ -104,7 +104,7 @@ function formatPrice(amount) {
 }
 
 function escapeHtml(value) {
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -274,7 +274,7 @@ function renderReviewList() {
 
   const filtered = reviews.filter((review) => {
     const categoryMatch = category === "all" || review.category === category;
-    const regionMatch = regionKeyword === "" || review.region.includes(regionKeyword);
+    const regionMatch = regionKeyword === "" || (review.region ?? "").includes(regionKeyword);
     return categoryMatch && regionMatch;
   });
 
@@ -1194,6 +1194,7 @@ async function openPlaceDetail(place) {
     .select("*")
     .eq("place_name", place.name)
     .eq("is_verified", true)
+    .eq("status", "approved")
     .order("created_at", { ascending: false });
 
   if (error || !data?.length) {

@@ -20,6 +20,9 @@
     <nav class="site-nav">
       <a href="index.html">홈으로</a>
     </nav>
+    <div class="header-auth" id="header-auth">
+      <button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>
+    </div>
   </header>
 
   <div class="contact-container">
@@ -67,6 +70,28 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // 헤더 인증 UI 업데이트
+    function updateContactHeaderAuth() {
+      const area = document.getElementById("header-auth");
+      if (!area) return;
+      const auth = window.PetAuth;
+      if (!auth?.isLoggedIn()) {
+        area.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>`;
+        return;
+      }
+      const name = auth.getDisplayName();
+      const avatar = auth.getAvatarUrl();
+      const avatarHtml = avatar
+        ? `<img src="${String(avatar).replaceAll('"','&quot;')}" class="header-avatar" alt="프로필" />`
+        : `<span class="header-avatar-placeholder">${(name[0] || "?")}</span>`;
+      area.innerHTML = `${avatarHtml}<span class="header-username">${name}</span>`;
+    }
+    window.PetAuth?.init((event) => { updateContactHeaderAuth(); })
+      .then(() => updateContactHeaderAuth())
+      .catch(() => {});
+  </script>
   <script>
     (function () {
       const form = document.getElementById("contact-form");

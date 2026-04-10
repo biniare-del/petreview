@@ -5,7 +5,7 @@
 
 -- 1. reviews 테이블 컬럼 추가
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_verified  BOOLEAN DEFAULT false;
-ALTER TABLE reviews ADD COLUMN IF NOT EXISTS total_amount INTEGER;
+-- total_price 는 기존 스키마에 이미 있으므로 추가 불필요 (코드에서 total_price 사용)
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS pet_photo_url TEXT;
 
 -- visit_date 는 기존 스키마에 이미 있으므로 추가 불필요.

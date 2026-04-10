@@ -20,6 +20,7 @@
         btn.classList.add("is-active");
         const panel = document.getElementById("panel-" + btn.dataset.tab);
         if (panel) panel.classList.add("is-active");
+        if (btn.dataset.tab === "receipts") loadReceipts();
         if (btn.dataset.tab === "reviews") loadAllReviews();
         if (btn.dataset.tab === "reports") loadReports();
         if (btn.dataset.tab === "users") loadUsers();
