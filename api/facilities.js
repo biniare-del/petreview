@@ -30,9 +30,10 @@ export default async function handler(req, res) {
   const keyword = String(req.query.keyword || "").trim();
 
   const categoryKeyword = category === "grooming" ? "애견미용" : "동물병원";
-  // keyword 파라미터가 있으면 카테고리 키워드를 붙여 필터링 (자동완성용), 없으면 기존 방식
+  // keyword(자동완성) 있을 때: 서울 전역에서 병원명 키워드만으로 검색 (카테고리 키워드 미포함)
+  // keyword 없을 때: 기존 지역+카테고리 방식 유지
   const query = keyword
-    ? `${keyword} ${categoryKeyword}`
+    ? `서울 ${keyword}`
     : region
     ? `서울 ${region} ${categoryKeyword}`
     : `서울 ${categoryKeyword}`;
