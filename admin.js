@@ -34,7 +34,7 @@
     if (!db) return;
 
     const [pendingRes, reviewsRes, profilesRes] = await Promise.all([
-      db.from("reviews").select("id", { count: "exact", head: true }).eq("is_verified", false).not("receipt_image_url", "is", null),
+      db.from("reviews").select("id", { count: "exact", head: true }).eq("status", "pending"),
       db.from("reviews").select("id", { count: "exact", head: true }),
       db.from("profiles").select("id", { count: "exact", head: true }),
     ]);
@@ -56,11 +56,12 @@
     const db = window.supabaseClient;
     if (!db) return;
 
-    // 검수 대기 리뷰 (status = 'pending')
+    // 검수 대기 리뷰 (status = 'pending' AND receipt_image_url IS NOT NULL)
     const { data, error } = await db
       .from("reviews")
       .select("*")
       .eq("status", "pending")
+      .not("receipt_image_url", "is", null)
       .order("created_at", { ascending: false });
 
     if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
@@ -108,11 +109,9 @@
           .eq("id", id);
         if (updErr) { alert("처리 실패: " + updErr.message); return; }
         const card = container.querySelector(`[data-review-id="${id}"]`);
-        if (card) {
-          card.querySelector(".badge-pending").outerHTML = isApprove
-            ? '<span class="badge-approved">✔ 인증 완료</span>'
-            : '<span class="badge-rejected">✕ 반려됨</span>';
-          card.querySelector(".card-actions").remove();
+        if (card) card.remove();
+        if (!container.querySelector(".admin-card")) {
+          container.innerHTML = '<p class="placeholder-text">검수 대기 영수증이 없습니다.</p>';
         }
         loadStats();
       });
@@ -136,28 +135,73 @@
     if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
     if (!data?.length) { container.innerHTML = '<p class="placeholder-text">리뷰가 없습니다.</p>'; return; }
 
-    container.innerHTML = data.map((r) => `
-      <div class="admin-card" data-review-id="${escapeHtml(r.id)}">
+    container.innerHTML = data.map((r) => {
+      const status = r.status ?? (r.is_verified ? "approved" : "approved");
+      let badgeHtml;
+      let cardStyle = "";
+      if (status === "approved" && r.is_verified) {
+        badgeHtml = '<span class="badge-approved">✔ 영수증 인증</span>';
+      } else if (status === "approved") {
+        badgeHtml = '<span class="badge-approved">✔ 승인</span>';
+      } else if (status === "pending") {
+        badgeHtml = '<span class="badge-pending">⏳ 검수 대기</span>';
+        cardStyle = ' style="background:#2a2520;"';
+      } else if (status === "rejected") {
+        badgeHtml = '<span class="badge-rejected">✕ 반려</span>';
+      } else {
+        badgeHtml = '<span style="font-size:11px;color:#aaa;">미인증</span>';
+      }
+      return `
+      <div class="admin-card" data-review-id="${escapeHtml(r.id)}"${cardStyle}>
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <h3>${escapeHtml(r.place_name)} <small style="color:#aaa;">(${CATEGORY_LABEL[r.category] ?? r.category})</small></h3>
-          ${r.is_verified
-            ? '<span class="badge-approved">✔ 영수증 인증</span>'
-            : '<span style="font-size:11px;color:#aaa;">미인증</span>'}
+          ${badgeHtml}
         </div>
         <p>지역: 서울특별시 ${escapeHtml(r.region ?? "")} · 방문일: ${escapeHtml(r.visit_date ?? "")}</p>
         <p>후기: ${escapeHtml(r.short_review ?? "")}</p>
         <p class="helper-text">등록일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
         <div class="card-actions">
-          <button class="btn-delete" data-review-id="${escapeHtml(r.id)}">삭제</button>
+          <button class="btn-approve review-approve-btn" data-id="${escapeHtml(r.id)}">인증승인</button>
+          <button class="btn-pending review-pending-btn" data-id="${escapeHtml(r.id)}">보류</button>
+          <button class="btn-delete review-delete-btn" data-id="${escapeHtml(r.id)}">삭제</button>
         </div>
-      </div>`).join("");
+      </div>`;
+    }).join("");
 
-    container.querySelectorAll(".btn-delete[data-review-id]").forEach((btn) => {
+    container.querySelectorAll(".review-approve-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const { error: updErr } = await db.from("reviews").update({ is_verified: true, status: "approved" }).eq("id", btn.dataset.id);
+        if (updErr) { alert("처리 실패: " + updErr.message); return; }
+        const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
+        if (card) {
+          card.removeAttribute("style");
+          const badge = card.querySelector(".badge-approved, .badge-pending, .badge-rejected, [style*='color:#aaa']");
+          if (badge) badge.outerHTML = '<span class="badge-approved">✔ 영수증 인증</span>';
+        }
+        loadStats();
+      });
+    });
+
+    container.querySelectorAll(".review-pending-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const { error: updErr } = await db.from("reviews").update({ status: "pending" }).eq("id", btn.dataset.id);
+        if (updErr) { alert("처리 실패: " + updErr.message); return; }
+        const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
+        if (card) {
+          card.style.background = "#2a2520";
+          const badge = card.querySelector(".badge-approved, .badge-pending, .badge-rejected, [style*='color:#aaa']");
+          if (badge) badge.outerHTML = '<span class="badge-pending">⏳ 검수 대기</span>';
+        }
+        loadStats();
+      });
+    });
+
+    container.querySelectorAll(".review-delete-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("이 리뷰를 삭제하시겠습니까?")) return;
-        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.reviewId);
+        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.id);
         if (delErr) { alert("삭제 실패: " + delErr.message); return; }
-        btn.closest(".admin-card").remove();
+        container.querySelector(`[data-review-id="${btn.dataset.id}"]`)?.remove();
         loadStats();
       });
     });
