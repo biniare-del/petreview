@@ -31,26 +31,13 @@ export default async function handler(req, res) {
 
   const categoryKeyword = category === "grooming" ? "애견미용" : "동물병원";
 
-  // ── 쿼리 / category_group_code 결정 ──────────────────────────────────────
-  // [자동완성] keyword 있을 때
-  //   - 동물병원: keyword 그대로 + category_group_code=PO3(반려동물) 필터
-  //   - 미용샵:  "keyword 애견미용" 로 검색 (PO3 미포함)
+  // [자동완성] keyword 있을 때: "키워드 동물병원" / "키워드 애견미용"
   // [일반 검색] keyword 없을 때: 기존 지역+카테고리 방식 유지
-  let query;
-  let categoryGroupCode = ""; // PO3 = 반려동물
-
-  if (keyword) {
-    if (category === "hospital") {
-      query = keyword;
-      categoryGroupCode = "PO3";
-    } else {
-      query = `${keyword} ${categoryKeyword}`; // "키워드 애견미용"
-    }
-  } else {
-    query = region
-      ? `서울 ${region} ${categoryKeyword}`
-      : `서울 ${categoryKeyword}`;
-  }
+  const query = keyword
+    ? `${keyword} ${categoryKeyword}`
+    : region
+    ? `서울 ${region} ${categoryKeyword}`
+    : `서울 ${categoryKeyword}`;
 
   // keyword 직접 검색 시 1페이지만, 지역 목록 조회 시 최대 3페이지(45건)
   const maxPages = keyword ? 1 : 3;
@@ -59,7 +46,6 @@ export default async function handler(req, res) {
   try {
     for (let page = 1; page <= maxPages; page++) {
       const params = new URLSearchParams({ query, size: "15", page: String(page) });
-      if (categoryGroupCode) params.set("category_group_code", categoryGroupCode);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
