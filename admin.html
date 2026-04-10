@@ -129,6 +129,7 @@
         <button class="admin-tab is-active" data-tab="receipts">영수증 검수</button>
         <button class="admin-tab" data-tab="reviews">리뷰 관리</button>
         <button class="admin-tab" data-tab="users">회원 관리</button>
+        <button class="admin-tab" data-tab="ads">광고 관리</button>
       </div>
 
       <!-- 영수증 검수 -->
@@ -144,6 +145,42 @@
       <!-- 회원 관리 -->
       <div class="admin-panel" id="panel-users">
         <div id="users-list"><p class="placeholder-text">불러오는 중...</p></div>
+      </div>
+
+      <!-- 광고 관리 -->
+      <div class="admin-panel" id="panel-ads">
+        <h3 style="margin:0 0 16px;">배너 관리</h3>
+        <div class="admin-card">
+          <h3 style="margin:0 0 12px;font-size:14px;">새 배너 등록</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <input type="text" id="banner-image-url" placeholder="이미지 URL" style="font-size:13px;" />
+            <input type="text" id="banner-link-url" placeholder="클릭 시 이동 URL (선택)" style="font-size:13px;" />
+            <input type="text" id="banner-alt-text" placeholder="대체 텍스트" style="font-size:13px;" />
+            <button class="btn-approve" id="btn-add-banner" style="width:fit-content;">+ 배너 등록</button>
+          </div>
+        </div>
+        <div id="banners-list"><p class="placeholder-text">불러오는 중...</p></div>
+
+        <h3 style="margin:24px 0 16px;">우수협력병원 / 이벤트 관리</h3>
+        <div class="admin-card">
+          <h3 style="margin:0 0 12px;font-size:14px;">고정 노출 업체 등록</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <input type="text" id="fp-place-name" placeholder="업체 이름" style="font-size:13px;" />
+            <select id="fp-category" style="font-size:13px;">
+              <option value="hospital">동물병원</option>
+              <option value="grooming">미용샵</option>
+            </select>
+            <input type="text" id="fp-region" placeholder="지역 (예: 강남구)" style="font-size:13px;" />
+            <input type="text" id="fp-address" placeholder="주소 (선택)" style="font-size:13px;" />
+            <input type="text" id="fp-phone" placeholder="전화번호 (선택)" style="font-size:13px;" />
+            <select id="fp-tag" style="font-size:13px;">
+              <option value="우수협력병원">우수협력병원</option>
+              <option value="이벤트">이벤트</option>
+            </select>
+            <button class="btn-approve" id="btn-add-featured" style="width:fit-content;">+ 등록</button>
+          </div>
+        </div>
+        <div id="featured-list"><p class="placeholder-text">불러오는 중...</p></div>
       </div>
     </div>
   </div>

@@ -71,6 +71,9 @@ function restoreFormDraft() {
 let searchPage = 1;
 let hasSearched = false;
 const PAGE_SIZE = 5;
+let featuredPlaces = [];   // featured_places 테이블 (우수협력병원/이벤트)
+let favCounts = {};        // { place_name: count }
+let userFavs = new Set();  // 현재 유저가 즐겨찾기한 place_name 집합
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -119,19 +122,37 @@ function renderSearchPage(page) {
         }</p>`
       : "";
 
+  // 우수협력병원/이벤트 고정 노출 카드 (1페이지에만 표시)
+  let featuredHtml = "";
+  if (page === 1 && featuredPlaces.length) {
+    featuredHtml = featuredPlaces.map((fp) => `
+      <article class="card featured-place-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+          <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(fp.place_name)}</h3>
+          <span class="featured-tag${fp.tag === "이벤트" ? " tag-event" : ""}">${escapeHtml(fp.tag || "우수협력병원")}</span>
+        </div>
+        <p>${CATEGORY_LABEL[fp.category] || fp.category} · 서울특별시 ${escapeHtml(fp.region || "")}</p>
+        ${fp.address ? `<p class="helper-text">주소: ${escapeHtml(fp.address)}</p>` : ""}
+        ${fp.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(fp.phone)}">📞 ${escapeHtml(fp.phone)}</a></p>` : ""}
+      </article>`).join("");
+  }
+
   const cards = slice
-    .map(
-      (place) => `
+    .map((place) => {
+      const count = favCounts[place.name] || 0;
+      const isSaved = userFavs.has(place.name);
+      const favLabel = (isSaved ? "♥ 단골" : "♡ 단골") + (count > 0 ? ` ${count}` : "");
+      return `
       <article class="card search-place-card">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
-          <button class="favorite-btn" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">♡ 단골</button>
+          <button class="favorite-btn${isSaved ? " is-saved" : ""}" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">${escapeHtml(favLabel)}</button>
         </div>
         <p>${CATEGORY_LABEL[place.category]} · 서울특별시 ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
         ${place.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(place.phone)}">📞 ${escapeHtml(place.phone)}</a></p>` : ""}
-      </article>`
-    )
+      </article>`;
+    })
     .join("");
 
   const pagination =
@@ -143,7 +164,7 @@ function renderSearchPage(page) {
         </div>`
       : "";
 
-  els.searchResults.innerHTML = dataNotice + cards + pagination;
+  els.searchResults.innerHTML = dataNotice + featuredHtml + cards + pagination;
 
   document.getElementById("page-prev")?.addEventListener("click", () => {
     renderSearchPage(searchPage - 1);
@@ -182,7 +203,56 @@ async function renderSearchResults() {
     return;
   }
 
-  searchFacilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  const db = window.supabaseClient;
+
+  // 우수협력병원/이벤트 고정 노출 카드 (Supabase)
+  featuredPlaces = [];
+  if (db) {
+    try {
+      let q = db.from("featured_places")
+        .select("*")
+        .eq("category", selectedSearchCategory)
+        .eq("is_active", true)
+        .order("sort_order");
+      if (regionKeyword) q = q.eq("region", regionKeyword);
+      const { data: fp } = await q;
+      featuredPlaces = fp || [];
+    } catch { /* ignore */ }
+  }
+
+  // 즐겨찾기 수 집계
+  favCounts = {};
+  if (db) {
+    try {
+      const placeNames = searchFacilities.map((p) => p.name);
+      const { data: favData } = await db
+        .from("favorites")
+        .select("place_name")
+        .in("place_name", placeNames);
+      (favData || []).forEach((f) => {
+        favCounts[f.place_name] = (favCounts[f.place_name] || 0) + 1;
+      });
+    } catch { /* ignore */ }
+  }
+
+  // 로그인 유저의 즐겨찾기 목록
+  userFavs = new Set();
+  if (db && window.PetAuth?.isLoggedIn()) {
+    try {
+      const { data: ufData } = await db
+        .from("favorites")
+        .select("place_name")
+        .eq("user_id", window.PetAuth.currentUser.id);
+      (ufData || []).forEach((f) => userFavs.add(f.place_name));
+    } catch { /* ignore */ }
+  }
+
+  // 즐겨찾기 수 기준 정렬 (내림차순), 동점이면 이름순
+  searchFacilities.sort((a, b) => {
+    const diff = (favCounts[b.name] || 0) - (favCounts[a.name] || 0);
+    return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
+  });
+
   hasSearched = true;
   renderSearchPage(1);
 }
@@ -501,43 +571,114 @@ function bindPlaceNameAutocomplete() {
     hideDropdown();
   }
 
-  function renderDropdown(places) {
-    if (!places.length) { hideDropdown(); return; }
+  // 검색어 매칭 부분 강조
+  function highlight(text, keyword) {
+    if (!keyword) return escapeHtml(text);
+    const idx = text.toLowerCase().indexOf(keyword.toLowerCase());
+    if (idx === -1) return escapeHtml(text);
+    return (
+      escapeHtml(text.slice(0, idx)) +
+      `<mark class="autocomplete-highlight">${escapeHtml(text.slice(idx, idx + keyword.length))}</mark>` +
+      escapeHtml(text.slice(idx + keyword.length))
+    );
+  }
+
+  function renderDropdown(places, keyword) {
+    if (!places.length) {
+      dropdown.innerHTML = `<li class="autocomplete-empty">검색 결과가 없어요</li>`;
+      dropdown.hidden = false;
+      return;
+    }
     currentResults = places.slice(0, 8);
     dropdown.innerHTML = currentResults
-      .map((p, i) => `
-        <li data-idx="${i}" role="option">
-          <div class="autocomplete-name">${escapeHtml(p.name)}</div>
-          <div class="autocomplete-meta">${
-            [p.region ? `서울 ${escapeHtml(p.region)}` : "", escapeHtml(p.address || "")]
-              .filter(Boolean).join(" · ")
-          }</div>
-        </li>`)
+      .map((p, i) => {
+        const meta = [p.region ? `서울 ${escapeHtml(p.region)}` : "", escapeHtml(p.address || "")]
+          .filter(Boolean).join(" · ");
+        const badge = p.hasReview
+          ? `<span class="autocomplete-review-badge">리뷰 있음</span>`
+          : "";
+        return `
+          <li data-idx="${i}" role="option">
+            <div class="autocomplete-name">${highlight(p.name, keyword)}${badge}</div>
+            ${meta ? `<div class="autocomplete-meta">${meta}</div>` : ""}
+          </li>`;
+      })
       .join("");
     dropdown.hidden = false;
   }
 
+  async function fetchFromKakao(keyword, category) {
+    try {
+      const url = `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(category)}&keyword=${encodeURIComponent(keyword)}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json?.results ?? [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function fetchFromSupabase(keyword, category) {
+    const db = window.supabaseClient;
+    if (!db) return [];
+    try {
+      const { data } = await db
+        .from("reviews")
+        .select("place_name, region, category")
+        .eq("category", category)
+        .ilike("place_name", `%${keyword}%`)
+        .limit(5);
+      // 중복 제거 (같은 place_name)
+      const seen = new Set();
+      return (data || []).reduce((acc, r) => {
+        if (!seen.has(r.place_name)) {
+          seen.add(r.place_name);
+          acc.push({ name: r.place_name, region: r.region, category: r.category, address: "", hasReview: true });
+        }
+        return acc;
+      }, []);
+    } catch {
+      return [];
+    }
+  }
+
   async function fetchSuggestions(keyword) {
     const category = els.placeCategorySelect.value || "hospital";
-    const url = `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(category)}&keyword=${encodeURIComponent(keyword)}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json?.results ?? [];
+    const [kakaoResults, supabaseResults] = await Promise.all([
+      fetchFromKakao(keyword, category),
+      fetchFromSupabase(keyword, category),
+    ]);
+
+    // 리뷰 있는 병원명 Set
+    const reviewedNames = new Set(supabaseResults.map((r) => r.name));
+
+    // Kakao 결과에 hasReview 플래그 추가
+    const mergedKakao = kakaoResults.map((p) => ({ ...p, hasReview: reviewedNames.has(p.name) }));
+
+    // Supabase 결과 중 Kakao에 없는 것만 추가 (리뷰만 있고 Kakao API에 없는 곳)
+    const kakaoNames = new Set(kakaoResults.map((p) => p.name));
+    const uniqueSupabase = supabaseResults.filter((p) => !kakaoNames.has(p.name));
+
+    // 리뷰 있는 것 상단 정렬
+    const combined = [...mergedKakao, ...uniqueSupabase];
+    combined.sort((a, b) => (b.hasReview ? 1 : 0) - (a.hasReview ? 1 : 0));
+    return combined;
   }
 
   input.addEventListener("input", () => {
     clearTimeout(debounceTimer);
     const val = input.value.trim();
-    if (val.length < 2) { hideDropdown(); return; }
+    if (val.length < 1) { hideDropdown(); return; }
+
+    // 로딩 상태 표시
+    dropdown.innerHTML = `<li class="autocomplete-empty">검색 중...</li>`;
+    dropdown.hidden = false;
+
     debounceTimer = setTimeout(async () => {
-      try {
-        const places = await fetchSuggestions(val);
-        renderDropdown(places);
-      } catch {
-        hideDropdown();
-      }
-    }, 300);
+      const places = await fetchSuggestions(val);
+      renderDropdown(places, val);
+    }, 150);
   });
 
   dropdown.addEventListener("mousedown", (e) => {
@@ -550,7 +691,7 @@ function bindPlaceNameAutocomplete() {
 
   input.addEventListener("keydown", (e) => {
     if (dropdown.hidden) return;
-    const items = dropdown.querySelectorAll("li");
+    const items = dropdown.querySelectorAll("li[data-idx]");
     if (e.key === "ArrowDown") {
       e.preventDefault();
       activeIndex = Math.min(activeIndex + 1, items.length - 1);
@@ -639,7 +780,10 @@ function bindSearchResultsSelection() {
       if (favBtn.classList.contains("is-saved")) {
         await db.from("favorites").delete().eq("user_id", userId).eq("place_name", placeName);
         favBtn.classList.remove("is-saved");
-        favBtn.textContent = "♡ 단골";
+        userFavs.delete(placeName);
+        favCounts[placeName] = Math.max(0, (favCounts[placeName] || 1) - 1);
+        const cnt = favCounts[placeName];
+        favBtn.textContent = cnt > 0 ? `♡ 단골 ${cnt}` : "♡ 단골";
       } else {
         const { error } = await db.from("favorites").insert([{
           user_id: userId,
@@ -651,7 +795,10 @@ function bindSearchResultsSelection() {
         }]);
         if (!error) {
           favBtn.classList.add("is-saved");
-          favBtn.textContent = "♥ 단골";
+          userFavs.add(placeName);
+          favCounts[placeName] = (favCounts[placeName] || 0) + 1;
+          const cnt = favCounts[placeName];
+          favBtn.textContent = `♥ 단골 ${cnt}`;
         }
       }
       return;
@@ -659,6 +806,28 @@ function bindSearchResultsSelection() {
 
     // 카드 클릭으로 폼 채우는 기능 제거됨 (리뷰 작성은 CTA 버튼으로만)
   });
+}
+
+// ===== 배너 로드 =====
+async function loadBanner() {
+  const db = window.supabaseClient;
+  const slot = document.getElementById("banner-slot");
+  if (!db || !slot) return;
+  try {
+    const { data } = await db
+      .from("banners")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order")
+      .limit(1);
+    if (!data?.length) return;
+    const b = data[0];
+    slot.hidden = false;
+    const img = `<img src="${escapeHtml(b.image_url || "")}" alt="${escapeHtml(b.alt_text || "")}" class="banner-img" />`;
+    slot.innerHTML = b.link_url
+      ? `<a href="${escapeHtml(b.link_url)}" target="_blank" rel="noopener noreferrer">${img}</a>`
+      : img;
+  } catch { /* ignore */ }
 }
 
 // ===== 헤더 인증 UI =====
@@ -799,6 +968,7 @@ function init() {
   bindPlaceNameAutocomplete();
   bindServiceTags();
   void loadReviews();
+  void loadBanner();
 
   // 방문일: 오늘 이후 날짜 선택 불가
   const visitDateInput = document.getElementById("visit-date");

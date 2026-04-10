@@ -22,6 +22,7 @@
         if (panel) panel.classList.add("is-active");
         if (btn.dataset.tab === "reviews") loadAllReviews();
         if (btn.dataset.tab === "users") loadUsers();
+        if (btn.dataset.tab === "ads") loadAdsTab();
       });
     });
   }
@@ -202,6 +203,149 @@
         if (updErr) { alert("변경 실패: " + updErr.message); return; }
         await loadUsers();
       });
+    });
+  }
+
+  // ===== 광고 관리 =====
+  async function loadAdsTab() {
+    await Promise.all([loadBannersAdmin(), loadFeaturedAdmin()]);
+    bindAdsForm();
+  }
+
+  async function loadBannersAdmin() {
+    const container = document.getElementById("banners-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    if (!db) return;
+
+    const { data, error } = await db
+      .from("banners")
+      .select("*")
+      .order("sort_order");
+
+    if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
+    if (!data?.length) { container.innerHTML = '<p class="placeholder-text">등록된 배너가 없습니다.</p>'; return; }
+
+    container.innerHTML = data.map((b) => `
+      <div class="admin-card" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;">
+          <p style="margin:0 0 4px;font-weight:600;font-size:13px;">${escapeHtml(b.alt_text || "(텍스트 없음)")}</p>
+          ${b.image_url ? `<img src="${escapeHtml(b.image_url)}" style="max-width:200px;max-height:80px;border-radius:8px;object-fit:cover;display:block;margin-top:6px;" alt="${escapeHtml(b.alt_text || "")}" />` : ""}
+          ${b.link_url ? `<p class="helper-text" style="word-break:break-all;">→ ${escapeHtml(b.link_url)}</p>` : ""}
+          <p class="helper-text">상태: ${b.is_active ? "노출 중" : "비활성"}</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-approve toggle-banner-btn" data-id="${escapeHtml(b.id)}" data-active="${b.is_active ? "1" : "0"}">${b.is_active ? "비활성화" : "활성화"}</button>
+          <button class="btn-delete delete-banner-btn" data-id="${escapeHtml(b.id)}">삭제</button>
+        </div>
+      </div>`).join("");
+
+    container.querySelectorAll(".toggle-banner-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const isActive = btn.dataset.active === "1";
+        await db.from("banners").update({ is_active: !isActive }).eq("id", btn.dataset.id);
+        loadBannersAdmin();
+      });
+    });
+
+    container.querySelectorAll(".delete-banner-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("배너를 삭제하시겠습니까?")) return;
+        await db.from("banners").delete().eq("id", btn.dataset.id);
+        loadBannersAdmin();
+      });
+    });
+  }
+
+  async function loadFeaturedAdmin() {
+    const container = document.getElementById("featured-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    if (!db) return;
+
+    const { data, error } = await db
+      .from("featured_places")
+      .select("*")
+      .order("sort_order");
+
+    if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
+    if (!data?.length) { container.innerHTML = '<p class="placeholder-text">등록된 업체가 없습니다.</p>'; return; }
+
+    container.innerHTML = data.map((fp) => `
+      <div class="admin-card" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <strong style="font-size:14px;">${escapeHtml(fp.place_name)}</strong>
+            <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:${fp.tag === "이벤트" ? "#fef3c7" : "#dcfce7"};color:${fp.tag === "이벤트" ? "#92400e" : "#166534"};font-weight:700;">${escapeHtml(fp.tag || "우수협력병원")}</span>
+          </div>
+          <p class="helper-text">${CATEGORY_LABEL[fp.category] || fp.category} · ${escapeHtml(fp.region || "")}</p>
+          ${fp.address ? `<p class="helper-text">${escapeHtml(fp.address)}</p>` : ""}
+          <p class="helper-text">상태: ${fp.is_active ? "노출 중" : "비활성"}</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-approve toggle-fp-btn" data-id="${escapeHtml(fp.id)}" data-active="${fp.is_active ? "1" : "0"}">${fp.is_active ? "비활성화" : "활성화"}</button>
+          <button class="btn-delete delete-fp-btn" data-id="${escapeHtml(fp.id)}">삭제</button>
+        </div>
+      </div>`).join("");
+
+    container.querySelectorAll(".toggle-fp-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const isActive = btn.dataset.active === "1";
+        await db.from("featured_places").update({ is_active: !isActive }).eq("id", btn.dataset.id);
+        loadFeaturedAdmin();
+      });
+    });
+
+    container.querySelectorAll(".delete-fp-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("고정 노출 업체를 삭제하시겠습니까?")) return;
+        await db.from("featured_places").delete().eq("id", btn.dataset.id);
+        loadFeaturedAdmin();
+      });
+    });
+  }
+
+  let adsFormBound = false;
+  function bindAdsForm() {
+    if (adsFormBound) return;
+    adsFormBound = true;
+    const db = window.supabaseClient;
+    if (!db) return;
+
+    document.getElementById("btn-add-banner")?.addEventListener("click", async () => {
+      const imageUrl = document.getElementById("banner-image-url")?.value.trim();
+      if (!imageUrl) { alert("이미지 URL을 입력해주세요."); return; }
+      const { error } = await db.from("banners").insert([{
+        image_url: imageUrl,
+        link_url: document.getElementById("banner-link-url")?.value.trim() || null,
+        alt_text: document.getElementById("banner-alt-text")?.value.trim() || null,
+      }]);
+      if (error) { alert("등록 실패: " + error.message); return; }
+      ["banner-image-url", "banner-link-url", "banner-alt-text"].forEach((id) => {
+        const el = document.getElementById(id); if (el) el.value = "";
+      });
+      loadBannersAdmin();
+    });
+
+    document.getElementById("btn-add-featured")?.addEventListener("click", async () => {
+      const placeName = document.getElementById("fp-place-name")?.value.trim();
+      const region = document.getElementById("fp-region")?.value.trim();
+      if (!placeName || !region) { alert("업체 이름과 지역을 입력해주세요."); return; }
+      const { error } = await db.from("featured_places").insert([{
+        place_name: placeName,
+        category: document.getElementById("fp-category")?.value || "hospital",
+        region,
+        address: document.getElementById("fp-address")?.value.trim() || null,
+        phone: document.getElementById("fp-phone")?.value.trim() || null,
+        tag: document.getElementById("fp-tag")?.value || "우수협력병원",
+      }]);
+      if (error) { alert("등록 실패: " + error.message); return; }
+      ["fp-place-name", "fp-region", "fp-address", "fp-phone"].forEach((id) => {
+        const el = document.getElementById(id); if (el) el.value = "";
+      });
+      loadFeaturedAdmin();
     });
   }
 
