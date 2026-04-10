@@ -75,6 +75,9 @@ let featuredPlaces = [];   // featured_places 테이블 (우수협력병원/이�
 let favCounts = {};        // { place_name: count }
 let userFavs = new Set();  // 현재 유저가 즐겨찾기한 place_name 집합
 let geoState = 'pending';  // 'pending' | 'granted' | 'denied'
+let reviewLikes = {};            // { reviewId: likeCount }
+let userLikedReviews = new Set(); // 현재 유저가 좋아요한 review ID 집합
+let reportingReviewId = null;    // 신고 처리 중인 review ID
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -127,7 +130,7 @@ function renderSearchPage(page) {
   let featuredHtml = "";
   if (page === 1 && featuredPlaces.length) {
     featuredHtml = featuredPlaces.map((fp) => `
-      <article class="card featured-place-card">
+      <article class="card featured-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(fp.place_name)}" data-place-category="${escapeHtml(fp.category)}" data-place-region="${escapeHtml(fp.region || "")}" data-place-address="${escapeHtml(fp.address || "")}" data-place-phone="${escapeHtml(fp.phone || "")}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(fp.place_name)}</h3>
           <span class="featured-tag${fp.tag === "이벤트" ? " tag-event" : ""}">${escapeHtml(fp.tag || "우수협력병원")}</span>
@@ -144,7 +147,7 @@ function renderSearchPage(page) {
       const isSaved = userFavs.has(place.name);
       const favLabel = (isSaved ? "♥ 단골" : "♡ 단골") + (count > 0 ? ` ${count}` : "");
       return `
-      <article class="card search-place-card">
+      <article class="card search-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(place.name)}" data-place-category="${escapeHtml(place.category)}" data-place-region="${escapeHtml(place.region)}" data-place-address="${escapeHtml(place.address || "")}" data-place-phone="${escapeHtml(place.phone || "")}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
           <button class="favorite-btn${isSaved ? " is-saved" : ""}" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">${escapeHtml(favLabel)}</button>
@@ -285,8 +288,10 @@ function renderReviewList() {
   const sorted = [...filtered].sort((a, b) => b.isVerified - a.isVerified);
 
   const items = sorted
-    .map(
-      (review) => `
+    .map((review) => {
+      const likeCount = reviewLikes[review.id] || 0;
+      const isLiked = userLikedReviews.has(review.id);
+      return `
       <article class="card${review.isVerified ? " card--verified" : ""}">
         <div class="review-card-header">
           <h3>${escapeHtml(review.placeName)} <small>(${CATEGORY_LABEL[review.category]})</small></h3>
@@ -300,8 +305,12 @@ function renderReviewList() {
           ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
           ${review.receiptImage ? `<img src="${escapeHtml(review.receiptImage)}" alt="영수증" class="review-thumb" />` : ""}
         </div>
-      </article>`
-    )
+        <div class="review-actions">
+          <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
+          <button class="report-btn" data-review-id="${escapeHtml(review.id)}">🚨 신고</button>
+        </div>
+      </article>`;
+    })
     .join("");
 
   els.reviewList.innerHTML = items;
@@ -364,6 +373,7 @@ async function loadReviews() {
   );
 
   reviews = rawReviews;
+  await loadLikes();
   renderReviewList();
 }
 
@@ -867,7 +877,17 @@ function bindSearchResultsSelection() {
       return;
     }
 
-    // 카드 클릭으로 폼 채우는 기능 제거됨 (리뷰 작성은 CTA 버튼으로만)
+    // 병원 카드 클릭 → 상세 모달
+    const card = event.target.closest(".search-place-card, .featured-place-card");
+    if (card) {
+      openPlaceDetail({
+        name: card.dataset.placeName || "",
+        category: card.dataset.placeCategory || selectedSearchCategory,
+        region: card.dataset.placeRegion || "",
+        address: card.dataset.placeAddress || "",
+        phone: card.dataset.placePhone || "",
+      });
+    }
   });
 }
 
@@ -1003,6 +1023,224 @@ function bindLoginModal() {
   document.getElementById("btn-google")?.addEventListener("click", () => window.PetAuth?.signInWithGoogle());
 }
 
+// ===== 좋아요 로드 =====
+async function loadLikes() {
+  const db = window.supabaseClient;
+  if (!db || !reviews.length) return;
+
+  const ids = reviews.map((r) => r.id).filter(Boolean);
+  if (!ids.length) return;
+
+  try {
+    const { data } = await db.from("review_likes").select("review_id").in("review_id", ids);
+    reviewLikes = {};
+    (data || []).forEach((l) => {
+      reviewLikes[l.review_id] = (reviewLikes[l.review_id] || 0) + 1;
+    });
+  } catch { /* ignore */ }
+
+  userLikedReviews = new Set();
+  if (window.PetAuth?.isLoggedIn()) {
+    try {
+      const { data } = await db
+        .from("review_likes")
+        .select("review_id")
+        .eq("user_id", window.PetAuth.currentUser.id)
+        .in("review_id", ids);
+      (data || []).forEach((l) => userLikedReviews.add(l.review_id));
+    } catch { /* ignore */ }
+  }
+}
+
+// ===== 좋아요 처리 =====
+async function handleLike(reviewId, btn) {
+  const db = window.supabaseClient;
+  if (!db) return;
+  const userId = window.PetAuth.currentUser.id;
+
+  if (userLikedReviews.has(reviewId)) {
+    const { error } = await db.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
+    if (!error) {
+      userLikedReviews.delete(reviewId);
+      reviewLikes[reviewId] = Math.max(0, (reviewLikes[reviewId] || 1) - 1);
+      btn.classList.remove("is-liked");
+      const cnt = reviewLikes[reviewId];
+      const countEl = btn.querySelector(".like-count");
+      if (cnt > 0) {
+        if (countEl) countEl.textContent = cnt;
+        else btn.insertAdjacentHTML("beforeend", ` <span class="like-count">${cnt}</span>`);
+      } else {
+        countEl?.remove();
+      }
+    }
+  } else {
+    const { error } = await db.from("review_likes").insert([{ review_id: reviewId, user_id: userId }]);
+    if (!error) {
+      userLikedReviews.add(reviewId);
+      reviewLikes[reviewId] = (reviewLikes[reviewId] || 0) + 1;
+      const cnt = reviewLikes[reviewId];
+      btn.classList.add("is-liked");
+      const countEl = btn.querySelector(".like-count");
+      if (countEl) countEl.textContent = cnt;
+      else btn.insertAdjacentHTML("beforeend", ` <span class="like-count">${cnt}</span>`);
+    }
+  }
+}
+
+// ===== 리뷰 액션 이벤트 바인딩 (좋아요 / 신고) =====
+function bindReviewActions() {
+  els.reviewList.addEventListener("click", async (e) => {
+    const likeBtn = e.target.closest(".like-btn");
+    if (likeBtn) {
+      if (!window.PetAuth?.isLoggedIn()) { openLoginModal(); return; }
+      await handleLike(likeBtn.dataset.reviewId, likeBtn);
+      return;
+    }
+    const reportBtn = e.target.closest(".report-btn");
+    if (reportBtn) {
+      if (!window.PetAuth?.isLoggedIn()) { openLoginModal(); return; }
+      openReportModal(reportBtn.dataset.reviewId);
+    }
+  });
+}
+
+// ===== 신고 모달 =====
+function openReportModal(reviewId) {
+  reportingReviewId = reviewId;
+  // 라디오 초기화
+  document.querySelectorAll("input[name='report-reason']").forEach((r) => r.checked = false);
+  const modal = document.getElementById("report-modal");
+  if (modal) modal.hidden = false;
+}
+
+function bindReportModal() {
+  document.getElementById("report-modal-close")?.addEventListener("click", () => {
+    document.getElementById("report-modal").hidden = true;
+  });
+  document.getElementById("report-modal")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.hidden = true;
+  });
+  document.getElementById("report-submit-btn")?.addEventListener("click", async () => {
+    const reason = document.querySelector("input[name='report-reason']:checked")?.value;
+    if (!reason) { alert("신고 사유를 선택해주세요."); return; }
+    const db = window.supabaseClient;
+    if (!db || !reportingReviewId) return;
+    const { error } = await db.from("review_reports").insert([{
+      review_id: reportingReviewId,
+      user_id: window.PetAuth.currentUser.id,
+      reason,
+    }]);
+    if (error) {
+      alert(error.code === "23505" ? "이미 신고한 리뷰입니다." : "신고 처리 중 오류가 발생했습니다.");
+    } else {
+      alert("신고가 접수되었습니다. 검토 후 처리해드리겠습니다.");
+    }
+    document.getElementById("report-modal").hidden = true;
+  });
+}
+
+// ===== 병원 상세 모달 =====
+function bindPlaceDetailModal() {
+  document.getElementById("place-detail-close")?.addEventListener("click", () => {
+    document.getElementById("place-detail-modal").hidden = true;
+  });
+  document.getElementById("place-detail-modal")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.hidden = true;
+  });
+}
+
+async function openPlaceDetail(place) {
+  const modal = document.getElementById("place-detail-modal");
+  if (!modal) return;
+
+  // 기본 정보 렌더링
+  document.getElementById("detail-place-name").textContent = place.name;
+  document.getElementById("detail-place-meta").textContent =
+    `${CATEGORY_LABEL[place.category] || place.category} · 서울특별시 ${place.region}`;
+
+  const addrEl = document.getElementById("detail-place-address");
+  addrEl.textContent = place.address || "";
+  addrEl.style.display = place.address ? "" : "none";
+
+  const phoneEl = document.getElementById("detail-place-phone");
+  if (place.phone) {
+    phoneEl.href = `tel:${place.phone}`;
+    phoneEl.textContent = `📞 ${place.phone}`;
+    phoneEl.style.display = "";
+  } else {
+    phoneEl.style.display = "none";
+  }
+
+  const mapBtn = document.getElementById("detail-map-btn");
+  if (mapBtn) {
+    const q = encodeURIComponent(`서울 ${place.region} ${place.name}`);
+    mapBtn.href = `https://map.kakao.com/link/search/${q}`;
+  }
+
+  document.getElementById("detail-reviews-list").innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+  document.getElementById("detail-price-table").innerHTML = "";
+  modal.hidden = false;
+
+  const db = window.supabaseClient;
+  if (!db) {
+    document.getElementById("detail-reviews-list").innerHTML = '<p class="placeholder-text">리뷰를 불러올 수 없습니다.</p>';
+    return;
+  }
+
+  const { data, error } = await db
+    .from("reviews")
+    .select("*")
+    .eq("place_name", place.name)
+    .eq("is_verified", true)
+    .order("created_at", { ascending: false });
+
+  if (error || !data?.length) {
+    document.getElementById("detail-reviews-list").innerHTML =
+      '<p class="placeholder-text">이 병원에 대한 인증된 리뷰가 없습니다.</p>';
+    return;
+  }
+
+  // 진료항목별 평균 진료비 (3건 이상인 항목만)
+  const serviceGroups = {};
+  data.forEach((r) => {
+    if (r.service_detail && r.total_price) {
+      if (!serviceGroups[r.service_detail]) serviceGroups[r.service_detail] = [];
+      serviceGroups[r.service_detail].push(Number(r.total_price));
+    }
+  });
+
+  const priceRows = Object.entries(serviceGroups)
+    .filter(([, prices]) => prices.length >= 3)
+    .map(([service, prices]) => {
+      const avg = Math.round(prices.reduce((s, p) => s + p, 0) / prices.length);
+      return `<tr><td>${escapeHtml(service)}</td><td>₩ ${avg.toLocaleString("ko-KR")}</td><td>${prices.length}건</td></tr>`;
+    });
+
+  const priceContainer = document.getElementById("detail-price-table");
+  if (priceRows.length) {
+    priceContainer.innerHTML = `
+      <h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 8px;">진료항목별 평균 진료비</h4>
+      <table class="price-table">
+        <thead><tr><th>항목</th><th>평균 금액</th><th>리뷰 수</th></tr></thead>
+        <tbody>${priceRows.join("")}</tbody>
+      </table>`;
+  }
+
+  // 리뷰 목록
+  document.getElementById("detail-reviews-list").innerHTML = data.map((r, i) => `
+    ${i > 0 ? '<hr style="border:none;border-top:1px solid #f0e8e2;margin:0;">' : ""}
+    <div class="detail-review-item">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span class="verified-badge">✔ 영수증 인증</span>
+        <span style="font-size:12px;color:#aaa;">${escapeHtml(r.visit_date || "")}</span>
+      </div>
+      <p style="margin:3px 0;font-size:13px;color:#666;">항목: ${escapeHtml(r.service_detail || "")}</p>
+      <p style="margin:3px 0;font-size:13px;color:#666;">실결제: ₩ ${Number(r.total_price || 0).toLocaleString("ko-KR")}</p>
+      <p style="margin:6px 0 0;font-size:14px;color:#333;">${escapeHtml(r.short_review || "")}</p>
+      ${r.pet_photo_url ? `<img src="${escapeHtml(r.pet_photo_url)}" class="review-thumb" alt="반려동물 사진" style="margin-top:8px;" />` : ""}
+    </div>`).join("");
+}
+
 function init() {
   // PetAuth 초기화 — 실패해도 나머지 앱 기능은 정상 동작
   window.PetAuth?.init((event) => {
@@ -1028,6 +1266,9 @@ function init() {
   bindPetPhotoPreview();
   bindReviewForm();
   bindReviewFilters();
+  bindReviewActions();
+  bindReportModal();
+  bindPlaceDetailModal();
   bindPlaceNameAutocomplete();
   bindServiceTags();
   void loadReviews();

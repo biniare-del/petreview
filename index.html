@@ -339,6 +339,49 @@
       </div>
     </section>
   </main>
+  <!-- 병원 상세 모달 -->
+  <div class="modal-overlay" id="place-detail-modal" hidden>
+    <div class="modal place-detail-modal">
+      <button class="modal-close" id="place-detail-close" aria-label="닫기">✕</button>
+      <h2 class="modal-title" id="detail-place-name" style="font-size:18px;"></h2>
+      <p id="detail-place-meta" style="margin:4px 0 2px;font-size:14px;color:#888;"></p>
+      <p id="detail-place-address" style="margin:2px 0;font-size:13px;color:#666;"></p>
+      <a id="detail-place-phone" href="#" style="font-size:13px;color:#ff7043;font-weight:600;display:none;"></a>
+      <div style="margin-top:10px;">
+        <a id="detail-map-btn" href="#" target="_blank" rel="noopener noreferrer" class="map-link-btn">🗺️ 카카오지도에서 보기</a>
+      </div>
+      <div id="detail-price-table" style="margin-top:16px;"></div>
+      <div style="margin-top:16px;">
+        <h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 10px;">인증된 리뷰</h4>
+        <div id="detail-reviews-list"><p class="placeholder-text">불러오는 중...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 리뷰 신고 모달 -->
+  <div class="modal-overlay" id="report-modal" hidden>
+    <div class="modal" style="max-width:340px;">
+      <button class="modal-close" id="report-modal-close" aria-label="닫기">✕</button>
+      <h2 class="modal-title" style="font-size:16px;">리뷰 신고</h2>
+      <p style="font-size:13px;color:#888;margin:8px 0 16px;">신고 사유를 선택해주세요.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="report-reason" value="허위정보" /> 허위 정보 / 사기성 리뷰
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="report-reason" value="욕설비방" /> 욕설 / 비방 내용
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="report-reason" value="광고성" /> 광고성 / 홍보 목적
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="report-reason" value="기타" /> 기타
+        </label>
+      </div>
+      <button class="primary-btn" id="report-submit-btn" style="width:100%;margin-top:20px;">신고 접수</button>
+    </div>
+  </div>
+
   <!-- 로그인 모달 -->
   <div class="modal-overlay" id="login-modal" hidden>
     <div class="modal login-modal">
@@ -372,6 +415,7 @@
     <div style="margin-top:6px;">
       <a href="terms.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">이용약관</a>
       <a href="privacy.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">개인정보처리방침</a>
+      <a href="contact.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">문의하기</a>
     </div>
   </footer>
   <!-- Supabase JS SDK -->

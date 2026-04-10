@@ -36,3 +36,61 @@ ALTER TABLE pets ADD COLUMN IF NOT EXISTS is_neutered     boolean;
 ALTER TABLE pets ADD COLUMN IF NOT EXISTS weight          numeric(5,2); -- kg
 ALTER TABLE pets ADD COLUMN IF NOT EXISTS registration_no text;
 ALTER TABLE pets ADD COLUMN IF NOT EXISTS notes           text;
+
+-- =====================================================
+-- 6. review_likes 테이블 (리뷰 도움이 됐어요)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS review_likes (
+  id         uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  review_id  uuid REFERENCES reviews(id) ON DELETE CASCADE NOT NULL,
+  user_id    uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  UNIQUE(review_id, user_id)
+);
+ALTER TABLE review_likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "누구나 좋아요 수 조회 가능"   ON review_likes FOR SELECT USING (true);
+CREATE POLICY "로그인 사용자 좋아요 추가"    ON review_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "본인 좋아요 삭제"             ON review_likes FOR DELETE USING (auth.uid() = user_id);
+
+-- =====================================================
+-- 7. review_reports 테이블 (리뷰 신고)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS review_reports (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  review_id   uuid REFERENCES reviews(id) ON DELETE CASCADE NOT NULL,
+  user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  reason      text NOT NULL,
+  is_resolved boolean DEFAULT false NOT NULL,
+  created_at  timestamptz DEFAULT now() NOT NULL,
+  UNIQUE(review_id, user_id)
+);
+ALTER TABLE review_reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "로그인 사용자 신고 등록"   ON review_reports FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "본인 신고 조회"            ON review_reports FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "관리자 신고 전체 조회"     ON review_reports FOR SELECT USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+);
+CREATE POLICY "관리자 신고 처리"          ON review_reports FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+);
+
+-- =====================================================
+-- 8. contacts 테이블 (문의하기)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS contacts (
+  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name        text NOT NULL,
+  email       text NOT NULL,
+  type        text NOT NULL,
+  content     text NOT NULL,
+  is_resolved boolean DEFAULT false NOT NULL,
+  created_at  timestamptz DEFAULT now() NOT NULL
+);
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "누구나 문의 등록 가능"  ON contacts FOR INSERT WITH CHECK (true);
+CREATE POLICY "관리자 문의 조회"       ON contacts FOR SELECT USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+);
+CREATE POLICY "관리자 문의 처리"       ON contacts FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+);

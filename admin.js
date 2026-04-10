@@ -21,6 +21,7 @@
         const panel = document.getElementById("panel-" + btn.dataset.tab);
         if (panel) panel.classList.add("is-active");
         if (btn.dataset.tab === "reviews") loadAllReviews();
+        if (btn.dataset.tab === "reports") loadReports();
         if (btn.dataset.tab === "users") loadUsers();
         if (btn.dataset.tab === "ads") loadAdsTab();
       });
@@ -156,6 +157,64 @@
         const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.reviewId);
         if (delErr) { alert("삭제 실패: " + delErr.message); return; }
         btn.closest(".admin-card").remove();
+        loadStats();
+      });
+    });
+  }
+
+  // ===== 신고 관리 =====
+  async function loadReports() {
+    const container = document.getElementById("reports-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    if (!db) return;
+
+    const { data, error } = await db
+      .from("review_reports")
+      .select("*, reviews(place_name, short_review, region)")
+      .eq("is_resolved", false)
+      .order("created_at", { ascending: false });
+
+    if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
+    if (!data?.length) { container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>'; return; }
+
+    container.innerHTML = data.map((r) => `
+      <div class="admin-card" data-report-id="${escapeHtml(r.id)}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+          <h3>${escapeHtml(r.reviews?.place_name || "(알 수 없음)")}</h3>
+          <span class="badge-pending">처리 대기</span>
+        </div>
+        <p>신고 사유: <strong>${escapeHtml(r.reason)}</strong></p>
+        <p>리뷰 내용: ${escapeHtml(r.reviews?.short_review || "")}</p>
+        <p class="helper-text">신고일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
+        <div class="card-actions">
+          <button class="btn-approve resolve-report-btn" data-id="${escapeHtml(r.id)}">처리 완료</button>
+          <button class="btn-reject delete-reported-review-btn" data-review-id="${escapeHtml(r.review_id)}" data-report-id="${escapeHtml(r.id)}">리뷰 삭제</button>
+        </div>
+      </div>`).join("");
+
+    container.querySelectorAll(".resolve-report-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const { error: updErr } = await db.from("review_reports").update({ is_resolved: true }).eq("id", btn.dataset.id);
+        if (updErr) { alert("처리 실패: " + updErr.message); return; }
+        btn.closest(".admin-card").remove();
+        if (!container.querySelector(".admin-card")) {
+          container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>';
+        }
+      });
+    });
+
+    container.querySelectorAll(".delete-reported-review-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("리뷰를 삭제하시겠습니까?")) return;
+        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.reviewId);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        await db.from("review_reports").update({ is_resolved: true }).eq("id", btn.dataset.reportId);
+        btn.closest(".admin-card").remove();
+        if (!container.querySelector(".admin-card")) {
+          container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>';
+        }
         loadStats();
       });
     });
