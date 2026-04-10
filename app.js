@@ -348,6 +348,7 @@ async function loadReviews() {
   const { data, error } = await db
     .from("reviews")
     .select("*")
+    .or("status.eq.approved,status.is.null")
     .order("is_verified", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -570,7 +571,8 @@ function bindReviewForm() {
         short_review: String(formData.get("short-review")).trim(),
         receipt_image_url: receiptPath,
         pet_photo_url: petPhotoUrl || null,
-        is_verified: !!receiptPath,
+        is_verified: false,
+        status: receiptPath ? "pending" : "approved",
         user_id: window.PetAuth?.currentUser?.id ?? null,
       };
 

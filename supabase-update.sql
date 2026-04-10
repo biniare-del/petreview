@@ -94,3 +94,18 @@ CREATE POLICY "관리자 문의 조회"       ON contacts FOR SELECT USING (
 CREATE POLICY "관리자 문의 처리"       ON contacts FOR UPDATE USING (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
 );
+
+-- =====================================================
+-- 10. reviews 테이블에 status 컬럼 추가 (검수 상태)
+-- =====================================================
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS status text DEFAULT 'approved';
+
+-- 기존 데이터 보정:
+-- 영수증 있지만 미인증 → pending (검수 대기)
+UPDATE reviews
+SET status = 'pending'
+WHERE is_verified = false
+  AND receipt_image_url IS NOT NULL
+  AND receipt_image_url != ''
+  AND status = 'approved';
+-- 이미 인증된 리뷰는 approved 유지 (DEFAULT로 이미 설정됨)

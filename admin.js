@@ -56,13 +56,11 @@
     const db = window.supabaseClient;
     if (!db) return;
 
-    // 영수증 업로드됐지만 미인증 리뷰
+    // 검수 대기 리뷰 (status = 'pending')
     const { data, error } = await db
       .from("reviews")
       .select("*")
-      .not("receipt_image_url", "is", null)
-      .neq("receipt_image_url", "")
-      .eq("is_verified", false)
+      .eq("status", "pending")
       .order("created_at", { ascending: false });
 
     if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
@@ -101,9 +99,12 @@
       btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
         const isApprove = btn.dataset.action === "approve";
+        const updateData = isApprove
+          ? { is_verified: true, status: "approved" }
+          : { status: "rejected" };
         const { error: updErr } = await db
           .from("reviews")
-          .update({ is_verified: isApprove })
+          .update(updateData)
           .eq("id", id);
         if (updErr) { alert("처리 실패: " + updErr.message); return; }
         const card = container.querySelector(`[data-review-id="${id}"]`);
