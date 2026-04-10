@@ -26,3 +26,13 @@ CREATE POLICY "pet-photos 업로드 허용"
 CREATE POLICY "pet-photos 조회 허용"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'pet-photos');
+
+-- 5. pets 테이블 컬럼 추가 (마이펫 프로필 확장)
+-- Supabase 대시보드 → SQL Editor 에서 실행하세요.
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS breed           text;
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS gender          text;         -- '수컷' | '암컷'
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS birth_date      date;
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS is_neutered     boolean;
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS weight          numeric(5,2); -- kg
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS registration_no text;
+ALTER TABLE pets ADD COLUMN IF NOT EXISTS notes           text;

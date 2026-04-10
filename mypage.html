@@ -23,6 +23,13 @@
     }
     .mypage-card h3 { margin: 0 0 6px; font-size: 16px; }
     .mypage-card p { margin: 4px 0; font-size: 13px; color: #666; }
+    .btn-edit {
+      padding: 5px 12px; background: transparent; color: #ff8a65;
+      border: 1.5px solid #ff8a65; border-radius: 999px;
+      font-size: 12px; cursor: pointer; font-weight: 600;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .btn-edit:hover { background: #ff8a65; color: #fff; }
     .btn-delete {
       padding: 5px 12px; background: transparent; color: #e57373;
       border: 1.5px solid #e57373; border-radius: 999px;
@@ -153,11 +160,11 @@
     </div>
   </div>
 
-  <!-- 펫 추가 모달 -->
+  <!-- 펫 추가/수정 모달 -->
   <div class="modal-overlay" id="pet-modal" hidden>
-    <div class="modal pet-modal">
+    <div class="modal pet-modal" style="max-height:90vh;overflow-y:auto;">
       <button class="modal-close" id="pet-modal-close">✕</button>
-      <h2 class="modal-title" style="font-size:18px;">반려동물 등록</h2>
+      <h2 class="modal-title" style="font-size:18px;" id="pet-modal-title">반려동물 등록</h2>
       <form id="pet-form" style="margin-top:16px;">
         <div class="form-group">
           <label for="pet-name">이름 *</label>
@@ -175,15 +182,47 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="pet-age">나이 (세)</label>
-          <input type="number" id="pet-age" min="0" max="50" placeholder="예: 3" />
+          <label for="pet-breed">품종</label>
+          <input type="text" id="pet-breed" placeholder="예: 말티즈, 페르시안" maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label for="pet-gender">성별</label>
+          <select id="pet-gender">
+            <option value="">선택 안 함</option>
+            <option value="수컷">수컷</option>
+            <option value="암컷">암컷</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pet-birth-date">생년월일</label>
+          <input type="date" id="pet-birth-date" />
+        </div>
+        <div class="form-group">
+          <label for="pet-is-neutered">중성화 여부</label>
+          <select id="pet-is-neutered">
+            <option value="">선택 안 함</option>
+            <option value="true">완료</option>
+            <option value="false">미완료</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pet-weight">몸무게 (kg)</label>
+          <input type="number" id="pet-weight" min="0" max="200" step="0.1" placeholder="예: 3.5" />
+        </div>
+        <div class="form-group">
+          <label for="pet-registration-no">동물등록번호</label>
+          <input type="text" id="pet-registration-no" placeholder="15자리 등록번호" maxlength="20" />
+        </div>
+        <div class="form-group">
+          <label for="pet-notes">특이사항 / 지병</label>
+          <input type="text" id="pet-notes" placeholder="예: 슬개골 탈구, 알레르기" maxlength="100" />
         </div>
         <div class="form-group">
           <label for="pet-photo-input">사진 (선택)</label>
           <input type="file" id="pet-photo-input" accept="image/*" capture="environment" />
         </div>
         <div style="margin-top:16px;">
-          <button type="submit" class="primary-btn" style="width:100%;">등록하기</button>
+          <button type="submit" class="primary-btn" id="pet-submit-btn" style="width:100%;">등록하기</button>
         </div>
       </form>
     </div>
@@ -191,6 +230,10 @@
 
   <footer class="site-footer">
     <small>© 2026 펫리뷰 · 실제 영수증 기반 반려동물 리뷰 플랫폼</small>
+    <div style="margin-top:6px;">
+      <a href="terms.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">이용약관</a>
+      <a href="privacy.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">개인정보처리방침</a>
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

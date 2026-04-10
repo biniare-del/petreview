@@ -11,6 +11,24 @@
 
   const CATEGORY_LABEL = { hospital: "동물병원", grooming: "미용샵" };
 
+  function calcAge(birthDate) {
+    if (!birthDate) return null;
+    const birth = new Date(birthDate);
+    const now = new Date();
+    const totalMonths = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+    if (totalMonths < 1) return "1개월 미만";
+    if (totalMonths < 12) return `${totalMonths}개월`;
+    return `${Math.floor(totalMonths / 12)}세`;
+  }
+
+  function speciesEmoji(species) {
+    if (species === "강아지") return "🐕";
+    if (species === "고양이") return "🐈";
+    if (species === "토끼") return "🐇";
+    if (species === "햄스터") return "🐹";
+    return "🐾";
+  }
+
   // ===== 탭 전환 =====
   function bindTabs() {
     document.querySelectorAll(".mypage-tab").forEach((btn) => {
@@ -131,18 +149,30 @@
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
-    const cards = (data || []).map((pet) => `
+    const cards = (data || []).map((pet) => {
+      const age = calcAge(pet.birth_date);
+      const infoLines = [
+        pet.species && pet.breed ? `${escapeHtml(pet.species)} · ${escapeHtml(pet.breed)}` : escapeHtml(pet.species ?? ""),
+        [pet.gender ? escapeHtml(pet.gender) : "", pet.is_neutered != null ? (pet.is_neutered ? "중성화 완료" : "중성화 미완료") : ""].filter(Boolean).join(" · "),
+        age ? `${age}${pet.birth_date ? ` (${escapeHtml(pet.birth_date)})` : ""}` : "",
+        pet.weight != null ? `${pet.weight}kg` : "",
+        pet.notes ? escapeHtml(pet.notes) : "",
+      ].filter(Boolean);
+
+      return `
       <div class="pet-card" data-pet-id="${escapeHtml(pet.id)}">
         <div class="pet-avatar">
-          ${pet.photo_url ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />` : "🐾"}
+          ${pet.photo_url ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />` : speciesEmoji(pet.species)}
         </div>
         <h4>${escapeHtml(pet.name)}</h4>
-        <p>${escapeHtml(pet.species ?? "")}</p>
-        ${pet.age != null ? `<p>${pet.age}세</p>` : ""}
-        <div class="card-actions" style="justify-content:center;margin-top:8px;">
+        ${infoLines.map((l) => `<p>${l}</p>`).join("")}
+        ${pet.registration_no ? `<p style="font-size:11px;color:#bbb;">등록번호: ${escapeHtml(pet.registration_no)}</p>` : ""}
+        <div class="card-actions" style="justify-content:center;margin-top:10px;">
+          <button class="btn-edit" data-pet-id="${escapeHtml(pet.id)}">수정</button>
           <button class="btn-delete" data-pet-id="${escapeHtml(pet.id)}">삭제</button>
         </div>
-      </div>`).join("");
+      </div>`;
+    }).join("");
 
     grid.innerHTML = cards + `
       <button class="add-pet-btn" id="add-pet-btn">
@@ -150,6 +180,7 @@
         반려동물 등록
       </button>`;
 
+    // 삭제
     grid.querySelectorAll(".btn-delete[data-pet-id]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm("반려동물을 삭제하시겠습니까?")) return;
@@ -159,13 +190,47 @@
       });
     });
 
-    document.getElementById("add-pet-btn")?.addEventListener("click", openPetModal);
+    // 수정 — 해당 row 데이터 가져와서 모달 열기
+    grid.querySelectorAll(".btn-edit[data-pet-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const pet = (data || []).find((p) => p.id === btn.dataset.petId);
+        if (pet) openPetModal(pet);
+      });
+    });
+
+    document.getElementById("add-pet-btn")?.addEventListener("click", () => openPetModal(null));
   }
 
-  // ===== 펫 추가 모달 =====
-  function openPetModal() {
+  // ===== 펫 모달 =====
+  let editingPetId = null;
+
+  function openPetModal(pet) {
+    editingPetId = pet?.id ?? null;
+    const form = document.getElementById("pet-form");
+    const title = document.getElementById("pet-modal-title");
+    const submitBtn = document.getElementById("pet-submit-btn");
+
+    form.reset();
+
+    if (pet) {
+      title.textContent = "반려동물 수정";
+      submitBtn.textContent = "수정하기";
+      document.getElementById("pet-name").value = pet.name ?? "";
+      document.getElementById("pet-species").value = pet.species ?? "";
+      document.getElementById("pet-breed").value = pet.breed ?? "";
+      document.getElementById("pet-gender").value = pet.gender ?? "";
+      document.getElementById("pet-birth-date").value = pet.birth_date ?? "";
+      document.getElementById("pet-is-neutered").value =
+        pet.is_neutered == null ? "" : String(pet.is_neutered);
+      document.getElementById("pet-weight").value = pet.weight ?? "";
+      document.getElementById("pet-registration-no").value = pet.registration_no ?? "";
+      document.getElementById("pet-notes").value = pet.notes ?? "";
+    } else {
+      title.textContent = "반려동물 등록";
+      submitBtn.textContent = "등록하기";
+    }
+
     document.getElementById("pet-modal").hidden = false;
-    document.getElementById("pet-form").reset();
   }
 
   function closePetModal() {
@@ -184,41 +249,57 @@
       const userId = window.PetAuth?.currentUser?.id;
       if (!db || !userId) return;
 
-      const submitBtn = e.target.querySelector('[type="submit"]');
+      const submitBtn = document.getElementById("pet-submit-btn");
       submitBtn.disabled = true;
-      submitBtn.textContent = "등록 중...";
+      submitBtn.textContent = "저장 중...";
 
       try {
-        const name = document.getElementById("pet-name").value.trim();
-        const species = document.getElementById("pet-species").value;
-        const age = document.getElementById("pet-age").value;
         const photoFile = document.getElementById("pet-photo-input").files?.[0];
-
         let photoUrl = null;
+
         if (photoFile) {
           const ext = photoFile.name.split(".").pop() || "jpg";
           const fileName = `${userId}/${Date.now()}.${ext}`;
-          const { error: upErr } = await db.storage.from("pet-photos").upload(fileName, photoFile, { contentType: photoFile.type });
+          const { error: upErr } = await db.storage
+            .from("pet-photos")
+            .upload(fileName, photoFile, { contentType: photoFile.type });
           if (!upErr) {
             const { data: urlData } = db.storage.from("pet-photos").getPublicUrl(fileName);
             photoUrl = urlData.publicUrl;
           }
         }
 
-        const { error } = await db.from("pets").insert([{
-          user_id: userId,
-          name,
-          species: species || null,
-          age: age ? Number(age) : null,
-          photo_url: photoUrl,
-        }]);
+        const neuteredVal = document.getElementById("pet-is-neutered").value;
+        const weightVal = document.getElementById("pet-weight").value;
+        const birthVal = document.getElementById("pet-birth-date").value;
 
-        if (error) { alert("등록 실패: " + error.message); return; }
+        const row = {
+          user_id: userId,
+          name: document.getElementById("pet-name").value.trim(),
+          species: document.getElementById("pet-species").value || null,
+          breed: document.getElementById("pet-breed").value.trim() || null,
+          gender: document.getElementById("pet-gender").value || null,
+          birth_date: birthVal || null,
+          is_neutered: neuteredVal === "" ? null : neuteredVal === "true",
+          weight: weightVal ? Number(weightVal) : null,
+          registration_no: document.getElementById("pet-registration-no").value.trim() || null,
+          notes: document.getElementById("pet-notes").value.trim() || null,
+        };
+        if (photoUrl) row.photo_url = photoUrl;
+
+        let error;
+        if (editingPetId) {
+          ({ error } = await db.from("pets").update(row).eq("id", editingPetId));
+        } else {
+          ({ error } = await db.from("pets").insert([row]));
+        }
+
+        if (error) { alert("저장 실패: " + error.message); return; }
         closePetModal();
         await loadPets();
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = "등록하기";
+        submitBtn.textContent = editingPetId ? "수정하기" : "등록하기";
       }
     });
   }
