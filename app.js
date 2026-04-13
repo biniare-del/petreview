@@ -78,6 +78,7 @@ let geoState = 'pending';  // 'pending' | 'granted' | 'denied'
 let reviewLikes = {};            // { reviewId: likeCount }
 let userLikedReviews = new Set(); // 현재 유저가 좋아요한 review ID 집합
 let reportingReviewId = null;    // 신고 처리 중인 review ID
+let selectedScores = {};         // 별점 입력 값 { score_kindness, score_price, score_facility, score_wait }
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -291,19 +292,43 @@ function renderReviewList() {
     .map((review) => {
       const likeCount = reviewLikes[review.id] || 0;
       const isLiked = userLikedReviews.has(review.id);
+      const scoresHtml = (review.scoreKindness || review.scorePrice || review.scoreFacility || review.scoreWait) ? `
+        <div class="card-scores">
+          ${review.scoreKindness ? `<div class="score-row"><span class="score-label">친절도</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreKindness * 20}%"></div></div><span class="score-val">${review.scoreKindness}.0</span></div>` : ""}
+          ${review.scorePrice ? `<div class="score-row"><span class="score-label">진료비</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scorePrice * 20}%"></div></div><span class="score-val">${review.scorePrice}.0</span></div>` : ""}
+          ${review.scoreFacility ? `<div class="score-row"><span class="score-label">시설</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreFacility * 20}%"></div></div><span class="score-val">${review.scoreFacility}.0</span></div>` : ""}
+          ${review.scoreWait ? `<div class="score-row"><span class="score-label">대기시간</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreWait * 20}%"></div></div><span class="score-val">${review.scoreWait}.0</span></div>` : ""}
+        </div>` : "";
       return `
       <article class="card${review.isVerified ? " card--verified" : ""}">
-        <div class="review-card-header">
-          <h3>${escapeHtml(review.placeName)} <small>(${CATEGORY_LABEL[review.category]})</small></h3>
-          ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
+        <div class="card-pet-header">
+          <div class="card-pet-avatar">
+            <div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>
+          </div>
+          <div class="card-pet-info">
+            <div class="card-pet-name">
+              ${review.petName ? escapeHtml(review.petName) : "반려동물"}
+              <span class="card-pet-species">${review.petSpecies ? escapeHtml(review.petSpecies) : ""}</span>
+            </div>
+            <div class="card-pet-owner">
+              ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
+              ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
+            </div>
+          </div>
+          <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
         </div>
-        <p>지역: 서울특별시 ${escapeHtml(review.region)} · 방문일: ${escapeHtml(review.visitDate)}</p>
-        <p>항목: ${escapeHtml(review.serviceDetail)}</p>
-        <p>실결제: ₩ ${formatPrice(review.totalPrice)}</p>
-        <p>후기: ${escapeHtml(review.shortReview)}</p>
+        <div class="card-place-info">
+          <span class="card-place-name">${escapeHtml(review.placeName)}</span>
+          <span class="card-place-region">서울 ${escapeHtml(review.region)}</span>
+        </div>
+        ${scoresHtml}
+        <div class="card-price-row">
+          <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
+          <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
+        </div>
+        <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
         <div class="review-images">
           ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
-          ${review.receiptImage ? `<img src="${escapeHtml(review.receiptImage)}" alt="영수증" class="review-thumb" />` : ""}
         </div>
         <div class="review-actions">
           <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
@@ -328,10 +353,17 @@ function rowToReview(row) {
     serviceDetail: row.service_detail,
     totalPrice: row.total_price,
     shortReview: row.short_review,
-    receiptPath: storagePath,            // 저장 경로 (private 버킷용)
-    receiptImage: storagePath.startsWith("http") ? storagePath : "", // signed URL 생성 전 임시
+    receiptPath: storagePath,
+    receiptImage: storagePath.startsWith("http") ? storagePath : "",
     petPhoto: row.pet_photo_url || "",
     isVerified: row.is_verified || false,
+    petName: row.pet_name || "",
+    petSpecies: row.pet_species || "",
+    scoreKindness: row.score_kindness || null,
+    scorePrice: row.score_price || null,
+    scoreFacility: row.score_facility || null,
+    scoreWait: row.score_wait || null,
+    userNickname: row.profiles?.nickname || "",
   };
 }
 
@@ -536,6 +568,22 @@ function bindPetPhotoPreview() {
   });
 }
 
+function bindStarSelects() {
+  document.querySelectorAll(".star-select").forEach((group) => {
+    const field = group.dataset.field;
+    const buttons = Array.from(group.querySelectorAll("button"));
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const val = Number(btn.dataset.val);
+        selectedScores[field] = val;
+        buttons.forEach((b) => {
+          b.classList.toggle("is-selected", Number(b.dataset.val) <= val);
+        });
+      });
+    });
+  });
+}
+
 function bindReviewForm() {
   els.reviewForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -574,6 +622,10 @@ function bindReviewForm() {
         is_verified: false,
         status: receiptPath ? "pending" : "approved",
         user_id: window.PetAuth?.currentUser?.id ?? null,
+        score_kindness: selectedScores.score_kindness || null,
+        score_price: selectedScores.score_price || null,
+        score_facility: selectedScores.score_facility || null,
+        score_wait: selectedScores.score_wait || null,
       };
 
       if (db) {
@@ -614,6 +666,8 @@ function bindReviewForm() {
       els.receiptPreview.innerHTML = "";
       if (els.petPhotoPreview) els.petPhotoPreview.innerHTML = "";
       if (els.ocrStatus) els.ocrStatus.hidden = true;
+      selectedScores = {};
+      document.querySelectorAll(".star-select button").forEach((b) => b.classList.remove("is-selected"));
       renderServiceTags(selectedSearchCategory);
       renderReviewList();
     } finally {
@@ -1343,6 +1397,7 @@ function init() {
   bindSearch();
   bindReceiptPreview();
   bindPetPhotoPreview();
+  bindStarSelects();
   bindReviewForm();
   bindReviewFilters();
   bindReviewActions();

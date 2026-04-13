@@ -1446,3 +1446,194 @@ body[data-theme="grooming"] .place-phone-link {
   resize: vertical;
   min-height: 120px;
 }
+
+/* ===== 리뷰 카드 리디자인 ===== */
+
+.card-pet-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.card-pet-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #e1f5ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+}
+
+.pet-icon--dog::before { content: "🐶"; }
+.pet-icon--cat::before { content: "🐱"; }
+
+.card-pet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-pet-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #2a2520);
+}
+
+.card-pet-species {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary, #888);
+  margin-left: 4px;
+}
+
+.card-pet-owner {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.card-place-info {
+  margin-bottom: 10px;
+}
+
+.card-place-name {
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+}
+
+.card-place-region {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+}
+
+.category-tag {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.category-tag--hospital { background: #e6f1fb; color: #0c447c; }
+.category-tag--grooming { background: #fbeaf0; color: #72243e; }
+
+/* 다항목 별점 바 */
+.card-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  margin: 10px 0;
+  padding: 10px;
+  background: #f7f8fa;
+  border-radius: 8px;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.score-label {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  min-width: 40px;
+}
+
+.score-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: #e0e0e0;
+  border-radius: 2px;
+}
+
+.score-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: #1d9e75;
+}
+
+.score-val {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f6e56;
+  min-width: 20px;
+  text-align: right;
+}
+
+/* 진료비 + 항목 행 */
+.card-price-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 4px;
+}
+
+.card-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d9e75;
+}
+
+.card-service-detail {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+}
+
+.card-review-text {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 6px 0 8px;
+  color: var(--text-primary, #2a2520);
+}
+
+/* ===== 별점 입력 폼 ===== */
+.score-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.score-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-input-label {
+  font-size: 13px;
+  color: var(--text-secondary, #888);
+  min-width: 48px;
+}
+
+.star-select {
+  display: flex;
+  gap: 2px;
+}
+
+.star-select button {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #ddd;
+  cursor: pointer;
+  padding: 2px;
+  line-height: 1;
+  transition: color 0.1s;
+}
+
+.star-select button:hover,
+.star-select button.is-selected {
+  color: #ef9f27;
+}
+}
