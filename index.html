@@ -63,6 +63,13 @@
     <!-- 배너 슬롯 (is_active 배너가 있을 때만 JS로 표시) -->
     <div id="banner-slot" class="banner-slot" hidden></div>
 
+    <!-- 0. 히어로 섹션 -->
+    <section class="hero-section" aria-label="히어로">
+      <p class="hero-title">우리 아이가 다녀온 곳</p>
+      <p class="hero-sub">영수증으로 인증된 진짜 후기만, 진료비까지 투명하게</p>
+      <button class="hero-cta-btn" onclick="document.getElementById('review-form-section')?.scrollIntoView({behavior:'smooth',block:'start'})">후기 남기기</button>
+    </section>
+
     <!-- 1. 주변 동물병원/미용샵 검색 섹션 -->
     <section id="search-section" class="section search-section" aria-label="주변 업체 검색">
       <header class="section-header">

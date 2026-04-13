@@ -1641,6 +1641,45 @@ body[data-theme="grooming"] .place-phone-link {
   padding-bottom: 56px;
 }
 
+/* ===== 히어로 섹션 ===== */
+.hero-section {
+  background: #0f6e56;
+  padding: 28px 20px 24px;
+  text-align: center;
+}
+
+.hero-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.hero-sub {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #9fe1cb;
+  line-height: 1.5;
+}
+
+.hero-cta-btn {
+  background: #fff;
+  color: #0f6e56;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.hero-cta-btn:hover {
+  opacity: 0.88;
+}
+
 /* ===== 하단 탭바 ===== */
 .bottom-tab-bar {
   position: fixed;
