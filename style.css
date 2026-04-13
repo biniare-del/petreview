@@ -16,7 +16,6 @@ body {
     "Segoe UI", sans-serif;
   color: #333333;
   background-color: #fff7f2; /* 따뜻한 크림톤 배경 */
-  padding-bottom: 56px; /* 하단 탭바 높이만큼 여백 */
 }
 
 /* 공통 레이아웃 */
@@ -1636,6 +1635,10 @@ body[data-theme="grooming"] .place-phone-link {
 .star-select button:hover,
 .star-select button.is-selected {
   color: #ef9f27;
+}
+
+.has-tabbar {
+  padding-bottom: 56px;
 }
 
 /* ===== 하단 탭바 ===== */
