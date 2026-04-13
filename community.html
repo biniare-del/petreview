@@ -117,6 +117,9 @@
       gap: 6px;
     }
 
+    /* hidden 속성이 display:flex에 덮어써지지 않도록 명시 */
+    .community-modal-overlay[hidden] { display: none; }
+
     /* 모달 오버레이 */
     .community-modal-overlay {
       position: fixed;
