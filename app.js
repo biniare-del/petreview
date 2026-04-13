@@ -408,6 +408,68 @@ async function loadReviews() {
   reviews = rawReviews;
   await loadLikes();
   renderReviewList();
+  renderRecentReviews();
+}
+
+function renderRecentReviews() {
+  const el = document.getElementById("recent-review-list");
+  if (!el) return;
+
+  // reviews는 DB에서 이미 created_at 내림차순으로 로드됨
+  const recent = reviews.slice(0, 3);
+
+  if (recent.length === 0) {
+    el.innerHTML = '<p class="placeholder-text">아직 후기가 없습니다.</p>';
+    return;
+  }
+
+  el.innerHTML = recent.map((review) => {
+    const likeCount = reviewLikes[review.id] || 0;
+    const isLiked = userLikedReviews.has(review.id);
+    const scoresHtml = (review.scoreKindness || review.scorePrice || review.scoreFacility || review.scoreWait) ? `
+      <div class="card-scores">
+        ${review.scoreKindness ? `<div class="score-row"><span class="score-label">친절도</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreKindness * 20}%"></div></div><span class="score-val">${review.scoreKindness}.0</span></div>` : ""}
+        ${review.scorePrice ? `<div class="score-row"><span class="score-label">진료비</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scorePrice * 20}%"></div></div><span class="score-val">${review.scorePrice}.0</span></div>` : ""}
+        ${review.scoreFacility ? `<div class="score-row"><span class="score-label">시설</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreFacility * 20}%"></div></div><span class="score-val">${review.scoreFacility}.0</span></div>` : ""}
+        ${review.scoreWait ? `<div class="score-row"><span class="score-label">대기시간</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreWait * 20}%"></div></div><span class="score-val">${review.scoreWait}.0</span></div>` : ""}
+      </div>` : "";
+    return `
+    <article class="card${review.isVerified ? " card--verified" : ""}">
+      <div class="card-pet-header">
+        <div class="card-pet-avatar">
+          <div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>
+        </div>
+        <div class="card-pet-info">
+          <div class="card-pet-name">
+            ${review.petName ? escapeHtml(review.petName) : "반려동물"}
+            <span class="card-pet-species">${review.petSpecies ? escapeHtml(review.petSpecies) : ""}</span>
+          </div>
+          <div class="card-pet-owner">
+            ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
+            ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
+          </div>
+        </div>
+        <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
+      </div>
+      <div class="card-place-info">
+        <span class="card-place-name">${escapeHtml(review.placeName)}</span>
+        <span class="card-place-region">서울 ${escapeHtml(review.region)}</span>
+      </div>
+      ${scoresHtml}
+      <div class="card-price-row">
+        <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
+        <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
+      </div>
+      <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
+      <div class="review-images">
+        ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
+      </div>
+      <div class="review-actions">
+        <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
+        <button class="report-btn" data-review-id="${escapeHtml(review.id)}">🚨 신고</button>
+      </div>
+    </article>`;
+  }).join("");
 }
 
 // 영수증: private 버킷에 업로드 → 파일 경로 반환 (공개 URL 아님)

@@ -1641,6 +1641,18 @@ body[data-theme="grooming"] .place-phone-link {
   padding-bottom: 56px;
 }
 
+.see-all-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f6e56;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+}
+.see-all-btn:hover { text-decoration: underline; }
+
 /* ===== 히어로 섹션 ===== */
 .hero-section {
   background: #0f6e56;

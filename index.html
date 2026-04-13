@@ -46,6 +46,19 @@
     <!-- 배너 슬롯 (is_active 배너가 있을 때만 JS로 표시) -->
     <div id="banner-slot" class="banner-slot" hidden></div>
 
+    <!-- 최근 후기 섹션 -->
+    <section class="section recent-reviews-section" aria-label="최근 후기">
+      <header class="section-header">
+        <h2>최근 후기</h2>
+      </header>
+      <div id="recent-review-list">
+        <p class="placeholder-text">불러오는 중...</p>
+      </div>
+      <div style="text-align:right;margin-top:10px;">
+        <button class="see-all-btn" onclick="document.getElementById('review-list-section')?.scrollIntoView({behavior:'smooth',block:'start'})">전체 후기 보기 →</button>
+      </div>
+    </section>
+
     <!-- 1. 주변 동물병원/미용샵 검색 섹션 -->
     <section id="search-section" class="section search-section" aria-label="주변 업체 검색">
       <header class="section-header">
