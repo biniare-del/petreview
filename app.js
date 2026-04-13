@@ -568,6 +568,47 @@ function bindPetPhotoPreview() {
   });
 }
 
+function bindTabBar() {
+  const tabs = document.querySelectorAll(".tab-item[data-tab]");
+  if (!tabs.length) return;
+
+  function setActive(tabName) {
+    tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === tabName));
+  }
+
+  document.querySelector('.tab-item[data-tab="home"]')?.addEventListener("click", () => {
+    setActive("home");
+    document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.querySelector('.tab-item[data-tab="reviews"]')?.addEventListener("click", () => {
+    setActive("reviews");
+    document.getElementById("review-list-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.querySelector('.tab-item[data-tab="community"]')?.addEventListener("click", () => {
+    alert("커뮤니티 기능은 준비 중입니다.");
+  });
+
+  document.querySelector('.tab-item[data-tab="mypage"]')?.addEventListener("click", () => {
+    window.location.href = "mypage.html";
+  });
+
+  // 스크롤 위치에 따라 홈/후기 자동 전환
+  const reviewSection = document.getElementById("review-list-section");
+  if (reviewSection) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setActive(entry.isIntersecting ? "reviews" : "home");
+        });
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(reviewSection);
+  }
+}
+
 function bindStarSelects() {
   document.querySelectorAll(".star-select").forEach((group) => {
     const field = group.dataset.field;
@@ -1395,6 +1436,7 @@ function init() {
   bindCategoryToggle();
   bindSearchResultsSelection();
   bindSearch();
+  bindTabBar();
   bindReceiptPreview();
   bindPetPhotoPreview();
   bindStarSelects();
