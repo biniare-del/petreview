@@ -109,3 +109,37 @@ WHERE is_verified = false
   AND receipt_image_url != ''
   AND status = 'approved';
 -- 이미 인증된 리뷰는 approved 유지 (DEFAULT로 이미 설정됨)
+
+-- =====================================================
+-- 11. 커뮤니티 게시판 (posts, comments)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS posts (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  tag        TEXT NOT NULL CHECK (tag IN ('병원추천', '질문', '자랑', '정보')),
+  title      TEXT NOT NULL,
+  content    TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id    UUID REFERENCES posts(id) ON DELETE CASCADE,
+  user_id    UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  content    TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE posts    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+
+-- posts RLS
+CREATE POLICY "posts_select" ON posts FOR SELECT USING (true);
+CREATE POLICY "posts_insert" ON posts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "posts_delete" ON posts FOR DELETE USING (auth.uid() = user_id);
+
+-- comments RLS
+CREATE POLICY "comments_select" ON comments FOR SELECT USING (true);
+CREATE POLICY "comments_insert" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "comments_delete" ON comments FOR DELETE USING (auth.uid() = user_id);

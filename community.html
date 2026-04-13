@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>커뮤니티 – 펫리뷰</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { padding-bottom: 56px; }
+
+    .community-main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    /* 태그 필터 바 */
+    .tag-filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      background: #fff;
+      border-bottom: 1px solid #f0e8e2;
+      position: sticky;
+      top: 56px;
+      z-index: 10;
+      scrollbar-width: none;
+    }
+    .tag-filter-bar::-webkit-scrollbar { display: none; }
+
+    .tag-filter-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #e0d7d2;
+      background: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      color: #666;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .tag-filter-btn.is-active {
+      background: #0f6e56;
+      border-color: #0f6e56;
+      color: #fff;
+    }
+
+    /* 글 목록 */
+    .post-list {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .post-card {
+      background: #fffaf7;
+      border: 1px solid #f5ded2;
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+    .post-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+
+    .post-card-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .tag-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .post-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #2a2520;
+      margin: 0 0 6px;
+      line-height: 1.4;
+    }
+
+    .post-card-meta {
+      font-size: 12px;
+      color: #aaa;
+      display: flex;
+      gap: 10px;
+    }
+
+    /* 글쓰기 FAB */
+    .write-fab {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: #0f6e56;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(15,110,86,0.35);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 모달 오버레이 */
+    .community-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 500;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .community-modal {
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+
+    .community-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid #f0e8e2;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+    }
+    .community-modal-header h3 { margin: 0; font-size: 17px; }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #888;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    /* 글 상세 */
+    .post-detail-body { padding: 16px 20px; }
+
+    .detail-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 8px 0 10px;
+      color: #2a2520;
+    }
+
+    .detail-meta { font-size: 12px; color: #aaa; margin-bottom: 14px; }
+
+    .detail-content {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+
+    /* 댓글 */
+    .comment-section {
+      padding: 16px 20px 24px;
+      border-top: 1px solid #f0e8e2;
+    }
+
+    .comment-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2a2520;
+      margin: 0 0 12px;
+    }
+
+    .comment-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #f9f4f0;
+    }
+    .comment-item:last-child { border-bottom: none; }
+
+    .comment-author { font-size: 13px; font-weight: 600; color: #444; }
+    .comment-time { font-size: 11px; color: #bbb; margin-left: 8px; }
+    .comment-content { font-size: 14px; color: #333; margin-top: 4px; line-height: 1.5; }
+
+    .comment-form { display: flex; gap: 8px; margin-top: 14px; }
+
+    .comment-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #e0d7d2;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+    .comment-input:focus { border-color: #0f6e56; }
+
+    .comment-submit-btn {
+      background: #0f6e56;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* 글쓰기 폼 */
+    .write-form-body { padding: 16px 20px 24px; }
+
+    .tag-select-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+    .tag-select-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #e0d7d2;
+      background: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tag-select-btn.is-active {
+      border-color: #0f6e56;
+      background: #e7f5f1;
+      color: #0f6e56;
+      font-weight: 600;
+    }
+
+    .write-title-input,
+    .write-content-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e0d7d2;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .write-title-input:focus,
+    .write-content-input:focus { border-color: #0f6e56; }
+
+    .write-content-input { resize: vertical; min-height: 140px; }
+
+    .write-submit-btn {
+      width: 100%;
+      margin-top: 4px;
+      background: #0f6e56;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .write-submit-btn:disabled { opacity: 0.6; cursor: default; }
+
+    .placeholder-text {
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-area">
+      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+        <div class="logo-icon">🐾</div>
+        <div class="logo-text">
+          <h1>펫리뷰</h1>
+          <p>영수증으로 인증하는 진짜 동물병원·미용샵 리뷰</p>
+        </div>
+      </a>
+    </div>
+    <nav class="site-nav">
+      <a href="index.html">홈으로</a>
+    </nav>
+    <div class="header-auth" id="header-auth">
+      <button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>
+    </div>
+    <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
+    <div class="header-mobile-nav" id="header-mobile-nav">
+      <a href="index.html" class="mobile-nav-link">홈으로</a>
+      <div id="mobile-auth-content"></div>
+    </div>
+  </header>
+
+  <main class="community-main">
+    <!-- 태그 필터 -->
+    <div class="tag-filter-bar" id="tag-filter-bar">
+      <button class="tag-filter-btn is-active" data-tag="전체">전체</button>
+      <button class="tag-filter-btn" data-tag="병원추천">병원추천</button>
+      <button class="tag-filter-btn" data-tag="질문">질문</button>
+      <button class="tag-filter-btn" data-tag="자랑">자랑</button>
+      <button class="tag-filter-btn" data-tag="정보">정보</button>
+    </div>
+
+    <!-- 글 목록 -->
+    <div class="post-list" id="post-list">
+      <p class="placeholder-text">게시글을 불러오는 중...</p>
+    </div>
+
+    <!-- 글쓰기 FAB -->
+    <button class="write-fab" id="write-fab">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      글쓰기
+    </button>
+  </main>
+
+  <!-- 글 상세 모달 -->
+  <div class="community-modal-overlay" id="post-detail-overlay" hidden>
+    <div class="community-modal">
+      <div class="community-modal-header">
+        <h3>게시글</h3>
+        <button class="modal-close-btn" id="detail-close-btn">✕</button>
+      </div>
+      <div class="post-detail-body">
+        <span class="tag-badge" id="detail-tag"></span>
+        <p class="detail-title" id="detail-title"></p>
+        <p class="detail-meta" id="detail-meta"></p>
+        <p class="detail-content" id="detail-content"></p>
+      </div>
+      <div class="comment-section">
+        <p class="comment-section-title">댓글 <span id="comment-count">0</span>개</p>
+        <div id="comment-list"></div>
+        <div id="comment-form-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 글쓰기 모달 -->
+  <div class="community-modal-overlay" id="write-modal-overlay" hidden>
+    <div class="community-modal">
+      <div class="community-modal-header">
+        <h3>글쓰기</h3>
+        <button class="modal-close-btn" id="write-close-btn">✕</button>
+      </div>
+      <div class="write-form-body">
+        <div class="tag-select-group" id="tag-select-group">
+          <button type="button" class="tag-select-btn" data-tag="병원추천">병원추천</button>
+          <button type="button" class="tag-select-btn" data-tag="질문">질문</button>
+          <button type="button" class="tag-select-btn" data-tag="자랑">자랑</button>
+          <button type="button" class="tag-select-btn" data-tag="정보">정보</button>
+        </div>
+        <input type="text" class="write-title-input" id="write-title" placeholder="제목을 입력하세요" maxlength="100" />
+        <textarea class="write-content-input" id="write-content" placeholder="내용을 입력하세요."></textarea>
+        <button class="write-submit-btn" id="write-submit-btn">등록하기</button>
+        <p id="write-result" style="text-align:center;font-size:13px;margin-top:8px;color:#e57373;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 탭바 -->
+  <nav class="bottom-tab-bar" aria-label="하단 탭 메뉴">
+    <button class="tab-item" onclick="window.location.href='index.html'" aria-label="홈">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>홈</span>
+    </button>
+    <button class="tab-item" onclick="window.location.href='index.html#review-list-section'" aria-label="후기">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+      <span>후기</span>
+    </button>
+    <button class="tab-item is-active" aria-label="커뮤니티">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span>커뮤니티</span>
+    </button>
+    <button class="tab-item" onclick="window.location.href='mypage.html'" aria-label="마이">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>마이</span>
+    </button>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // ===== 유틸 =====
+    function escH(v) {
+      return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+    }
+
+    function formatTime(dateStr) {
+      const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+      if (diff < 60) return "방금";
+      if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+      return `${Math.floor(diff / 86400)}일 전`;
+    }
+
+    const TAG_COLORS = {
+      "병원추천": { bg: "#E6F1FB", color: "#0C447C" },
+      "질문":    { bg: "#FAEEDA", color: "#854F0B" },
+      "자랑":    { bg: "#FBEAF0", color: "#72243E" },
+      "정보":    { bg: "#EAF3DE", color: "#27500A" },
+    };
+
+    function tagBadgeHtml(tag) {
+      const c = TAG_COLORS[tag] || { bg: "#f0f0f0", color: "#666" };
+      return `<span class="tag-badge" style="background:${c.bg};color:${c.color};">${escH(tag)}</span>`;
+    }
+
+    // ===== 상태 =====
+    let currentTag = "전체";
+    let currentPostId = null;
+    let allPosts = [];
+    let selectedWriteTag = null;
+
+    // ===== 글 목록 =====
+    async function loadPosts() {
+      const db = window.supabaseClient;
+      const listEl = document.getElementById("post-list");
+      if (!db) {
+        listEl.innerHTML = '<p class="placeholder-text">서비스 연결에 실패했습니다.</p>';
+        return;
+      }
+      const { data, error } = await db
+        .from("posts")
+        .select("*, profiles(nickname), comments(id)")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("[커뮤니티] 글 로드 실패:", error);
+        listEl.innerHTML = '<p class="placeholder-text">게시글을 불러오지 못했습니다.</p>';
+        return;
+      }
+      allPosts = data || [];
+      renderPosts();
+    }
+
+    function renderPosts() {
+      const listEl = document.getElementById("post-list");
+      const filtered = currentTag === "전체"
+        ? allPosts
+        : allPosts.filter(p => p.tag === currentTag);
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<p class="placeholder-text">아직 게시글이 없습니다. 첫 글을 남겨보세요!</p>';
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(post => `
+        <div class="post-card" data-post-id="${escH(post.id)}">
+          <div class="post-card-top">${tagBadgeHtml(post.tag)}</div>
+          <p class="post-card-title">${escH(post.title)}</p>
+          <div class="post-card-meta">
+            <span>${escH(post.profiles?.nickname || "익명")}</span>
+            <span>댓글 ${post.comments?.length || 0}</span>
+            <span>${formatTime(post.created_at)}</span>
+          </div>
+        </div>`).join("");
+
+      listEl.querySelectorAll(".post-card").forEach(card => {
+        card.addEventListener("click", () => {
+          const post = allPosts.find(p => p.id === card.dataset.postId);
+          if (post) openPostDetail(post);
+        });
+      });
+    }
+
+    // ===== 글 상세 =====
+    function openPostDetail(post) {
+      currentPostId = post.id;
+      const c = TAG_COLORS[post.tag] || { bg: "#f0f0f0", color: "#666" };
+      const tagEl = document.getElementById("detail-tag");
+      tagEl.style.background = c.bg;
+      tagEl.style.color = c.color;
+      tagEl.textContent = post.tag;
+      document.getElementById("detail-title").textContent = post.title;
+      document.getElementById("detail-meta").textContent =
+        `${post.profiles?.nickname || "익명"} · ${formatTime(post.created_at)}`;
+      document.getElementById("detail-content").textContent = post.content;
+      document.getElementById("post-detail-overlay").hidden = false;
+      document.body.style.overflow = "hidden";
+      loadComments(post.id);
+    }
+
+    function closePostDetail() {
+      document.getElementById("post-detail-overlay").hidden = true;
+      document.body.style.overflow = "";
+      currentPostId = null;
+    }
+
+    // ===== 댓글 =====
+    async function loadComments(postId) {
+      const db = window.supabaseClient;
+      const listEl = document.getElementById("comment-list");
+      const countEl = document.getElementById("comment-count");
+      listEl.innerHTML = '<p style="font-size:13px;color:#aaa;">불러오는 중...</p>';
+
+      const { data, error } = await db
+        .from("comments")
+        .select("*, profiles(nickname)")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
+
+      const comments = data || [];
+      countEl.textContent = error ? "?" : comments.length;
+
+      listEl.innerHTML = comments.length === 0
+        ? '<p style="font-size:13px;color:#aaa;padding:12px 0;">첫 댓글을 남겨보세요.</p>'
+        : comments.map(c => `
+            <div class="comment-item">
+              <span class="comment-author">${escH(c.profiles?.nickname || "익명")}</span>
+              <span class="comment-time">${formatTime(c.created_at)}</span>
+              <p class="comment-content">${escH(c.content)}</p>
+            </div>`).join("");
+
+      const formArea = document.getElementById("comment-form-area");
+      if (window.PetAuth?.isLoggedIn()) {
+        formArea.innerHTML = `
+          <div class="comment-form">
+            <input class="comment-input" id="comment-input" placeholder="댓글을 입력하세요." maxlength="500" />
+            <button class="comment-submit-btn" id="comment-submit-btn">등록</button>
+          </div>`;
+        document.getElementById("comment-submit-btn").addEventListener("click", submitComment);
+        document.getElementById("comment-input").addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(); }
+        });
+      } else {
+        formArea.innerHTML = `<p style="font-size:13px;color:#aaa;text-align:center;padding:14px 0;">댓글을 달려면 <a href="index.html" style="color:#0f6e56;font-weight:600;">로그인</a>이 필요합니다.</p>`;
+      }
+    }
+
+    async function submitComment() {
+      const db = window.supabaseClient;
+      const input = document.getElementById("comment-input");
+      const btn = document.getElementById("comment-submit-btn");
+      const content = input?.value.trim();
+      if (!content || !currentPostId) return;
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!userId) return;
+
+      btn.disabled = true;
+      const { error } = await db.from("comments").insert([{
+        post_id: currentPostId,
+        user_id: userId,
+        content,
+      }]);
+      btn.disabled = false;
+
+      if (error) {
+        alert("댓글 등록에 실패했습니다.");
+        return;
+      }
+      input.value = "";
+      await loadComments(currentPostId);
+      // 글 목록 댓글 수 갱신
+      const post = allPosts.find(p => p.id === currentPostId);
+      if (post) { if (!post.comments) post.comments = []; post.comments.push({ id: "t" }); }
+    }
+
+    // ===== 글쓰기 =====
+    function openWriteModal() {
+      if (!window.PetAuth?.isLoggedIn()) {
+        alert("로그인이 필요합니다.");
+        window.location.href = "index.html";
+        return;
+      }
+      selectedWriteTag = null;
+      document.getElementById("write-title").value = "";
+      document.getElementById("write-content").value = "";
+      document.getElementById("write-result").textContent = "";
+      document.querySelectorAll(".tag-select-btn").forEach(b => b.classList.remove("is-active"));
+      document.getElementById("write-modal-overlay").hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeWriteModal() {
+      document.getElementById("write-modal-overlay").hidden = true;
+      document.body.style.overflow = "";
+    }
+
+    async function submitPost() {
+      const db = window.supabaseClient;
+      const title = document.getElementById("write-title").value.trim();
+      const content = document.getElementById("write-content").value.trim();
+      const resultEl = document.getElementById("write-result");
+      const btn = document.getElementById("write-submit-btn");
+
+      if (!selectedWriteTag) { resultEl.textContent = "태그를 선택해주세요."; return; }
+      if (!title) { resultEl.textContent = "제목을 입력해주세요."; return; }
+      if (!content) { resultEl.textContent = "내용을 입력해주세요."; return; }
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!userId) return;
+
+      btn.disabled = true;
+      btn.textContent = "등록 중...";
+
+      const { data, error } = await db
+        .from("posts")
+        .insert([{ user_id: userId, tag: selectedWriteTag, title, content }])
+        .select("*, profiles(nickname)")
+        .single();
+
+      btn.disabled = false;
+      btn.textContent = "등록하기";
+
+      if (error) {
+        resultEl.textContent = "등록에 실패했습니다. 다시 시도해주세요.";
+        return;
+      }
+      closeWriteModal();
+      if (data) { data.comments = []; allPosts.unshift(data); renderPosts(); }
+    }
+
+    // ===== 바인딩 =====
+    let _hbBound = false;
+    function bindHamburger() {
+      if (_hbBound) return;
+      const btn = document.getElementById("header-hamburger-btn");
+      const nav = document.getElementById("header-mobile-nav");
+      if (!btn || !nav) return;
+      _hbBound = true;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = nav.classList.toggle("is-open");
+        btn.setAttribute("aria-expanded", open);
+        btn.textContent = open ? "✕" : "☰";
+      });
+      document.addEventListener("click", (e) => {
+        if (nav.classList.contains("is-open") && !nav.contains(e.target) && e.target !== btn) {
+          nav.classList.remove("is-open");
+          btn.setAttribute("aria-expanded", "false");
+          btn.textContent = "☰";
+        }
+      });
+    }
+
+    function updateHeaderAuth() {
+      const area = document.getElementById("header-auth");
+      if (!area) return;
+      bindHamburger();
+      const auth = window.PetAuth;
+      if (!auth?.isLoggedIn()) {
+        area.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>`;
+        const el = document.getElementById("mobile-auth-content");
+        if (el) el.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'" style="margin-top:8px;">로그인</button>`;
+        return;
+      }
+      const name = auth.getDisplayName();
+      const avatar = auth.getAvatarUrl();
+      const avatarHtml = avatar
+        ? `<img src="${escH(avatar)}" class="header-avatar" alt="프로필" />`
+        : `<span class="header-avatar-placeholder">${escH(name[0] || "?")}</span>`;
+      area.innerHTML = `${avatarHtml}<span class="header-username">${escH(name)}</span>`;
+      const el = document.getElementById("mobile-auth-content");
+      if (el) el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0e8e2;">
+          ${avatarHtml}<span style="font-weight:600;font-size:14px;">${escH(name)}</span>
+        </div>`;
+    }
+
+    // ===== 초기화 =====
+    (function init() {
+      window.PetAuth?.init((event) => { updateHeaderAuth(); })
+        .then(() => updateHeaderAuth())
+        .catch(() => {});
+
+      // 태그 필터
+      document.getElementById("tag-filter-bar")?.addEventListener("click", (e) => {
+        const btn = e.target.closest(".tag-filter-btn");
+        if (!btn) return;
+        currentTag = btn.dataset.tag;
+        document.querySelectorAll(".tag-filter-btn").forEach(b =>
+          b.classList.toggle("is-active", b.dataset.tag === currentTag));
+        renderPosts();
+      });
+
+      // 태그 선택 (글쓰기)
+      document.getElementById("tag-select-group")?.addEventListener("click", (e) => {
+        const btn = e.target.closest(".tag-select-btn");
+        if (!btn) return;
+        selectedWriteTag = btn.dataset.tag;
+        document.querySelectorAll(".tag-select-btn").forEach(b =>
+          b.classList.toggle("is-active", b.dataset.tag === selectedWriteTag));
+      });
+
+      document.getElementById("write-fab")?.addEventListener("click", openWriteModal);
+      document.getElementById("detail-close-btn")?.addEventListener("click", closePostDetail);
+      document.getElementById("write-close-btn")?.addEventListener("click", closeWriteModal);
+      document.getElementById("write-submit-btn")?.addEventListener("click", submitPost);
+
+      // 오버레이 배경 클릭 시 닫기
+      document.getElementById("post-detail-overlay")?.addEventListener("click", (e) => {
+        if (e.target.id === "post-detail-overlay") closePostDetail();
+      });
+      document.getElementById("write-modal-overlay")?.addEventListener("click", (e) => {
+        if (e.target.id === "write-modal-overlay") closeWriteModal();
+      });
+
+      void loadPosts();
+    })();
+  </script>
+</body>
+</html>

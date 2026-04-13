@@ -587,7 +587,7 @@ function bindTabBar() {
   });
 
   document.querySelector('.tab-item[data-tab="community"]')?.addEventListener("click", () => {
-    alert("커뮤니티 기능은 준비 중입니다.");
+    window.location.href = "community.html";
   });
 
   document.querySelector('.tab-item[data-tab="mypage"]')?.addEventListener("click", () => {
