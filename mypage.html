@@ -233,6 +233,33 @@
     </div>
   </div>
 
+  <!-- 건강기록 모달 -->
+  <div class="modal-overlay" id="health-modal" hidden>
+    <div class="modal pet-modal" style="max-height:90vh;overflow-y:auto;">
+      <button class="modal-close" id="health-modal-close">✕</button>
+      <h2 class="modal-title" style="font-size:18px;" id="health-modal-title">건강기록</h2>
+
+      <!-- 체중 기록 -->
+      <div style="margin-top:20px;">
+        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px;color:#444;">⚖️ 체중 기록</h3>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <input type="number" id="weight-input" placeholder="kg (예: 3.5)" min="0" max="200" step="0.1"
+            style="flex:1;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
+          <input type="date" id="weight-date-input"
+            style="flex:1;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
+          <button id="weight-add-btn" class="primary-btn" style="padding:8px 14px;white-space:nowrap;">추가</button>
+        </div>
+        <div id="weight-log-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
+      </div>
+
+      <!-- 진료 이력 -->
+      <div style="margin-top:24px;border-top:1px solid #f0e8e2;padding-top:20px;">
+        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px;color:#444;">🏥 진료 이력</h3>
+        <div id="pet-visit-list"><p class="placeholder-text" style="padding:12px 0;">불러오는 중...</p></div>
+      </div>
+    </div>
+  </div>
+
   <footer class="site-footer">
     <small>© 2026 펫리뷰 · 실제 영수증 기반 반려동물 리뷰 플랫폼</small>
     <div style="margin-top:6px;">

@@ -179,9 +179,12 @@
         <h4>${escapeHtml(pet.name)}</h4>
         ${infoLines.map((l) => `<p>${l}</p>`).join("")}
         ${pet.registration_no ? `<p style="font-size:11px;color:#bbb;">등록번호: ${escapeHtml(pet.registration_no)}</p>` : ""}
-        <div class="card-actions" style="justify-content:center;margin-top:10px;">
-          <button class="btn-edit" data-pet-id="${escapeHtml(pet.id)}">수정</button>
-          <button class="btn-delete" data-pet-id="${escapeHtml(pet.id)}">삭제</button>
+        <div class="card-actions" style="justify-content:center;margin-top:10px;flex-direction:column;gap:6px;">
+          <button class="primary-btn" data-health-pet-id="${escapeHtml(pet.id)}" data-health-pet-name="${escapeHtml(pet.name)}" style="width:100%;padding:7px;font-size:13px;">🩺 건강기록</button>
+          <div style="display:flex;gap:6px;width:100%;">
+            <button class="btn-edit" data-pet-id="${escapeHtml(pet.id)}" style="flex:1;">수정</button>
+            <button class="btn-delete" data-pet-id="${escapeHtml(pet.id)}" style="flex:1;">삭제</button>
+          </div>
         </div>
       </div>`;
     }).join("");
@@ -207,6 +210,14 @@
       btn.addEventListener("click", async () => {
         const pet = (data || []).find((p) => p.id === btn.dataset.petId);
         if (pet) openPetModal(pet);
+      });
+    });
+
+    // 건강기록
+    grid.querySelectorAll("[data-health-pet-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const pet = (data || []).find((p) => p.id === btn.dataset.healthPetId);
+        if (pet) openHealthModal(pet);
       });
     });
 
@@ -334,6 +345,125 @@
         submitBtn.disabled = false;
         submitBtn.textContent = editingPetId ? "수정하기" : "등록하기";
       }
+    });
+  }
+
+  // ===== 건강기록 모달 =====
+  let currentHealthPet = null;
+
+  function openHealthModal(pet) {
+    currentHealthPet = pet;
+    document.getElementById("health-modal-title").textContent = `${pet.name}의 건강기록`;
+    document.getElementById("health-modal").hidden = false;
+    // 날짜 기본값 = 오늘
+    const dateInput = document.getElementById("weight-date-input");
+    if (dateInput) dateInput.value = new Date().toISOString().split("T")[0];
+    loadWeightLogs(pet.id);
+    loadPetVisitHistory(pet.name);
+  }
+
+  function closeHealthModal() {
+    document.getElementById("health-modal").hidden = true;
+    currentHealthPet = null;
+  }
+
+  async function loadWeightLogs(petId) {
+    const db = window.supabaseClient;
+    const container = document.getElementById("weight-log-list");
+    const { data, error } = await db
+      .from("pet_weight_logs")
+      .select("*")
+      .eq("pet_id", petId)
+      .order("recorded_at", { ascending: false })
+      .limit(20);
+
+    if (error || !data?.length) {
+      container.innerHTML = '<p class="placeholder-text" style="padding:12px 0;">체중 기록이 없습니다.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:left;padding:4px 0;color:#888;font-weight:600;">날짜</th>
+          <th style="text-align:right;padding:4px 0;color:#888;font-weight:600;">체중</th>
+          <th style="width:32px;"></th>
+        </tr></thead>
+        <tbody>
+          ${data.map((log) => `
+            <tr style="border-top:1px solid #f5ede8;">
+              <td style="padding:6px 0;color:#555;">${escapeHtml(log.recorded_at)}</td>
+              <td style="padding:6px 0;text-align:right;font-weight:600;color:#ff7043;">${log.weight} kg</td>
+              <td style="padding:6px 0;text-align:right;">
+                <button class="btn-delete" style="padding:2px 8px;font-size:11px;" data-log-id="${escapeHtml(log.id)}">삭제</button>
+              </td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+
+    container.querySelectorAll(".btn-delete[data-log-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await db.from("pet_weight_logs").delete().eq("id", btn.dataset.logId);
+        loadWeightLogs(petId);
+      });
+    });
+  }
+
+  async function loadPetVisitHistory(petName) {
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    const container = document.getElementById("pet-visit-list");
+    const { data, error } = await db
+      .from("reviews")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("pet_name", petName)
+      .order("visit_date", { ascending: false });
+
+    if (error || !data?.length) {
+      container.innerHTML = '<p class="placeholder-text" style="padding:12px 0;">진료 이력이 없습니다.<br><small style="color:#bbb;">리뷰 작성 시 반려동물을 선택하면 이력이 쌓입니다.</small></p>';
+      return;
+    }
+
+    container.innerHTML = data.map((r) => `
+      <div style="padding:10px 0;border-top:1px solid #f5ede8;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <span style="font-weight:600;font-size:14px;color:#2a2520;">${escapeHtml(r.place_name)}</span>
+          ${r.is_verified ? '<span class="verified-badge" style="font-size:10px;">✔ 인증</span>' : ""}
+        </div>
+        <p style="margin:2px 0;font-size:12px;color:#888;">${CATEGORY_LABEL[r.category] ?? r.category} · ${escapeHtml(r.visit_date ?? "")}</p>
+        <p style="margin:2px 0;font-size:13px;color:#555;">항목: ${escapeHtml(r.service_detail ?? "")}</p>
+        <p style="margin:2px 0;font-size:13px;color:#ff7043;font-weight:600;">₩ ${Number(r.total_price ?? 0).toLocaleString("ko-KR")}</p>
+      </div>`).join("");
+  }
+
+  function bindHealthModal() {
+    document.getElementById("health-modal-close")?.addEventListener("click", closeHealthModal);
+    document.getElementById("health-modal")?.addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) closeHealthModal();
+    });
+
+    document.getElementById("weight-add-btn")?.addEventListener("click", async () => {
+      if (!currentHealthPet) return;
+      const db = window.supabaseClient;
+      const userId = window.PetAuth?.currentUser?.id;
+      const weight = parseFloat(document.getElementById("weight-input").value);
+      const date = document.getElementById("weight-date-input").value;
+      if (!weight || weight <= 0) { alert("체중을 입력해주세요."); return; }
+      if (!date) { alert("날짜를 선택해주세요."); return; }
+
+      const btn = document.getElementById("weight-add-btn");
+      btn.disabled = true;
+      const { error } = await db.from("pet_weight_logs").insert([{
+        pet_id: currentHealthPet.id,
+        user_id: userId,
+        weight,
+        recorded_at: date,
+      }]);
+      btn.disabled = false;
+      if (error) { alert("저장 실패: " + error.message); return; }
+      document.getElementById("weight-input").value = "";
+      loadWeightLogs(currentHealthPet.id);
     });
   }
 
@@ -494,6 +624,7 @@
     await loadProfile();
     bindTabs();
     bindPetModal();
+    bindHealthModal();
     bindProfile();
     await loadMyReviews();
   }
