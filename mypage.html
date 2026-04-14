@@ -176,9 +176,9 @@
           <input type="text" id="pet-name" placeholder="예: 뭉치" required maxlength="20" />
         </div>
         <div class="form-group">
-          <label for="pet-species">종류</label>
-          <select id="pet-species">
-            <option value="">선택 안 함</option>
+          <label for="pet-species">종류 *</label>
+          <select id="pet-species" required>
+            <option value="">선택하세요</option>
             <option value="강아지">강아지</option>
             <option value="고양이">고양이</option>
             <option value="토끼">토끼</option>
@@ -191,9 +191,9 @@
           <input type="text" id="pet-breed" placeholder="예: 말티즈, 페르시안" maxlength="30" />
         </div>
         <div class="form-group">
-          <label for="pet-gender">성별</label>
-          <select id="pet-gender">
-            <option value="">선택 안 함</option>
+          <label for="pet-gender">성별 *</label>
+          <select id="pet-gender" required>
+            <option value="">선택하세요</option>
             <option value="수컷">수컷</option>
             <option value="암컷">암컷</option>
           </select>
@@ -203,9 +203,9 @@
           <input type="date" id="pet-birth-date" />
         </div>
         <div class="form-group">
-          <label for="pet-is-neutered">중성화 여부</label>
-          <select id="pet-is-neutered">
-            <option value="">선택 안 함</option>
+          <label for="pet-is-neutered">중성화 여부 *</label>
+          <select id="pet-is-neutered" required>
+            <option value="">선택하세요</option>
             <option value="true">완료</option>
             <option value="false">미완료</option>
           </select>

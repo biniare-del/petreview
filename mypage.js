@@ -219,6 +219,10 @@
 
     form.reset();
 
+    // 생년월일 최대값 = 오늘 (미래 날짜 방지)
+    const birthInput = document.getElementById("pet-birth-date");
+    if (birthInput) birthInput.max = new Date().toISOString().split("T")[0];
+
     if (pet) {
       title.textContent = "반려동물 수정";
       submitBtn.textContent = "수정하기";
@@ -256,6 +260,25 @@
       const userId = window.PetAuth?.currentUser?.id;
       if (!db || !userId) return;
 
+      // JS 유효성 검사
+      const name = document.getElementById("pet-name").value.trim();
+      const species = document.getElementById("pet-species").value;
+      const breed = document.getElementById("pet-breed").value.trim();
+      const gender = document.getElementById("pet-gender").value;
+      const neuteredVal = document.getElementById("pet-is-neutered").value;
+      const birthVal = document.getElementById("pet-birth-date").value;
+
+      if (!name) { alert("이름을 입력해주세요."); document.getElementById("pet-name").focus(); return; }
+      if (!species) { alert("종류를 선택해주세요."); document.getElementById("pet-species").focus(); return; }
+      if (!breed) { alert("품종을 입력해주세요."); document.getElementById("pet-breed").focus(); return; }
+      if (!gender) { alert("성별을 선택해주세요."); document.getElementById("pet-gender").focus(); return; }
+      if (neuteredVal === "") { alert("중성화 여부를 선택해주세요."); document.getElementById("pet-is-neutered").focus(); return; }
+
+      if (birthVal) {
+        const today = new Date().toISOString().split("T")[0];
+        if (birthVal > today) { alert("생년월일은 오늘 이전 날짜여야 합니다."); document.getElementById("pet-birth-date").focus(); return; }
+      }
+
       const submitBtn = document.getElementById("pet-submit-btn");
       submitBtn.disabled = true;
       submitBtn.textContent = "저장 중...";
@@ -276,16 +299,14 @@
           }
         }
 
-        const neuteredVal = document.getElementById("pet-is-neutered").value;
         const weightVal = document.getElementById("pet-weight").value;
-        const birthVal = document.getElementById("pet-birth-date").value;
 
         const row = {
           user_id: userId,
-          name: document.getElementById("pet-name").value.trim(),
-          species: document.getElementById("pet-species").value || null,
-          breed: document.getElementById("pet-breed").value.trim() || null,
-          gender: document.getElementById("pet-gender").value || null,
+          name,
+          species: species || null,
+          breed: breed || null,
+          gender: gender || null,
           birth_date: birthVal || null,
           is_neutered: neuteredVal === "" ? null : neuteredVal === "true",
           weight: weightVal ? Number(weightVal) : null,
