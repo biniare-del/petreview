@@ -1496,6 +1496,43 @@ async function openPlaceDetail(place) {
       </table>`;
   }
 
+  // 다항목 별점 평균
+  const scoreFields = [
+    { key: "score_kindness", label: "친절도" },
+    { key: "score_price",    label: "진료비 수준" },
+    { key: "score_facility", label: "시설 청결도" },
+    { key: "score_wait",     label: "대기시간" },
+  ];
+  const scoreSums = {};
+  const scoreCounts = {};
+  data.forEach((r) => {
+    scoreFields.forEach(({ key }) => {
+      if (r[key]) {
+        scoreSums[key] = (scoreSums[key] || 0) + r[key];
+        scoreCounts[key] = (scoreCounts[key] || 0) + 1;
+      }
+    });
+  });
+  const scoreRows = scoreFields
+    .filter(({ key }) => scoreCounts[key] > 0)
+    .map(({ key, label }) => {
+      const avg = (scoreSums[key] / scoreCounts[key]).toFixed(1);
+      return `
+        <div class="score-row">
+          <span class="score-label">${label}</span>
+          <div class="score-bar-wrap"><div class="score-bar" style="width:${avg * 20}%"></div></div>
+          <span class="score-val">${avg}</span>
+        </div>`;
+    });
+
+  const scoreContainer = document.getElementById("detail-score-section");
+  if (scoreContainer) {
+    scoreContainer.innerHTML = scoreRows.length
+      ? `<h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 10px;">별점 평균</h4>
+         <div class="card-scores">${scoreRows.join("")}</div>`
+      : "";
+  }
+
   // 리뷰 목록
   document.getElementById("detail-reviews-list").innerHTML = data.map((r, i) => `
     ${i > 0 ? '<hr style="border:none;border-top:1px solid #f0e8e2;margin:0;">' : ""}
