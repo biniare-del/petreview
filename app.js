@@ -97,6 +97,8 @@ const els = {
   receiptPreview: document.getElementById("receipt-preview"),
   petPhotoInput: document.getElementById("pet-photo"),
   petPhotoPreview: document.getElementById("pet-photo-preview"),
+  reviewPhotosInput: document.getElementById("review-photos"),
+  reviewPhotosPreview: document.getElementById("review-photos-preview"),
   ocrStatus: document.getElementById("ocr-status"),
   reviewList: document.getElementById("review-list"),
   filterCategory: document.getElementById("filter-category"),
@@ -345,6 +347,7 @@ function renderReviewList() {
         <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
         <div class="review-images">
           ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
+          ${(review.reviewPhotoUrls || []).map(url => `<img src="${escapeHtml(url)}" alt="리뷰 사진" class="review-thumb" />`).join("")}
         </div>
         <div class="review-actions">
           <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
@@ -379,6 +382,7 @@ function rowToReview(row) {
     scorePrice: row.score_price || null,
     scoreFacility: row.score_facility || null,
     scoreWait: row.score_wait || null,
+    reviewPhotoUrls: row.review_photo_urls || [],
     userNickname: row.profiles?.nickname || "",
   };
 }
@@ -495,6 +499,7 @@ function renderRecentReviews() {
       <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
       <div class="review-images">
         ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
+        ${(review.reviewPhotoUrls || []).map(url => `<img src="${escapeHtml(url)}" alt="리뷰 사진" class="review-thumb" />`).join("")}
       </div>
       <div class="review-actions">
         <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
@@ -524,6 +529,25 @@ async function uploadReceiptImage(db, file) {
 
   // private 버킷: 파일 경로만 저장 (로드 시 signed URL 생성)
   return fileName;
+}
+
+// 리뷰 사진: public 버킷에 업로드 (최대 3장) → 공개 URL 배열 반환
+async function uploadReviewPhotos(db, files) {
+  const urls = [];
+  if (!db || !files?.length) return urls;
+  for (const file of Array.from(files).slice(0, 3)) {
+    if (!file || file.size === 0) continue;
+    const ext = file.name.split(".").pop() || "jpg";
+    const fileName = `reviews/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await db.storage
+      .from("pet-photos")
+      .upload(fileName, file, { contentType: file.type });
+    if (!error) {
+      const { data: urlData } = db.storage.from("pet-photos").getPublicUrl(fileName);
+      urls.push(urlData.publicUrl);
+    }
+  }
+  return urls;
 }
 
 // 반려동물 사진: public 버킷에 업로드 → 공개 URL 반환
@@ -662,6 +686,29 @@ function bindPetPhotoPreview() {
   });
 }
 
+function bindReviewPhotosPreview() {
+  els.reviewPhotosInput?.addEventListener("change", () => {
+    const preview = els.reviewPhotosPreview;
+    if (!preview) return;
+    preview.innerHTML = "";
+    const files = Array.from(els.reviewPhotosInput.files).slice(0, 3);
+    files.forEach((file) => {
+      const url = URL.createObjectURL(file);
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "리뷰 사진 미리보기";
+      img.style.cssText = "width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #f0e8e2;";
+      preview.appendChild(img);
+    });
+    if (els.reviewPhotosInput.files.length > 3) {
+      const note = document.createElement("p");
+      note.style.cssText = "font-size:12px;color:#e57373;width:100%;margin:4px 0 0;";
+      note.textContent = "처음 3장만 업로드됩니다.";
+      preview.appendChild(note);
+    }
+  });
+}
+
 function bindTabBar() {
   const tabs = document.querySelectorAll(".tab-item[data-tab]");
   if (!tabs.length) return;
@@ -737,11 +784,13 @@ function bindReviewForm() {
       const formData = new FormData(els.reviewForm);
       const receiptFile = formData.get("receipt-image");
       const petPhotoFile = formData.get("pet-photo");
+      const reviewPhotoFiles = els.reviewPhotosInput?.files;
       const db = window.supabaseClient;
 
-      const [receiptPath, petPhotoUrl] = await Promise.all([
+      const [receiptPath, petPhotoUrl, reviewPhotoUrls] = await Promise.all([
         uploadReceiptImage(db, receiptFile),
         uploadPetPhoto(db, petPhotoFile),
+        uploadReviewPhotos(db, reviewPhotoFiles),
       ]);
 
       const newRow = {
@@ -754,6 +803,7 @@ function bindReviewForm() {
         short_review: String(formData.get("short-review")).trim(),
         receipt_image_url: receiptPath,
         pet_photo_url: petPhotoUrl || null,
+        review_photo_urls: reviewPhotoUrls.length ? reviewPhotoUrls : null,
         is_verified: false,
         status: receiptPath ? "pending" : "approved",
         user_id: window.PetAuth?.currentUser?.id ?? null,
@@ -802,6 +852,7 @@ function bindReviewForm() {
       els.reviewForm.reset();
       els.receiptPreview.innerHTML = "";
       if (els.petPhotoPreview) els.petPhotoPreview.innerHTML = "";
+      if (els.reviewPhotosPreview) els.reviewPhotosPreview.innerHTML = "";
       if (els.ocrStatus) els.ocrStatus.hidden = true;
       selectedScores = {};
       selectedPetName = "";
@@ -1663,6 +1714,7 @@ function init() {
   bindTabBar();
   bindReceiptPreview();
   bindPetPhotoPreview();
+  bindReviewPhotosPreview();
   bindStarSelects();
   bindReviewForm();
   bindReviewFilters();
