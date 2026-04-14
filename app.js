@@ -1611,7 +1611,7 @@ async function openPlaceDetail(place) {
     return;
   }
 
-  // 진료항목별 평균 진료비 (3건 이상인 항목만)
+  // 진료항목별 진료비 (3건 이상인 항목만)
   const serviceGroups = {};
   data.forEach((r) => {
     if (r.service_detail && r.total_price) {
@@ -1622,17 +1622,27 @@ async function openPlaceDetail(place) {
 
   const priceRows = Object.entries(serviceGroups)
     .filter(([, prices]) => prices.length >= 3)
+    .sort((a, b) => b[1].length - a[1].length)
     .map(([service, prices]) => {
       const avg = Math.round(prices.reduce((s, p) => s + p, 0) / prices.length);
-      return `<tr><td>${escapeHtml(service)}</td><td>₩ ${avg.toLocaleString("ko-KR")}</td><td>${prices.length}건</td></tr>`;
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      const rangeHtml = min !== max
+        ? `<span style="font-size:11px;color:#aaa;display:block;margin-top:2px;">₩ ${min.toLocaleString("ko-KR")} ~ ${max.toLocaleString("ko-KR")}</span>`
+        : "";
+      return `<tr>
+        <td>${escapeHtml(service)}</td>
+        <td>₩ ${avg.toLocaleString("ko-KR")}${rangeHtml}</td>
+        <td>${prices.length}건</td>
+      </tr>`;
     });
 
   const priceContainer = document.getElementById("detail-price-table");
   if (priceRows.length) {
     priceContainer.innerHTML = `
-      <h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 8px;">진료항목별 평균 진료비</h4>
+      <h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 8px;">진료항목별 진료비</h4>
       <table class="price-table">
-        <thead><tr><th>항목</th><th>평균 금액</th><th>리뷰 수</th></tr></thead>
+        <thead><tr><th>항목</th><th>평균 (범위)</th><th>리뷰 수</th></tr></thead>
         <tbody>${priceRows.join("")}</tbody>
       </table>`;
   }
