@@ -501,7 +501,7 @@
       }
       const { data, error } = await db
         .from("posts")
-        .select("*, profiles(nickname), comments(id)")
+        .select("*, comments(id)")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -510,6 +510,18 @@
         return;
       }
       allPosts = data || [];
+
+      // profiles 닉네임 별도 조회 (FK join 우회)
+      if (allPosts.length) {
+        const userIds = [...new Set(allPosts.map(p => p.user_id).filter(Boolean))];
+        if (userIds.length) {
+          const { data: profilesData } = await db
+            .from("profiles").select("id, nickname").in("id", userIds);
+          const profileMap = {};
+          (profilesData || []).forEach(p => { profileMap[p.id] = p; });
+          allPosts.forEach(post => { post.profiles = profileMap[post.user_id] || null; });
+        }
+      }
 
       // 좋아요 수 집계
       postLikeCounts = {};
@@ -615,11 +627,22 @@
 
       const { data, error } = await db
         .from("comments")
-        .select("*, profiles(nickname)")
+        .select("*")
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
 
-      const comments = data || [];
+      let comments = data || [];
+
+      // 닉네임 별도 조회
+      if (comments.length) {
+        const uids = [...new Set(comments.map(c => c.user_id).filter(Boolean))];
+        if (uids.length) {
+          const { data: pd } = await db.from("profiles").select("id, nickname").in("id", uids);
+          const pm = {};
+          (pd || []).forEach(p => { pm[p.id] = p; });
+          comments = comments.map(c => ({ ...c, profiles: pm[c.user_id] || null }));
+        }
+      }
       countEl.textContent = error ? "?" : comments.length;
 
       listEl.innerHTML = comments.length === 0
@@ -785,14 +808,19 @@
           const { data, error } = await db
             .from("posts")
             .insert([{ user_id: userId, tag: selectedWriteTag, title, content }])
-            .select("*, profiles(nickname)")
+            .select("*")
             .single();
 
           btn.disabled = false;
           btn.textContent = "등록하기";
           if (error) { resultEl.textContent = "등록 실패: " + error.message; return; }
           closeWriteModal();
-          if (data) { data.comments = []; allPosts.unshift(data); renderPosts(); }
+          if (data) {
+            data.comments = [];
+            data.profiles = { nickname: window.PetAuth?.getDisplayName() || "나" };
+            allPosts.unshift(data);
+            renderPosts();
+          }
         }
       } catch (e) {
         btn.disabled = false;
