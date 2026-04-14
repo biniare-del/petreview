@@ -124,6 +124,7 @@
     .community-modal-overlay {
       position: fixed;
       inset: 0;
+      bottom: 56px; /* 하단 탭바 높이 */
       background: rgba(0,0,0,0.45);
       z-index: 500;
       display: flex;
@@ -140,6 +141,14 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+    }
+
+    /* 댓글 입력창 하단 고정 */
+    #comment-form-area {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      padding: 8px 0 4px;
     }
 
     .community-modal-header {
