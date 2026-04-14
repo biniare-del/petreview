@@ -155,6 +155,11 @@
         <form id="review-form" class="review-form">
           <!-- 업종은 hidden input으로 (step 1에서 설정) -->
           <input type="hidden" id="place-category" name="place-category" />
+          <!-- 마이펫 선택 -->
+          <div class="form-group" style="margin-bottom:16px;">
+            <label style="font-size:14px;font-weight:600;color:#444;">어떤 아이와 다녀오셨나요?</label>
+            <div id="pet-selector-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+          </div>
           <!-- 업장 정보 -->
           <div class="form-group">
             <label for="place-name">업체 이름</label>

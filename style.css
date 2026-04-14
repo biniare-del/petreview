@@ -478,6 +478,23 @@ textarea {
   padding: 8px 0 4px;
 }
 
+.pet-select-btn {
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid #e0d7d2;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #555;
+}
+.pet-select-btn.is-active {
+  background: #0f6e56;
+  border-color: #0f6e56;
+  color: #fff;
+}
+
 .sort-btn {
   padding: 5px 14px;
   border-radius: 20px;

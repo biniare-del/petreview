@@ -80,6 +80,8 @@ let reviewLikes = {};            // { reviewId: likeCount }
 let userLikedReviews = new Set(); // 현재 유저가 좋아요한 review ID 집합
 let reportingReviewId = null;    // 신고 처리 중인 review ID
 let selectedScores = {};         // 별점 입력 값 { score_kindness, score_price, score_facility, score_wait }
+let selectedPetName = "";        // 선택된 마이펫 이름
+let selectedPetSpecies = "";     // 선택된 마이펫 종류
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -743,6 +745,8 @@ function bindReviewForm() {
         score_price: selectedScores.score_price || null,
         score_facility: selectedScores.score_facility || null,
         score_wait: selectedScores.score_wait || null,
+        pet_name: selectedPetName || null,
+        pet_species: selectedPetSpecies || null,
       };
 
       if (db) {
@@ -1180,6 +1184,44 @@ function selectFormCategory(category) {
   // 서비스 태그 재렌더링
   renderServiceTags(category);
   showFormStep(2);
+
+  // 마이펫 선택 UI 로드
+  loadPetSelector();
+}
+
+async function loadPetSelector() {
+  const container = document.getElementById("pet-selector-list");
+  if (!container) return;
+
+  const db = window.supabaseClient;
+  const userId = window.PetAuth?.currentUser?.id;
+  if (!db || !userId) {
+    container.innerHTML = `<a href="mypage.html" style="font-size:13px;color:#0f6e56;">마이페이지에서 반려동물을 등록하면 선택할 수 있어요 →</a>`;
+    return;
+  }
+
+  const { data: pets } = await db.from("pets").select("id, name, species").eq("user_id", userId);
+  if (!pets?.length) {
+    container.innerHTML = `<a href="mypage.html" style="font-size:13px;color:#0f6e56;">마이페이지에서 반려동물을 등록하면 선택할 수 있어요 →</a>`;
+    return;
+  }
+
+  selectedPetName = "";
+  selectedPetSpecies = "";
+
+  container.innerHTML = pets.map(p => {
+    const icon = p.species === "고양이" ? "🐱" : "🐶";
+    return `<button type="button" class="pet-select-btn" data-name="${escapeHtml(p.name)}" data-species="${escapeHtml(p.species || "")}">${icon} ${escapeHtml(p.name)}</button>`;
+  }).join("");
+
+  container.querySelectorAll(".pet-select-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      container.querySelectorAll(".pet-select-btn").forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      selectedPetName = btn.dataset.name;
+      selectedPetSpecies = btn.dataset.species;
+    });
+  });
 }
 
 function bindCategorySelection() {
