@@ -295,6 +295,18 @@
       padding: 40px 0;
     }
 
+    .detail-edit-btn {
+      background: none;
+      border: 1px solid #e0d7d2;
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #666;
+      cursor: pointer;
+    }
+    .detail-edit-btn:hover { border-color: #0f6e56; color: #0f6e56; }
+
     .post-like-btn {
       display: inline-flex;
       align-items: center;
@@ -369,7 +381,10 @@
     <div class="community-modal">
       <div class="community-modal-header">
         <h3>게시글</h3>
-        <button class="modal-close-btn" id="detail-close-btn">✕</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="detail-actions"></div>
+          <button class="modal-close-btn" id="detail-close-btn">✕</button>
+        </div>
       </div>
       <div class="post-detail-body">
         <span class="tag-badge" id="detail-tag"></span>
@@ -474,6 +489,7 @@
     let selectedWriteTag = null;
     let postLikeCounts = {};   // { post_id: count }
     let userLikedPosts = new Set(); // 현재 유저가 좋아요한 post_id Set
+    let editingPostId = null;  // 수정 모드일 때 post id
 
     // ===== 글 목록 =====
     async function loadPosts() {
@@ -566,6 +582,18 @@
       document.getElementById("detail-meta").textContent =
         `${post.profiles?.nickname || "익명"} · ${formatTime(post.created_at)}`;
       document.getElementById("detail-content").textContent = post.content;
+      // 수정 버튼 (본인 글만)
+      const actionsArea = document.getElementById("detail-actions");
+      if (actionsArea) {
+        const isOwner = window.PetAuth?.currentUser?.id === post.user_id;
+        actionsArea.innerHTML = isOwner
+          ? `<button class="detail-edit-btn" id="detail-edit-btn">수정</button>`
+          : "";
+        if (isOwner) {
+          document.getElementById("detail-edit-btn")
+            ?.addEventListener("click", () => openEditModal(post));
+        }
+      }
       document.getElementById("post-detail-overlay").hidden = false;
       document.body.style.overflow = "hidden";
       renderLikeButton(post.id);
@@ -697,9 +725,25 @@
       document.body.style.overflow = "hidden";
     }
 
+    function openEditModal(post) {
+      editingPostId = post.id;
+      closePostDetail();
+      selectedWriteTag = post.tag;
+      document.getElementById("write-title").value = post.title;
+      document.getElementById("write-content").value = post.content;
+      document.getElementById("write-result").textContent = "";
+      document.querySelectorAll(".tag-select-btn").forEach(b =>
+        b.classList.toggle("is-active", b.dataset.tag === post.tag));
+      document.getElementById("write-submit-btn").textContent = "수정 완료";
+      document.getElementById("write-modal-overlay").hidden = false;
+      document.body.style.overflow = "hidden";
+    }
+
     function closeWriteModal() {
       document.getElementById("write-modal-overlay").hidden = true;
       document.body.style.overflow = "";
+      editingPostId = null;
+      document.getElementById("write-submit-btn").textContent = "등록하기";
     }
 
     async function submitPost() {
@@ -716,23 +760,41 @@
       if (!userId) return;
 
       btn.disabled = true;
-      btn.textContent = "등록 중...";
+      btn.textContent = editingPostId ? "수정 중..." : "등록 중...";
 
-      const { data, error } = await db
-        .from("posts")
-        .insert([{ user_id: userId, tag: selectedWriteTag, title, content }])
-        .select("*, profiles(nickname)")
-        .single();
+      if (editingPostId) {
+        // 수정 모드
+        const { error } = await db
+          .from("posts")
+          .update({ tag: selectedWriteTag, title, content })
+          .eq("id", editingPostId);
 
-      btn.disabled = false;
-      btn.textContent = "등록하기";
+        btn.disabled = false;
+        btn.textContent = "수정 완료";
 
-      if (error) {
-        resultEl.textContent = "등록에 실패했습니다. 다시 시도해주세요.";
-        return;
+        if (error) { resultEl.textContent = "수정에 실패했습니다."; return; }
+
+        const idx = allPosts.findIndex(p => p.id === editingPostId);
+        if (idx !== -1) {
+          allPosts[idx] = { ...allPosts[idx], tag: selectedWriteTag, title, content };
+        }
+        closeWriteModal();
+        renderPosts();
+      } else {
+        // 등록 모드
+        const { data, error } = await db
+          .from("posts")
+          .insert([{ user_id: userId, tag: selectedWriteTag, title, content }])
+          .select("*, profiles(nickname)")
+          .single();
+
+        btn.disabled = false;
+        btn.textContent = "등록하기";
+
+        if (error) { resultEl.textContent = "등록에 실패했습니다. 다시 시도해주세요."; return; }
+        closeWriteModal();
+        if (data) { data.comments = []; allPosts.unshift(data); renderPosts(); }
       }
-      closeWriteModal();
-      if (data) { data.comments = []; allPosts.unshift(data); renderPosts(); }
     }
 
     // ===== 바인딩 =====

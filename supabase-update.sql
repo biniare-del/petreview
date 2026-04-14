@@ -166,3 +166,12 @@ ALTER TABLE post_likes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "post_likes_select" ON post_likes FOR SELECT USING (true);
 CREATE POLICY "post_likes_insert" ON post_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "post_likes_delete" ON post_likes FOR DELETE USING (auth.uid() = user_id);
+
+-- =====================================================
+-- 14. posts 권한 변경 (삭제: 관리자만 / 수정: 본인만)
+-- =====================================================
+DROP POLICY IF EXISTS "posts_delete" ON posts;
+CREATE POLICY "posts_delete" ON posts FOR DELETE USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+);
+CREATE POLICY "posts_update" ON posts FOR UPDATE USING (auth.uid() = user_id);
