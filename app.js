@@ -804,9 +804,41 @@ function bindReviewForm() {
       if (els.petPhotoPreview) els.petPhotoPreview.innerHTML = "";
       if (els.ocrStatus) els.ocrStatus.hidden = true;
       selectedScores = {};
+      selectedPetName = "";
+      selectedPetSpecies = "";
       document.querySelectorAll(".star-select button").forEach((b) => b.classList.remove("is-selected"));
       renderServiceTags(selectedSearchCategory);
       renderReviewList();
+
+      // 등록 완료 메시지 표시 (step 2 자리에)
+      showFormStep(1);
+      const step1 = document.getElementById("form-step-1");
+      if (step1) {
+        step1.innerHTML = `
+          <div style="text-align:center;padding:32px 16px 24px;">
+            <div style="font-size:52px;margin-bottom:12px;">🎉</div>
+            <p style="font-size:18px;font-weight:700;color:#2a2520;margin:0 0 8px;">리뷰가 등록됐어요!</p>
+            <p style="font-size:14px;color:#888;margin:0 0 6px;">영수증 검토 후 인증 뱃지가 부여됩니다.</p>
+            <p style="font-size:13px;color:#ff8a65;margin:0 0 24px;">🏅 포인트 적립 &amp; 이벤트 기능이 곧 추가될 예정이에요!</p>
+            <button type="button" class="primary-btn" id="write-another-btn">다른 리뷰 작성하기</button>
+          </div>`;
+        document.getElementById("write-another-btn")?.addEventListener("click", () => {
+          step1.innerHTML = `
+            <p class="form-step-hint">어떤 업종의 리뷰를 작성하시겠어요?</p>
+            <div class="category-cards">
+              <button type="button" class="category-card" data-category="hospital">
+                <span class="category-card-icon">🏥</span>
+                <strong class="category-card-name">동물병원</strong>
+                <span class="category-card-desc">진료비 · 수술 · 건강검진</span>
+              </button>
+              <button type="button" class="category-card" data-category="grooming">
+                <span class="category-card-icon">✂️</span>
+                <strong class="category-card-name">미용샵</strong>
+                <span class="category-card-desc">목욕 · 미용 · 가위컷</span>
+              </button>
+            </div>`;
+        });
+      }
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "리뷰 등록하기";
