@@ -352,7 +352,7 @@
       <a href="index.html">홈으로</a>
     </nav>
     <div class="header-auth" id="header-auth">
-      <button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>
+      <button class="auth-login-btn" onclick="window.PetAuth?.signInWithGoogle()">로그인</button>
     </div>
     <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
     <div class="header-mobile-nav" id="header-mobile-nav">
@@ -867,9 +867,9 @@
       bindHamburger();
       const auth = window.PetAuth;
       if (!auth?.isLoggedIn()) {
-        area.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'">로그인</button>`;
+        area.innerHTML = `<button class="auth-login-btn" onclick="window.PetAuth?.signInWithGoogle()">로그인</button>`;
         const el = document.getElementById("mobile-auth-content");
-        if (el) el.innerHTML = `<button class="auth-login-btn" onclick="window.location.href='index.html'" style="margin-top:8px;">로그인</button>`;
+        if (el) el.innerHTML = `<button class="auth-login-btn" onclick="window.PetAuth?.signInWithGoogle()" style="margin-top:8px;">로그인</button>`;
         return;
       }
       const name = auth.getDisplayName();
@@ -877,12 +877,23 @@
       const avatarHtml = avatar
         ? `<img src="${escH(avatar)}" class="header-avatar" alt="프로필" />`
         : `<span class="header-avatar-placeholder">${escH(name[0] || "?")}</span>`;
-      area.innerHTML = `${avatarHtml}<span class="header-username">${escH(name)}</span>`;
+      area.innerHTML = `${avatarHtml}<span class="header-username">${escH(name)}</span><button class="header-logout-btn" id="community-logout-btn">로그아웃</button>`;
+      document.getElementById("community-logout-btn")?.addEventListener("click", async () => {
+        await auth.signOut();
+        window.location.href = "index.html";
+      });
       const el = document.getElementById("mobile-auth-content");
-      if (el) el.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0e8e2;">
-          ${avatarHtml}<span style="font-weight:600;font-size:14px;">${escH(name)}</span>
-        </div>`;
+      if (el) {
+        el.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0e8e2;">
+            ${avatarHtml}<span style="font-weight:600;font-size:14px;">${escH(name)}</span>
+          </div>
+          <button class="mobile-logout-btn" id="community-mobile-logout">로그아웃</button>`;
+        document.getElementById("community-mobile-logout")?.addEventListener("click", async () => {
+          await auth.signOut();
+          window.location.href = "index.html";
+        });
+      }
     }
 
     // ===== 초기화 =====

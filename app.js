@@ -409,6 +409,22 @@ async function loadReviews() {
 
   const rawReviews = (data || []).map(rowToReview);
 
+  // 작성자 닉네임 별도 조회 (profiles FK join 우회)
+  if (rawReviews.length) {
+    try {
+      const uids = [...new Set((data || []).map(r => r.user_id).filter(Boolean))];
+      if (uids.length) {
+        const { data: profilesData } = await db.from("profiles").select("id, nickname").in("id", uids);
+        const profileMap = {};
+        (profilesData || []).forEach(p => { profileMap[p.id] = p; });
+        rawReviews.forEach(r => {
+          const row = (data || []).find(d => d.id === r.id);
+          if (row) r.userNickname = profileMap[row.user_id]?.nickname || "";
+        });
+      }
+    } catch { /* ignore */ }
+  }
+
   // private 버킷 영수증: 서명된 URL 생성 (1시간 유효)
   await Promise.all(
     rawReviews
