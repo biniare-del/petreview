@@ -13,42 +13,55 @@
 - Vercel 프록시: https://petreview.vercel.app
 - 작업 브랜치: claude/review-context-md-zsvkI
 
+---
+
 ## 현재 구현 상태 요약
 
 ### 인증 / 계정
 - 구글 OAuth 로그인 (Supabase PKCE)
 - 세션 만료 자동 감지 → 로그인 모달 (requireAuthUserId 헬퍼)
 - 관리자 계정 (profiles.is_admin)
+- 비로그인 상태에서 로그인 필요한 액션 → signInWithGoogle() 직접 호출 (redirect 아님)
 
 ### 메인 페이지 (index.html)
 - 히어로 섹션 (서비스 소개)
 - 최근 후기 3개 프리뷰 섹션 (히어로 바로 아래)
 - 카카오 API 병원/미용샵 검색 (Vercel 프록시)
-- 검색 결과 정렬: 단골 수 내림차순 → 동점 이름순 (UI 토글 미구현)
+- 검색 결과 정렬 토글 UI: 단골순 / 가나다순
 - 업체 자동완성: 카카오 + Supabase 병렬, 리뷰 있는 병원 상단
 - 위치정보 → 구 자동 선택 (Nominatim 역지오코딩)
-- 병원 상세 모달 (진료항목별 평균 진료비, 인증 리뷰 목록, 카카오지도 링크)
+- 병원 상세 모달 (진료항목별 평균 진료비, 다항목 별점 평균, 인증 리뷰 목록, 카카오지도 링크)
 - 리뷰 작성 폼 (CTA → 로그인 → 업종선택 → 폼, draft 저장/복원)
+  - 마이펫 선택 UI (등록된 반려동물 버튼, 없으면 마이페이지 링크 → #pets 해시로 바로 이동)
+  - 다항목 별점 입력 (친절도/진료비/시설/대기시간, 선택)
+  - 방문일 max=오늘 (미래 날짜 입력 불가)
+- 리뷰 등록 완료 → 성공 메시지 화면 + 포인트/이벤트 예고 문구
 - 영수증 업로드 → pending 검수 플로우
-- 리뷰 카드 리디자인 (다항목 별점 바 표시)
+- 리뷰 카드: 다항목 별점 바, 작성자 닉네임 표시 (profiles 별도 조회)
 - 리뷰 좋아요 (review_likes), 신고 (review_reports)
 - 배너 광고 (banners 테이블)
 - 하단 탭바 (홈/후기/커뮤니티/마이, ≤480px)
 - 모바일 햄버거 메뉴
 
 ### 커뮤니티 (community.html)
-- 태그 필터 (병원추천/질문/자랑/정보)
-- 글 목록 (posts 테이블, profiles join, 댓글 수)
-- 글 작성 / 상세 모달 / 댓글 (comments 테이블)
-- 글 삭제 (본인만), 댓글 삭제 (본인만)
-- 글 좋아요 미구현 (post_likes 테이블 없음)
-- 글 수정 미구현
+- 태그 필터 (병원추천/질문/자랑/정보/전체)
+- 글 목록 (posts 테이블, profiles 별도 조회, 댓글 수, 좋아요 수)
+- 글 작성 / 수정 / 상세 모달 / 댓글
+- 글 좋아요 (post_likes 테이블)
+- 비로그인 → 글쓰기/댓글/좋아요 클릭 시 signInWithGoogle() 직접 호출
+- 헤더 로그인 버튼 → signInWithGoogle() 직접 호출
+- 헤더/모바일 메뉴 로그아웃 버튼 있음
 
 ### 마이페이지 (mypage.html)
-- 내 리뷰 목록
+- 내 리뷰 목록 (삭제 가능)
 - 단골병원 즐겨찾기 (favorites 테이블)
-- 마이펫 등록/수정/삭제 (pets 테이블, 종/성별/나이/등록번호 등)
-- 프로필 (닉네임, 아바타)
+- 마이펫 등록/수정/삭제
+  - 필수: 이름, 종류, 품종, 성별, 중성화 여부
+  - 선택: 생년월일(max=오늘), 몸무게, 동물등록번호, 특이사항, 사진
+  - 사진: 앨범+카메라 선택 가능 (capture 속성 제거)
+  - URL 해시로 탭 직접 이동 가능 (mypage.html#pets 등)
+- 프로필 (닉네임 변경)
+- 로그아웃
 
 ### 관리자 페이지 (admin.html)
 - 영수증 검수 (pending → approved/rejected)
@@ -67,11 +80,9 @@
 
 | 항목 | 내용 |
 |------|------|
-| **DB 스키마 갭** | `app.js`는 `reviews.score_kindness/score_price/score_facility/score_wait` 컬럼을 읽고 씀. 그런데 `supabase-update.sql`에 해당 `ALTER TABLE` 구문이 없음. Supabase 대시보드에서 직접 실행했는지 확인 필요. 없으면 별점 입력/표시가 조용히 실패함. |
-| **post_likes 미구현** | 커뮤니티 글 좋아요 테이블/기능 없음 |
-| **검색 정렬 UI** | 단골순/가나다순 토글 버튼 미구현 (현재 단골순 고정) |
 | **카카오 로그인** | 비즈앱 전환 전까지 비활성 상태 |
 | **api/ocr.js** | 미사용 파일 (삭제 검토 가능) |
+| **리뷰 사진 첨부** | 현재 반려동물 사진만 가능, 리뷰 전용 사진 첨부 미구현 (백로그) |
 
 ---
 
@@ -79,10 +90,13 @@
 
 | 결정 사항 | 선택 | 이유 |
 |-----------|------|------|
-| 검색 정렬 방식 | B) UI 토글 추가 (단골순/가나다순) | 단골순이 서비스 차별점이라 기본값 바꾸면 묻힘 |
-| 홈 최근 리뷰 | 프리뷰 컴포넌트 추가 (섹션 위치 변경 X) | 기존 섹션 구조 덜 깨서 안전 |
-| 다항목 별점 스키마 | reviews 테이블에 컬럼 추가 (별도 테이블 X) | 단순, 조인 불필요, NULL 허용으로 기존 리뷰 호환 |
+| 검색 정렬 방식 | UI 토글 (단골순/가나다순) | 단골순이 서비스 차별점, 기본값 유지 |
+| 홈 최근 리뷰 | 프리뷰 컴포넌트 추가 | 기존 섹션 구조 덜 깨서 안전 |
+| 다항목 별점 스키마 | reviews 테이블에 컬럼 추가 | 단순, 조인 불필요, NULL 허용으로 기존 리뷰 호환 |
 | 커뮤니티 로그인 | 로그인 필수 | 신고/관리 간편, 어뷰징 방지 |
+| 리뷰에 마이펫 연결 | review 작성 시 pet 선택 버튼 UI | 강제 아님, 선택적 연결 |
+| 커뮤니티 글 수정 | 수정 기능 추가 | 삭제 후 재작성보다 UX 좋음 |
+| 마이펫 필수 항목 | 이름/종류/품종/성별/중성화 | 등록번호, 체중은 선택 |
 
 ---
 
@@ -90,9 +104,8 @@
 
 | 결정 필요 | 선택지 | 현재 상태 |
 |-----------|--------|-----------|
-| 리뷰에 마이펫 연결 | A) review 작성 시 pet 선택 드롭다운 추가 / B) 별도 연결 안 함 | 미결 |
-| 진료비 범위 표시 형식 | A) `₩10,000 ~ ₩70,000` 단순 범위 / B) 항목별 평균 (데이터 충분 시) | 미결 |
-| 커뮤니티 글 수정 | A) 수정 기능 추가 / B) 삭제 후 재작성 유도 | 미결 |
+| 진료비 범위 표시 형식 | A) `₩10,000 ~ ₩70,000` 단순 범위 / B) 항목별 평균 (현재 3건 이상일 때만 표시) | 미결 |
+| 포인트/이벤트 시스템 | A) 리뷰 작성 시 포인트 적립 / B) 단순 이벤트 배너 / C) 미구현 유지 | 미결 |
 
 ---
 
@@ -100,22 +113,18 @@
 
 ### 1순위 — 지금 해야 할 것
 
-| 항목 | 난이도 | 효과 | 선행조건 |
-|------|--------|------|----------|
-| DB score 컬럼 확인/추가 (supabase-update.sql 보정) | 낮음 | 높음 (별점 기능 동작 전제) | 없음 |
-| 검색 정렬 UI (단골순/가나다순 토글) | 낮음 | 중간 | 없음 |
-| post_likes 테이블 + 커뮤니티 좋아요 | 낮음~중간 | 중간 | 없음 |
-| 커뮤니티 글 수정 기능 | 낮음 | 낮음 | 결정사항 확정 |
+| 항목 | 상태 |
+|------|------|
+| 리뷰 사진 첨부 (전용 이미지, pet-photos 버킷 재활용) | 미완 |
+| 진료비 범위 표시 개선 | 미완 |
 
 ### 2순위 — 다음 라운드
 
-| 항목 | 난이도 | 효과 | 선행조건 |
-|------|--------|------|----------|
-| 마이펫 연동 리뷰 (pet_id 연결) | 중간 | 높음 (차별점) | 결정사항 확정 |
-| 리뷰 사진 첨부 | 중간 | 높음 | pet-photos 버킷 활용 가능 |
-| 반려동물 종별 필터 (강아지/고양이/기타) | 낮음 | 중간 | 마이펫 연동 후 |
-| 병원 상세 - 별점 레이더/바 시각화 | 중간 | 높음 | DB score 컬럼 확정 |
-| 진료비 범위 표시 개선 | 낮음 | 중간 | 결정사항 확정 |
+| 항목 | 비고 |
+|------|------|
+| 반려동물 종별 필터 (강아지/고양이/기타) | 마이펫 데이터 쌓이면 의미 생김 |
+| 병원 상세 - 별점 레이더/바 시각화 고도화 | 현재 텍스트 평균만 표시 |
+| 포인트/이벤트 시스템 | 결정 후 |
 
 ### 3순위 — 커뮤니티 활성화 후
 
@@ -135,37 +144,12 @@
 
 ---
 
-## 실행 계획 (1~2주)
-
-```
-Day 1  supabase-update.sql에 score 컬럼 ALTER TABLE 추가
-       → Supabase 대시보드에서 실행 (별점 기능 정상화)
-
-Day 2  검색 정렬 UI 추가 (단골순/가나다순 드롭다운)
-
-Day 3  post_likes 테이블 생성 + 커뮤니티 글 좋아요 기능
-
-Day 4  커뮤니티 글 수정 기능 (결정 후)
-
-Day 5  병원 상세 모달 별점 시각화 개선 (레이더/바 차트)
-
-─────────────────────────────────────────────────
-
-Day 6~7  마이펫 연동 리뷰 (pet_id 컬럼 + 작성 폼 드롭다운)
-
-Day 8~9  리뷰 사진 첨부 (pet-photos 버킷 재활용)
-
-Day 10   진료비 범위 표시 개선
-```
-
----
-
 ## 파일 구조
 
 ```
 petreview/
 ├── index.html          # 메인 (히어로, 검색, 최근후기, 리뷰목록)
-├── community.html      # 커뮤니티 (태그필터, 글목록, 글쓰기/상세 모달)
+├── community.html      # 커뮤니티 (태그필터, 글목록, 글쓰기/수정/상세 모달)
 ├── mypage.html         # 마이페이지 (내 리뷰, 단골병원, 마이펫, 프로필)
 ├── admin.html          # 관리자 (영수증검수, 리뷰/회원/광고/신고 관리)
 ├── contact.html        # 문의하기
@@ -212,44 +196,27 @@ petreview/
 
 ---
 
-## 주요 함수 목록
+## 주요 패턴 / 주의사항
 
-### auth.js (window.PetAuth)
-| 함수 | 역할 |
-|------|------|
-| `PetAuth.init(onAuthChange)` | 세션 복원 + onAuthStateChange 등록 |
-| `PetAuth.signInWithGoogle()` | 구글 OAuth 로그인 |
-| `PetAuth.signOut()` | 로그아웃 |
-| `PetAuth.isLoggedIn()` | 로그인 여부 |
-| `PetAuth.isAdmin()` | 관리자 여부 (profiles.is_admin) |
-| `PetAuth.getDisplayName()` | 표시 이름 |
-| `PetAuth.getAvatarUrl()` | 프로필 이미지 URL |
+### profiles join 이슈
+PostgREST가 `profiles(nickname)` FK join을 거부하는 경우가 있음 (PGRST200 오류).
+모든 닉네임 조회는 **별도 쿼리 패턴**으로 처리:
+```js
+const { data: profilesData } = await db.from("profiles").select("id, nickname").in("id", userIds);
+const profileMap = {};
+(profilesData || []).forEach(p => { profileMap[p.id] = p; });
+```
 
-### app.js
-| 함수 | 역할 |
-|------|------|
-| `init()` | 앱 초기화 |
-| `requireAuthUserId()` | 세션 만료 감지 → 로그인 모달, userId 반환 |
-| `renderSearchResults()` | 검색 실행 (featured_places, favCounts, userFavs) |
-| `renderSearchPage(page)` | 검색 결과 페이지 렌더링 |
-| `loadBanner()` | 메인 배너 로드 |
-| `loadReviews()` | 리뷰 목록 로드 (approved만) |
-| `openReviewForm()` | 리뷰 작성 폼 열기 |
-| `openPlaceDetail(place)` | 병원 상세 모달 (평균 진료비, 인증 리뷰) |
-| `bindPlaceNameAutocomplete()` | 업체명 자동완성 |
-| `handleLike(reviewId, btn)` | 좋아요 토글 |
-| `openReportModal(reviewId)` | 신고 모달 |
-| `initGeolocation()` | 위치정보 → 구 자동 선택 |
+### 비로그인 UX 패턴
+로그인 필요 액션(글쓰기, 좋아요, 댓글) → `window.PetAuth?.signInWithGoogle()` 직접 호출.
+index.html에서만 로그인 모달 사용 (openLoginModal), 나머지 페이지는 직접 OAuth.
 
-### admin.js
-| 함수 | 역할 |
-|------|------|
-| `loadStats()` | 검수대기/전체리뷰/회원수 집계 |
-| `loadReceipts()` | 영수증 검수 대기 목록 |
-| `loadAllReviews()` | 전체 리뷰 관리 |
-| `loadReports()` | 신고 관리 |
-| `loadUsers()` | 회원 관리 |
-| `loadAdsTab()` | 광고 관리 탭 |
+### git push
+매 세션마다 PAT로 remote URL 재설정 필요:
+```
+git remote set-url origin https://<PAT>@github.com/biniare-del/petreview.git
+git push origin <작업브랜치>:main
+```
 
 ---
 
@@ -258,7 +225,7 @@ petreview/
 | 테이블 | 주요 컬럼 |
 |--------|-----------|
 | profiles | id, nickname, avatar_url, is_admin |
-| reviews | id, user_id, place_name, category, region, visit_date, service_detail, total_price, short_review, receipt_image_url, pet_photo_url, is_verified, status, score_kindness, score_price, score_facility, score_wait, created_at |
+| reviews | id, user_id, place_name, category, region, visit_date, service_detail, total_price, short_review, receipt_image_url, pet_photo_url, pet_name, pet_species, is_verified, status, score_kindness, score_price, score_facility, score_wait, created_at |
 | favorites | id, user_id, place_name, category, region, address, phone |
 | pets | id, user_id, name, species, breed, gender, birth_date, is_neutered, weight, registration_no, notes, photo_url |
 | review_likes | id, review_id, user_id, created_at (UNIQUE review_id+user_id) |
@@ -268,6 +235,7 @@ petreview/
 | featured_places | id, place_name, category, region, address, phone, tag, is_active, sort_order |
 | posts | id, user_id, tag, title, content, created_at |
 | comments | id, post_id, user_id, content, created_at |
+| post_likes | id, post_id, user_id, created_at (UNIQUE post_id+user_id) |
 
 ### reviews.status
 - `pending`: 영수증 첨부 후 검수 대기 (메인 미표시)
@@ -275,10 +243,6 @@ petreview/
 - `rejected`: 관리자 반려 (메인 미표시)
 - 영수증 없이 등록 → 바로 `approved`
 - 영수증 첨부 등록 → `pending`, 관리자 승인 시 `approved`
-
-### reviews.score_* 컬럼 (⚠️ DB 실행 확인 필요)
-- `score_kindness`, `score_price`, `score_facility`, `score_wait`: INTEGER 1~5, NULLABLE
-- supabase-update.sql에 ALTER TABLE 구문 누락 → 수동 실행 또는 SQL 추가 필요
 
 ### Supabase Storage
 - `receipts` 버킷: private, signed URL (createSignedUrl 1시간)
@@ -291,10 +255,3 @@ petreview/
 - Supabase (Auth PKCE, PostgreSQL, Storage)
 - GitHub Pages (정적 호스팅)
 - Vercel (서버리스: 카카오 API 프록시)
-
----
-
-## Git
-- push 전 항상 PAT로 remote URL 설정 필요
-- 형식: `git remote set-url origin https://<PAT>@github.com/biniare-del/petreview.git`
-- main으로 push: `git push origin <작업브랜치>:main`
