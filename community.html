@@ -609,10 +609,13 @@
         const isOwner = window.PetAuth?.currentUser?.id === post.user_id;
         actionsArea.innerHTML = isOwner
           ? `<button class="detail-edit-btn" id="detail-edit-btn">수정</button>`
-          : "";
+          : `<button class="detail-edit-btn" id="detail-report-post-btn" style="color:#e57373;border-color:#e57373;">신고</button>`;
         if (isOwner) {
           document.getElementById("detail-edit-btn")
             ?.addEventListener("click", () => openEditModal(post));
+        } else {
+          document.getElementById("detail-report-post-btn")
+            ?.addEventListener("click", () => reportPost(post.id));
         }
       }
       document.getElementById("post-detail-overlay").hidden = false;
@@ -739,6 +742,24 @@
       }
       renderLikeButton(postId);
       renderPosts();
+    }
+
+    // ===== 게시글 신고 =====
+    async function reportPost(postId) {
+      if (!window.PetAuth?.isLoggedIn()) {
+        window.PetAuth?.signInWithGoogle();
+        return;
+      }
+      const reason = prompt("신고 사유를 입력해주세요.\n(허위정보 / 욕설비방 / 광고성 / 기타)");
+      if (!reason) return;
+      const db = window.supabaseClient;
+      const userId = window.PetAuth.currentUser.id;
+      const { error } = await db.from("post_reports").insert([{ post_id: postId, user_id: userId, reason }]);
+      if (error) {
+        alert(error.code === "23505" ? "이미 신고한 게시글입니다." : "신고 처리 중 오류가 발생했습니다.");
+      } else {
+        alert("신고가 접수됐습니다. 검토 후 처리해드리겠습니다.");
+      }
     }
 
     // ===== 글쓰기 =====

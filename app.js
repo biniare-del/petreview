@@ -1572,9 +1572,38 @@ async function openPlaceDetail(place) {
   }
 
   const mapBtn = document.getElementById("detail-map-btn");
-  if (mapBtn) {
-    const q = encodeURIComponent(`서울 ${place.region} ${place.name}`);
-    mapBtn.href = `https://map.kakao.com/link/search/${q}`;
+  const q = encodeURIComponent(`서울 ${place.region} ${place.name}`);
+  const mapUrl = `https://map.kakao.com/link/search/${q}`;
+  if (mapBtn) mapBtn.href = mapUrl;
+
+  // 공유 버튼 (Web Share API)
+  const shareBtn = document.getElementById("detail-share-btn");
+  if (shareBtn) {
+    shareBtn.onclick = async () => {
+      const lines = [
+        `📍 ${place.name}`,
+        `${CATEGORY_LABEL[place.category] || place.category} · 서울 ${place.region}`,
+        place.address ? `주소: ${place.address}` : "",
+        place.phone ? `전화: ${place.phone}` : "",
+        `🗺️ ${mapUrl}`,
+        `\n펫리뷰에서 실제 후기를 확인하세요 → https://biniare-del.github.io/petreview/`,
+      ].filter(Boolean).join("\n");
+
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: `펫리뷰 - ${place.name}`, text: lines });
+        } catch { /* 사용자가 취소한 경우 */ }
+      } else {
+        // 공유 API 미지원 환경 → 클립보드 복사
+        try {
+          await navigator.clipboard.writeText(lines);
+          shareBtn.textContent = "✅ 복사됨!";
+          setTimeout(() => { shareBtn.textContent = "📤 공유하기"; }, 2000);
+        } catch {
+          alert("공유 기능을 지원하지 않는 브라우저입니다.");
+        }
+      }
+    };
   }
 
   document.getElementById("detail-reviews-list").innerHTML = '<p class="placeholder-text">불러오는 중...</p>';

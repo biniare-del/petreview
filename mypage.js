@@ -71,13 +71,18 @@
       return;
     }
 
-    container.innerHTML = data.map((r) => `
+    const total = data.length;
+
+    container.innerHTML = data.map((r, i) => `
       <div class="mypage-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-          <h3>${escapeHtml(r.place_name)} <small style="color:#aaa;font-size:13px;">(${CATEGORY_LABEL[r.category] ?? r.category})</small></h3>
+          <div>
+            <h3 style="margin:0 0 2px;">${escapeHtml(r.place_name)} <small style="color:#aaa;font-size:13px;">(${CATEGORY_LABEL[r.category] ?? r.category})</small></h3>
+            <span style="font-size:11px;color:#ff8a65;font-weight:600;">✍️ 내 ${total - i}번째 리뷰</span>
+          </div>
           ${r.is_verified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
         </div>
-        <p>지역: 서울특별시 ${escapeHtml(r.region)} · 방문일: ${escapeHtml(r.visit_date ?? "")}</p>
+        <p style="margin-top:6px;">지역: 서울특별시 ${escapeHtml(r.region)} · 방문일: ${escapeHtml(r.visit_date ?? "")}</p>
         <p>항목: ${escapeHtml(r.service_detail ?? "")}</p>
         <p>결제: ₩ ${Number(r.total_price ?? 0).toLocaleString("ko-KR")}</p>
         <p>후기: ${escapeHtml(r.short_review ?? "")}</p>
@@ -340,8 +345,17 @@
     const name = auth.getDisplayName();
     const avatar = auth.getAvatarUrl();
 
+    // 리뷰 횟수 집계
+    const db = window.supabaseClient;
+    const userId = auth.currentUser?.id;
+    let reviewCount = 0;
+    if (db && userId) {
+      const { count } = await db.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId);
+      reviewCount = count || 0;
+    }
+
     const greetingEl = document.getElementById("mypage-greeting");
-    if (greetingEl) greetingEl.textContent = `안녕하세요, ${name}님!`;
+    if (greetingEl) greetingEl.textContent = `안녕하세요, ${name}님! · 리뷰 ${reviewCount}개 작성`;
 
     const nicknameDisplay = document.getElementById("profile-nickname-display");
     if (nicknameDisplay) nicknameDisplay.textContent = name;
