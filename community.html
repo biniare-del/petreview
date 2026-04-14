@@ -675,7 +675,7 @@
           if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitComment(); }
         });
       } else {
-        formArea.innerHTML = `<p style="font-size:13px;color:#aaa;text-align:center;padding:14px 0;">댓글을 달려면 <a href="index.html" style="color:#0f6e56;font-weight:600;">로그인</a>이 필요합니다.</p>`;
+        formArea.innerHTML = `<p style="font-size:13px;color:#aaa;text-align:center;padding:14px 0;">댓글을 달려면 <button onclick="window.PetAuth?.signInWithGoogle()" style="background:none;border:none;color:#0f6e56;font-weight:600;font-size:13px;cursor:pointer;padding:0;">로그인</button>이 필요합니다.</p>`;
       }
     }
 
@@ -717,7 +717,7 @@
         area.innerHTML = `<button class="post-like-btn${liked ? " is-liked" : ""}" id="post-like-btn" data-post-id="${escH(postId)}">❤️ ${count}</button>`;
         document.getElementById("post-like-btn").addEventListener("click", () => togglePostLike(postId));
       } else {
-        area.innerHTML = `<span style="font-size:14px;color:#bbb;">❤️ ${count}</span>`;
+        area.innerHTML = `<button class="post-like-btn" onclick="window.PetAuth?.signInWithGoogle()">❤️ ${count}</button>`;
       }
     }
 
