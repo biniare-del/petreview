@@ -40,6 +40,7 @@
         if (panel) panel.classList.add("is-active");
         if (btn.dataset.tab === "favorites") loadFavorites();
         if (btn.dataset.tab === "pets") loadPets();
+        if (btn.dataset.tab === "myposts") loadMyPosts();
       });
     });
 
@@ -99,6 +100,70 @@
         btn.closest(".mypage-card").remove();
         if (!container.querySelector(".mypage-card"))
           container.innerHTML = '<p class="placeholder-text">작성한 리뷰가 없습니다.</p>';
+      });
+    });
+  }
+
+  // ===== 내 커뮤니티 글 =====
+  async function loadMyPosts() {
+    const container = document.getElementById("my-posts-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!db || !userId) { container.innerHTML = '<p class="placeholder-text">불러올 수 없습니다.</p>'; return; }
+
+    const { data, error } = await db
+      .from("posts")
+      .select("*, comments(id)")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data?.length) {
+      container.innerHTML = '<p class="placeholder-text">작성한 게시글이 없습니다.</p>';
+      return;
+    }
+
+    const TAG_COLORS = {
+      "병원추천": { bg: "#E6F1FB", color: "#0C447C" },
+      "질문": { bg: "#FAEEDA", color: "#854F0B" },
+      "자랑": { bg: "#FBEAF0", color: "#72243E" },
+      "정보": { bg: "#EAF3DE", color: "#27500A" },
+    };
+
+    container.innerHTML = data.map((post) => {
+      const c = TAG_COLORS[post.tag] || { bg: "#f0f0f0", color: "#666" };
+      const commentCount = post.comments?.length || 0;
+      const timeAgo = (() => {
+        const diff = Math.floor((Date.now() - new Date(post.created_at)) / 1000);
+        if (diff < 60) return "방금";
+        if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+        return `${Math.floor(diff / 86400)}일 전`;
+      })();
+      return `
+      <div class="mypage-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:${c.bg};color:${c.color};">${escapeHtml(post.tag)}</span>
+          <span style="font-size:12px;color:#bbb;">${timeAgo}</span>
+        </div>
+        <h3 style="margin:8px 0 4px;font-size:15px;">${escapeHtml(post.title)}</h3>
+        <p style="font-size:13px;color:#888;margin:0 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(post.content)}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:#aaa;">💬 댓글 ${commentCount}</span>
+          <button class="btn-delete" data-post-id="${escapeHtml(post.id)}" style="padding:4px 10px;font-size:12px;">삭제</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    container.querySelectorAll(".btn-delete[data-post-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("게시글을 삭제하시겠습니까?")) return;
+        const { error: delErr } = await db.from("posts").delete().eq("id", btn.dataset.postId);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        btn.closest(".mypage-card").remove();
+        if (!container.querySelector(".mypage-card"))
+          container.innerHTML = '<p class="placeholder-text">작성한 게시글이 없습니다.</p>';
       });
     });
   }
