@@ -226,6 +226,10 @@
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
+    // 예약 모달용 캐시 갱신 & 예약 불러오기
+    apptPets = (data || []).map((p) => ({ id: p.id, name: p.name }));
+    loadUpcomingAppointments();
+
     const cards = (data || []).map((pet) => {
       const age = calcAge(pet.birth_date);
       const infoLines = [
@@ -410,6 +414,129 @@
         submitBtn.disabled = false;
         submitBtn.textContent = editingPetId ? "수정하기" : "등록하기";
       }
+    });
+  }
+
+  // ===== 병원 예약 =====
+  let apptPets = []; // 반려동물 목록 캐시 (셀렉트박스용)
+
+  async function loadUpcomingAppointments() {
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    const container = document.getElementById("upcoming-appts-list");
+    if (!container) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    const { data, error } = await db
+      .from("pet_appointments")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("appointment_date", today)
+      .order("appointment_date", { ascending: true })
+      .order("appointment_time", { ascending: true })
+      .limit(10);
+
+    if (error || !data?.length) {
+      container.innerHTML = '<p class="placeholder-text" style="font-size:13px;">예약된 일정이 없습니다.</p>';
+      return;
+    }
+
+    // 반려동물 이름 매핑
+    const petMap = {};
+    apptPets.forEach((p) => { petMap[p.id] = p.name; });
+
+    container.innerHTML = data.map((a) => {
+      const petName = petMap[a.pet_id] || "";
+      const daysLeft = Math.ceil((new Date(a.appointment_date) - new Date(today)) / 86400000);
+      const daysLabel = daysLeft === 0 ? "오늘" : daysLeft === 1 ? "내일" : `${daysLeft}일 후`;
+      return `
+      <div class="mypage-card" style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${petName ? `<span style="font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px;background:#fff0e8;color:#ff7043;">${escapeHtml(petName)}</span>` : ""}
+            <span style="font-size:12px;font-weight:700;color:${daysLeft <= 1 ? "#e57373" : "#ff8a65"};">${daysLabel}</span>
+          </div>
+          <p style="margin:4px 0 2px;font-weight:600;font-size:14px;">${escapeHtml(a.appointment_date)}${a.appointment_time ? " " + escapeHtml(a.appointment_time) : ""}</p>
+          ${a.hospital_name ? `<p style="margin:0;font-size:13px;color:#555;">🏥 ${escapeHtml(a.hospital_name)}</p>` : ""}
+          ${a.memo ? `<p style="margin:2px 0 0;font-size:12px;color:#aaa;">${escapeHtml(a.memo)}</p>` : ""}
+        </div>
+        <button class="btn-delete" data-appt-id="${escapeHtml(a.id)}" style="padding:4px 10px;font-size:12px;flex-shrink:0;">삭제</button>
+      </div>`;
+    }).join("");
+
+    container.querySelectorAll(".btn-delete[data-appt-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("예약을 삭제하시겠습니까?")) return;
+        await db.from("pet_appointments").delete().eq("id", btn.dataset.apptId);
+        loadUpcomingAppointments();
+      });
+    });
+  }
+
+  function openApptModal(pet) {
+    const modal = document.getElementById("appt-modal");
+    const form = document.getElementById("appt-form");
+    if (!modal || !form) return;
+    form.reset();
+
+    // 날짜 기본값 = 오늘
+    const dateInput = document.getElementById("appt-date");
+    if (dateInput) dateInput.min = new Date().toISOString().split("T")[0];
+
+    // 반려동물 셀렉트 채우기
+    const select = document.getElementById("appt-pet-select");
+    if (select) {
+      select.innerHTML = '<option value="">선택하세요</option>' +
+        apptPets.map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("");
+      if (pet) select.value = pet.id;
+    }
+
+    modal.hidden = false;
+  }
+
+  function closeApptModal() {
+    document.getElementById("appt-modal").hidden = true;
+  }
+
+  let _apptModalBound = false;
+  function bindApptModal() {
+    if (_apptModalBound) return;
+    _apptModalBound = true;
+    document.getElementById("add-appt-btn")?.addEventListener("click", () => openApptModal(null));
+    document.getElementById("appt-modal-close")?.addEventListener("click", closeApptModal);
+    document.getElementById("appt-modal")?.addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) closeApptModal();
+    });
+
+    document.getElementById("appt-form")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const db = window.supabaseClient;
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!db || !userId) return;
+
+      const petId = document.getElementById("appt-pet-select").value;
+      const date = document.getElementById("appt-date").value;
+      const time = document.getElementById("appt-time").value;
+      const hospital = document.getElementById("appt-hospital").value.trim();
+      const memo = document.getElementById("appt-memo").value.trim();
+
+      if (!date) { alert("예약 날짜를 선택해주세요."); return; }
+
+      const submitBtn = e.target.querySelector("button[type=submit]");
+      submitBtn.disabled = true;
+      const { error } = await db.from("pet_appointments").insert([{
+        user_id: userId,
+        pet_id: petId || null,
+        appointment_date: date,
+        appointment_time: time || null,
+        hospital_name: hospital || null,
+        memo: memo || null,
+      }]);
+      submitBtn.disabled = false;
+
+      if (error) { alert("저장 실패: " + error.message); return; }
+      closeApptModal();
+      loadUpcomingAppointments();
     });
   }
 
@@ -690,6 +817,7 @@
     bindTabs();
     bindPetModal();
     bindHealthModal();
+    bindApptModal();
     bindProfile();
     await loadMyReviews();
   }

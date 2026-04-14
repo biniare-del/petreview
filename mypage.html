@@ -137,6 +137,14 @@
 
       <!-- 마이펫 -->
       <div class="mypage-panel" id="panel-pets">
+        <!-- 다가오는 예약 -->
+        <div id="upcoming-appts-section" style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="margin:0;font-size:15px;font-weight:700;color:#444;">📅 다가오는 예약</h3>
+            <button class="btn-edit" id="add-appt-btn" style="font-size:12px;">+ 예약 추가</button>
+          </div>
+          <div id="upcoming-appts-list"><p class="placeholder-text">불러오는 중...</p></div>
+        </div>
         <div class="pet-grid" id="pets-grid">
           <p class="placeholder-text">불러오는 중...</p>
         </div>
@@ -234,6 +242,46 @@
         </div>
         <div style="margin-top:16px;">
           <button type="submit" class="primary-btn" id="pet-submit-btn" style="width:100%;">등록하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 병원 예약 모달 -->
+  <div class="modal-overlay" id="appt-modal" hidden>
+    <div class="modal pet-modal" style="max-height:90vh;overflow-y:auto;">
+      <button class="modal-close" id="appt-modal-close">✕</button>
+      <h2 class="modal-title" style="font-size:18px;">병원 예약 등록</h2>
+      <form id="appt-form" style="margin-top:16px;">
+        <div class="form-group">
+          <label for="appt-pet-select">반려동물 *</label>
+          <select id="appt-pet-select" required
+            style="width:100%;padding:8px 10px;font-size:14px;border-radius:10px;border:1px solid #e0d7d2;background:#fffdfb;outline:none;">
+            <option value="">선택하세요</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="appt-date">예약 날짜 *</label>
+          <input type="date" id="appt-date" required
+            style="width:100%;padding:8px 10px;font-size:14px;border-radius:10px;border:1px solid #e0d7d2;background:#fffdfb;outline:none;" />
+        </div>
+        <div class="form-group">
+          <label for="appt-time">예약 시간</label>
+          <input type="time" id="appt-time"
+            style="width:100%;padding:8px 10px;font-size:14px;border-radius:10px;border:1px solid #e0d7d2;background:#fffdfb;outline:none;" />
+        </div>
+        <div class="form-group">
+          <label for="appt-hospital">병원/미용샵 이름</label>
+          <input type="text" id="appt-hospital" placeholder="예: 행복동물병원" maxlength="60"
+            style="width:100%;padding:8px 10px;font-size:14px;border-radius:10px;border:1px solid #e0d7d2;background:#fffdfb;outline:none;" />
+        </div>
+        <div class="form-group">
+          <label for="appt-memo">메모</label>
+          <input type="text" id="appt-memo" placeholder="예: 예방접종, 스케일링" maxlength="100"
+            style="width:100%;padding:8px 10px;font-size:14px;border-radius:10px;border:1px solid #e0d7d2;background:#fffdfb;outline:none;" />
+        </div>
+        <div style="margin-top:16px;">
+          <button type="submit" class="primary-btn" style="width:100%;">예약 등록</button>
         </div>
       </form>
     </div>
