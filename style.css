@@ -472,6 +472,30 @@ textarea {
 }
 
 /* 검색 결과 페이지네이션 */
+.sort-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0 4px;
+}
+
+.sort-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid #d0ccc8;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sort-btn.is-active {
+  background: #0f6e56;
+  border-color: #0f6e56;
+  color: #fff;
+}
+
 .search-pagination {
   display: flex;
   align-items: center;

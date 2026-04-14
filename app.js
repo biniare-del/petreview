@@ -73,6 +73,7 @@ let hasSearched = false;
 const PAGE_SIZE = 5;
 let featuredPlaces = [];   // featured_places 테이블 (우수협력병원/이벤트)
 let favCounts = {};        // { place_name: count }
+let searchSortMode = 'fav'; // 'fav' | 'name'
 let userFavs = new Set();  // 현재 유저가 즐겨찾기한 place_name 집합
 let geoState = 'pending';  // 'pending' | 'granted' | 'denied'
 let reviewLikes = {};            // { reviewId: likeCount }
@@ -84,6 +85,7 @@ const els = {
   searchRegion: document.getElementById("search-region"),
   searchButton: document.getElementById("search-button"),
   searchResults: document.getElementById("search-results"),
+  sortToggle: document.getElementById("sort-toggle"),
   categoryButtons: document.querySelectorAll(".category-toggle .toggle-btn"),
   placeNameInput: document.getElementById("place-name"),
   placeCategorySelect: document.getElementById("place-category"),
@@ -252,11 +254,23 @@ async function renderSearchResults() {
     } catch { /* ignore */ }
   }
 
-  // 즐겨찾기 수 기준 정렬 (내림차순), 동점이면 이름순
-  searchFacilities.sort((a, b) => {
-    const diff = (favCounts[b.name] || 0) - (favCounts[a.name] || 0);
-    return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
-  });
+  // 정렬 적용
+  if (searchSortMode === 'fav') {
+    searchFacilities.sort((a, b) => {
+      const diff = (favCounts[b.name] || 0) - (favCounts[a.name] || 0);
+      return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
+    });
+  } else {
+    searchFacilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  }
+
+  // 정렬 토글 표시 및 활성 상태 갱신
+  if (els.sortToggle) {
+    els.sortToggle.style.display = 'flex';
+    els.sortToggle.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.classList.toggle('is-active', btn.dataset.sort === searchSortMode);
+    });
+  }
 
   hasSearched = true;
   renderSearchPage(1);
@@ -1178,6 +1192,26 @@ function bindCategorySelection() {
 
 // ===== 햄버거 메뉴 =====
 let _hamburgerBound = false;
+function bindSortToggle() {
+  els.sortToggle?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.sort-btn');
+    if (!btn || btn.dataset.sort === searchSortMode) return;
+    searchSortMode = btn.dataset.sort;
+    els.sortToggle.querySelectorAll('.sort-btn').forEach(b => {
+      b.classList.toggle('is-active', b.dataset.sort === searchSortMode);
+    });
+    if (searchSortMode === 'fav') {
+      searchFacilities.sort((a, b) => {
+        const diff = (favCounts[b.name] || 0) - (favCounts[a.name] || 0);
+        return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
+      });
+    } else {
+      searchFacilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+    }
+    renderSearchPage(1);
+  });
+}
+
 function bindHamburger() {
   if (_hamburgerBound) return;
   const btn = document.getElementById("header-hamburger-btn");
@@ -1498,6 +1532,7 @@ function init() {
   bindCategoryToggle();
   bindSearchResultsSelection();
   bindSearch();
+  bindSortToggle();
   bindTabBar();
   bindReceiptPreview();
   bindPetPhotoPreview();
