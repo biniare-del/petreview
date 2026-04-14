@@ -294,6 +294,26 @@
       font-size: 14px;
       padding: 40px 0;
     }
+
+    .post-like-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #e0d7d2;
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .post-like-btn.is-liked {
+      border-color: #e57373;
+      color: #e57373;
+      background: #fff5f5;
+    }
   </style>
 </head>
 <body>
@@ -356,6 +376,7 @@
         <p class="detail-title" id="detail-title"></p>
         <p class="detail-meta" id="detail-meta"></p>
         <p class="detail-content" id="detail-content"></p>
+        <div id="post-like-area" style="margin-top:16px;"></div>
       </div>
       <div class="comment-section">
         <p class="comment-section-title">댓글 <span id="comment-count">0</span>개</p>
@@ -451,6 +472,8 @@
     let currentPostId = null;
     let allPosts = [];
     let selectedWriteTag = null;
+    let postLikeCounts = {};   // { post_id: count }
+    let userLikedPosts = new Set(); // 현재 유저가 좋아요한 post_id Set
 
     // ===== 글 목록 =====
     async function loadPosts() {
@@ -471,6 +494,32 @@
         return;
       }
       allPosts = data || [];
+
+      // 좋아요 수 집계
+      postLikeCounts = {};
+      if (allPosts.length) {
+        try {
+          const { data: likesData } = await db
+            .from("post_likes")
+            .select("post_id")
+            .in("post_id", allPosts.map(p => p.id));
+          (likesData || []).forEach(l => {
+            postLikeCounts[l.post_id] = (postLikeCounts[l.post_id] || 0) + 1;
+          });
+        } catch { /* ignore */ }
+      }
+
+      // 내 좋아요 목록
+      userLikedPosts = new Set();
+      const userId = window.PetAuth?.currentUser?.id;
+      if (userId && allPosts.length) {
+        try {
+          const { data: myLikes } = await db
+            .from("post_likes").select("post_id").eq("user_id", userId);
+          (myLikes || []).forEach(l => userLikedPosts.add(l.post_id));
+        } catch { /* ignore */ }
+      }
+
       renderPosts();
     }
 
@@ -492,6 +541,7 @@
           <div class="post-card-meta">
             <span>${escH(post.profiles?.nickname || "익명")}</span>
             <span>댓글 ${post.comments?.length || 0}</span>
+            <span>❤️ ${postLikeCounts[post.id] || 0}</span>
             <span>${formatTime(post.created_at)}</span>
           </div>
         </div>`).join("");
@@ -518,6 +568,7 @@
       document.getElementById("detail-content").textContent = post.content;
       document.getElementById("post-detail-overlay").hidden = false;
       document.body.style.overflow = "hidden";
+      renderLikeButton(post.id);
       loadComments(post.id);
     }
 
@@ -594,6 +645,40 @@
       // 글 목록 댓글 수 갱신
       const post = allPosts.find(p => p.id === currentPostId);
       if (post) { if (!post.comments) post.comments = []; post.comments.push({ id: "t" }); }
+    }
+
+    // ===== 좋아요 =====
+    function renderLikeButton(postId) {
+      const area = document.getElementById("post-like-area");
+      if (!area) return;
+      const count = postLikeCounts[postId] || 0;
+      const liked = userLikedPosts.has(postId);
+      if (window.PetAuth?.isLoggedIn()) {
+        area.innerHTML = `<button class="post-like-btn${liked ? " is-liked" : ""}" id="post-like-btn" data-post-id="${escH(postId)}">❤️ ${count}</button>`;
+        document.getElementById("post-like-btn").addEventListener("click", () => togglePostLike(postId));
+      } else {
+        area.innerHTML = `<span style="font-size:14px;color:#bbb;">❤️ ${count}</span>`;
+      }
+    }
+
+    async function togglePostLike(postId) {
+      const db = window.supabaseClient;
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!userId) return;
+      const btn = document.getElementById("post-like-btn");
+      if (btn) btn.disabled = true;
+      const liked = userLikedPosts.has(postId);
+      if (liked) {
+        await db.from("post_likes").delete().eq("post_id", postId).eq("user_id", userId);
+        userLikedPosts.delete(postId);
+        postLikeCounts[postId] = Math.max(0, (postLikeCounts[postId] || 1) - 1);
+      } else {
+        await db.from("post_likes").insert([{ post_id: postId, user_id: userId }]);
+        userLikedPosts.add(postId);
+        postLikeCounts[postId] = (postLikeCounts[postId] || 0) + 1;
+      }
+      renderLikeButton(postId);
+      renderPosts();
     }
 
     // ===== 글쓰기 =====

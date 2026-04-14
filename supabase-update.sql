@@ -151,3 +151,18 @@ ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_kindness  INTEGER CHECK (scor
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_price     INTEGER CHECK (score_price     BETWEEN 1 AND 5);
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_facility  INTEGER CHECK (score_facility  BETWEEN 1 AND 5);
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_wait      INTEGER CHECK (score_wait      BETWEEN 1 AND 5);
+
+-- =====================================================
+-- 13. post_likes 테이블 (커뮤니티 글 좋아요)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS post_likes (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id    UUID REFERENCES posts(id) ON DELETE CASCADE,
+  user_id    UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(post_id, user_id)
+);
+ALTER TABLE post_likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "post_likes_select" ON post_likes FOR SELECT USING (true);
+CREATE POLICY "post_likes_insert" ON post_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "post_likes_delete" ON post_likes FOR DELETE USING (auth.uid() = user_id);
