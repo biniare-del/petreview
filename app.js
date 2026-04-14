@@ -1196,13 +1196,13 @@ async function loadPetSelector() {
   const db = window.supabaseClient;
   const userId = window.PetAuth?.currentUser?.id;
   if (!db || !userId) {
-    container.innerHTML = `<a href="mypage.html" style="font-size:13px;color:#0f6e56;">마이페이지에서 반려동물을 등록하면 선택할 수 있어요 →</a>`;
+    container.innerHTML = `<a href="mypage.html#pets" style="font-size:13px;color:#0f6e56;">+ 마이페이지에서 반려동물 등록하기 →</a>`;
     return;
   }
 
   const { data: pets } = await db.from("pets").select("id, name, species").eq("user_id", userId);
   if (!pets?.length) {
-    container.innerHTML = `<a href="mypage.html" style="font-size:13px;color:#0f6e56;">마이페이지에서 반려동물을 등록하면 선택할 수 있어요 →</a>`;
+    container.innerHTML = `<a href="mypage.html#pets" style="font-size:13px;color:#0f6e56;">+ 마이페이지에서 반려동물 등록하기 →</a>`;
     return;
   }
 

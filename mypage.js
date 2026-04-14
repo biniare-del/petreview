@@ -42,6 +42,13 @@
         if (btn.dataset.tab === "pets") loadPets();
       });
     });
+
+    // URL 해시로 탭 직접 이동 (예: mypage.html#pets)
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      const targetBtn = document.querySelector(`.mypage-tab[data-tab="${hash}"]`);
+      if (targetBtn) targetBtn.click();
+    }
   }
 
   // ===== 내 리뷰 =====
