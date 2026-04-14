@@ -143,3 +143,11 @@ CREATE POLICY "posts_delete" ON posts FOR DELETE USING (auth.uid() = user_id);
 CREATE POLICY "comments_select" ON comments FOR SELECT USING (true);
 CREATE POLICY "comments_insert" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "comments_delete" ON comments FOR DELETE USING (auth.uid() = user_id);
+
+-- =====================================================
+-- 12. reviews 테이블 다항목 별점 컬럼 추가
+-- =====================================================
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_kindness  INTEGER CHECK (score_kindness  BETWEEN 1 AND 5);
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_price     INTEGER CHECK (score_price     BETWEEN 1 AND 5);
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_facility  INTEGER CHECK (score_facility  BETWEEN 1 AND 5);
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS score_wait      INTEGER CHECK (score_wait      BETWEEN 1 AND 5);
