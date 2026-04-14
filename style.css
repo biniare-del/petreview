@@ -930,6 +930,7 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .btn-kakao,
+.btn-naver,
 .btn-google {
   display: flex;
   align-items: center;
@@ -956,13 +957,20 @@ body[data-theme="grooming"] .place-phone-link {
   border: 1.5px solid #ddd;
 }
 
+.btn-naver {
+  background: #03C75A;
+  color: #fff;
+}
+
 .btn-kakao:hover,
+.btn-naver:hover,
 .btn-google:hover {
   transform: translateY(-1px);
   opacity: 0.9;
 }
 
 .btn-kakao:active,
+.btn-naver:active,
 .btn-google:active {
   transform: translateY(0);
 }

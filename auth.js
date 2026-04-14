@@ -77,6 +77,13 @@
       });
     },
 
+    async signInWithNaver() {
+      await window.supabaseClient?.auth.signInWithOAuth({
+        provider: "naver",
+        options: { redirectTo: SITE_URL },
+      });
+    },
+
     async signInWithGoogle() {
       await window.supabaseClient?.auth.signInWithOAuth({
         provider: "google",

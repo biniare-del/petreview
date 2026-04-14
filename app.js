@@ -1415,6 +1415,7 @@ function bindLoginModal() {
     if (e.target === e.currentTarget) closeLoginModal();
   });
   document.getElementById("btn-kakao")?.addEventListener("click", () => window.PetAuth?.signInWithKakao());
+  document.getElementById("btn-naver")?.addEventListener("click", () => window.PetAuth?.signInWithNaver());
   document.getElementById("btn-google")?.addEventListener("click", () => window.PetAuth?.signInWithGoogle());
 }
 
@@ -1573,7 +1574,7 @@ async function openPlaceDetail(place) {
 
   const mapBtn = document.getElementById("detail-map-btn");
   const q = encodeURIComponent(`서울 ${place.region} ${place.name}`);
-  const mapUrl = `https://map.kakao.com/link/search/${q}`;
+  const mapUrl = `https://map.naver.com/v5/search/${q}`;
   if (mapBtn) mapBtn.href = mapUrl;
 
   // 공유 버튼 (Web Share API)
