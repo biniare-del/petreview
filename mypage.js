@@ -88,9 +88,30 @@
         <p>결제: ₩ ${Number(r.total_price ?? 0).toLocaleString("ko-KR")}</p>
         <p>후기: ${escapeHtml(r.short_review ?? "")}</p>
         <div class="card-actions">
+          <button class="btn-favorite" data-place-name="${escapeHtml(r.place_name)}" data-category="${escapeHtml(r.category)}" data-region="${escapeHtml(r.region ?? "")}">⭐ 단골병원 등록</button>
           <button class="btn-delete" data-review-id="${escapeHtml(r.id)}">삭제</button>
         </div>
       </div>`).join("");
+
+    container.querySelectorAll(".btn-favorite[data-place-name]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const userId = window.PetAuth?.currentUser?.id;
+        if (!userId) return;
+        // 중복 확인
+        const { data: existing } = await db.from("favorites")
+          .select("id").eq("user_id", userId).eq("place_name", btn.dataset.placeName).maybeSingle();
+        if (existing) { alert("이미 단골병원으로 등록된 곳입니다."); return; }
+        const { error: favErr } = await db.from("favorites").insert([{
+          user_id: userId,
+          place_name: btn.dataset.placeName,
+          category: btn.dataset.category,
+          region: btn.dataset.region,
+        }]);
+        if (favErr) { alert("등록 실패: " + favErr.message); return; }
+        btn.textContent = "✅ 등록됨";
+        btn.disabled = true;
+      });
+    });
 
     container.querySelectorAll(".btn-delete[data-review-id]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -547,9 +568,13 @@
     currentHealthPet = pet;
     document.getElementById("health-modal-title").textContent = `${pet.name}의 건강기록`;
     document.getElementById("health-modal").hidden = false;
-    // 날짜 기본값 = 오늘
+    // 날짜 기본값 = 오늘, 미래 날짜 선택 불가
     const dateInput = document.getElementById("weight-date-input");
-    if (dateInput) dateInput.value = new Date().toISOString().split("T")[0];
+    if (dateInput) {
+      const today = new Date().toISOString().split("T")[0];
+      dateInput.value = today;
+      dateInput.max = today;
+    }
     loadWeightLogs(pet.id);
     loadPetVisitHistory(pet.name);
   }

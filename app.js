@@ -1488,7 +1488,7 @@ async function handleLike(reviewId, btn) {
 
 // ===== 리뷰 액션 이벤트 바인딩 (좋아요 / 신고) =====
 function bindReviewActions() {
-  els.reviewList.addEventListener("click", async (e) => {
+  async function handleReviewClick(e) {
     const likeBtn = e.target.closest(".like-btn");
     if (likeBtn) {
       if (!window.PetAuth?.isLoggedIn()) { openLoginModal(); return; }
@@ -1500,7 +1500,10 @@ function bindReviewActions() {
       if (!window.PetAuth?.isLoggedIn()) { openLoginModal(); return; }
       openReportModal(reportBtn.dataset.reviewId);
     }
-  });
+  }
+  els.reviewList.addEventListener("click", handleReviewClick);
+  // 최근후기 섹션도 동일하게 바인딩
+  document.getElementById("recent-review-list")?.addEventListener("click", handleReviewClick);
 }
 
 // ===== 신고 모달 =====
@@ -1767,10 +1770,13 @@ function init() {
   void loadBanner();
   void initGeolocation();
 
-  // 방문일: 오늘 이후 날짜 선택 불가
+  // 방문일: 오늘 이후 날짜 선택 불가 + 클릭 시 달력 자동 펼치기
   const visitDateInput = document.getElementById("visit-date");
   if (visitDateInput) {
     visitDateInput.max = new Date().toISOString().slice(0, 10);
+    visitDateInput.addEventListener("click", () => {
+      try { visitDateInput.showPicker(); } catch { /* 지원 안 하는 브라우저 무시 */ }
+    });
   }
 }
 
