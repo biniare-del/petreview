@@ -1275,29 +1275,39 @@ async function loadBanner() {
   const db = window.supabaseClient;
   const slot = document.getElementById("banner-slot");
   if (!db || !slot) return;
+
+  const placeholderHtml = `
+    <div class="banner-placeholder">
+      <span class="banner-placeholder-label">ADS</span>
+      <span class="banner-placeholder-text">광고 배너 모집 중 · 문의는 관리자에게</span>
+    </div>`;
+
   try {
-    const { data } = await db
+    const { data, error } = await db
       .from("banners")
       .select("*")
       .eq("is_active", true)
       .order("sort_order")
       .limit(1);
+
     slot.hidden = false;
-    if (!data?.length) {
-      // 등록된 배너 없을 때 플레이스홀더
-      slot.innerHTML = `
-        <div class="banner-placeholder">
-          <span class="banner-placeholder-label">ADS</span>
-          <span class="banner-placeholder-text">광고 배너 모집 중 · 문의는 관리자에게</span>
-        </div>`;
+
+    // 테이블 없거나 데이터 없으면 플레이스홀더
+    if (error || !data?.length) {
+      slot.innerHTML = placeholderHtml;
       return;
     }
+
     const b = data[0];
     const img = `<img src="${escapeHtml(b.image_url || "")}" alt="${escapeHtml(b.alt_text || "")}" class="banner-img" />`;
     slot.innerHTML = b.link_url
       ? `<a href="${escapeHtml(b.link_url)}" target="_blank" rel="noopener noreferrer">${img}</a>`
       : img;
-  } catch { /* ignore */ }
+  } catch {
+    // 네트워크 오류 등 → 플레이스홀더라도 표시
+    slot.hidden = false;
+    slot.innerHTML = placeholderHtml;
+  }
 }
 
 // ===== 헤더 인증 UI =====
@@ -1413,7 +1423,7 @@ async function loadPetSelector() {
   selectedPetName = "";
   selectedPetSpecies = "";
 
-  const addBtn = `<a href="mypage.html" class="pet-add-link">＋ 마이펫 추가</a>`;
+  const addBtn = `<a href="mypage.html#pets" class="pet-add-link">＋ 마이펫 추가</a>`;
 
   if (!pets?.length) {
     container.innerHTML = addBtn;
