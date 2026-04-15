@@ -43,8 +43,25 @@
       <button class="hero-cta-btn" type="button" id="cta-review-btn">후기 남기기</button>
     </section>
 
+    <!-- 마이펫 인사 바 (로그인 + 펫 등록 시 JS로 표시) -->
+    <div id="pet-greeting" class="pet-greeting-bar" hidden>
+      <div class="pet-greeting-avatar" id="pet-greeting-avatar"></div>
+      <div class="pet-greeting-text" id="pet-greeting-text"></div>
+    </div>
+
     <!-- 배너 슬롯 (is_active 배너가 있을 때만 JS로 표시) -->
     <div id="banner-slot" class="banner-slot" hidden></div>
+
+    <!-- 미용샵 이벤트 섹션 (미용샵 탭 선택 시 JS로 표시) -->
+    <section id="grooming-events-section" class="section grooming-events-section" hidden>
+      <header class="section-header">
+        <h2>✂️ 미용샵 이벤트</h2>
+        <p>현재 진행 중인 미용샵 특가·이벤트</p>
+      </header>
+      <div id="grooming-events-list" class="grooming-events-list">
+        <p class="placeholder-text">이벤트를 불러오는 중...</p>
+      </div>
+    </section>
 
     <!-- 최근 후기 섹션 -->
     <section class="section recent-reviews-section" aria-label="최근 후기">

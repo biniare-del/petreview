@@ -321,7 +321,10 @@ function renderReviewList() {
       <article class="card${review.isVerified ? " card--verified" : ""}">
         <div class="card-pet-header">
           <div class="card-pet-avatar">
-            <div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>
+            ${review.petPhoto
+              ? `<img src="${escapeHtml(review.petPhoto)}" alt="${escapeHtml(review.petName || "반려동물")}" class="pet-avatar-img" />`
+              : `<div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>`
+            }
           </div>
           <div class="card-pet-info">
             <div class="card-pet-name">
@@ -345,10 +348,10 @@ function renderReviewList() {
           <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
         </div>
         <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
+        ${(review.reviewPhotoUrls || []).length > 0 ? `
         <div class="review-images">
-          ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
           ${(review.reviewPhotoUrls || []).map(url => `<img src="${escapeHtml(url)}" alt="리뷰 사진" class="review-thumb" />`).join("")}
-        </div>
+        </div>` : ""}
         <div class="review-actions">
           <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
           <button class="report-btn" data-review-id="${escapeHtml(review.id)}">🚨 신고</button>
@@ -401,6 +404,7 @@ async function loadReviews() {
     .from("reviews")
     .select("*")
     .or("status.eq.approved,status.is.null")
+    .or("is_hidden.is.null,is_hidden.eq.false")
     .order("is_verified", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -473,7 +477,10 @@ function renderRecentReviews() {
     <article class="card${review.isVerified ? " card--verified" : ""}">
       <div class="card-pet-header">
         <div class="card-pet-avatar">
-          <div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>
+          ${review.petPhoto
+            ? `<img src="${escapeHtml(review.petPhoto)}" alt="${escapeHtml(review.petName || "반려동물")}" class="pet-avatar-img" />`
+            : `<div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>`
+          }
         </div>
         <div class="card-pet-info">
           <div class="card-pet-name">
@@ -497,10 +504,10 @@ function renderRecentReviews() {
         <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
       </div>
       <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
+      ${(review.reviewPhotoUrls || []).length > 0 ? `
       <div class="review-images">
-        ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" alt="반려동물 사진" class="review-thumb" />` : ""}
         ${(review.reviewPhotoUrls || []).map(url => `<img src="${escapeHtml(url)}" alt="리뷰 사진" class="review-thumb" />`).join("")}
-      </div>
+      </div>` : ""}
       <div class="review-actions">
         <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
         <button class="report-btn" data-review-id="${escapeHtml(review.id)}">🚨 신고</button>
@@ -1111,10 +1118,51 @@ function bindReviewFilters() {
       // 테마 전환
       document.body.dataset.theme = btn.dataset.cat === "grooming" ? "grooming" : "hospital";
       renderReviewList();
+      // 미용샵 탭: 이벤트 섹션 표시
+      const evSection = document.getElementById("grooming-events-section");
+      if (evSection) {
+        if (btn.dataset.cat === "grooming") {
+          evSection.hidden = false;
+          loadGroomingEvents();
+        } else {
+          evSection.hidden = true;
+        }
+      }
     });
   });
   els.filterCategory.addEventListener("change", renderReviewList);
   els.filterRegion.addEventListener("change", renderReviewList);
+}
+
+async function loadGroomingEvents() {
+  const db = window.supabaseClient;
+  const listEl = document.getElementById("grooming-events-list");
+  if (!db || !listEl) return;
+  try {
+    const { data } = await db
+      .from("featured_places")
+      .select("*")
+      .eq("category", "grooming")
+      .eq("tag", "이벤트")
+      .eq("is_active", true)
+      .order("sort_order");
+
+    if (!data?.length) {
+      listEl.innerHTML = `
+        <div class="grooming-event-placeholder">
+          <span class="banner-placeholder-label">이벤트</span>
+          <span class="banner-placeholder-text">등록된 이벤트가 없습니다. 관리자에게 문의하세요.</span>
+        </div>`;
+      return;
+    }
+    listEl.innerHTML = data.map((fp) => `
+      <div class="grooming-event-card">
+        <strong class="grooming-event-name">${escapeHtml(fp.place_name)}</strong>
+        <span class="grooming-event-region">서울 ${escapeHtml(fp.region || "")}</span>
+        ${fp.address ? `<p class="helper-text" style="margin:4px 0 0;">${escapeHtml(fp.address)}</p>` : ""}
+        ${fp.phone ? `<a href="tel:${escapeHtml(fp.phone)}" class="grooming-event-phone">📞 ${escapeHtml(fp.phone)}</a>` : ""}
+      </div>`).join("");
+  } catch { /* ignore */ }
 }
 
 function bindCtaButton() {
@@ -1181,6 +1229,38 @@ function bindSearchResultsSelection() {
 }
 
 // ===== 배너 로드 =====
+async function loadPetGreeting() {
+  const db = window.supabaseClient;
+  const userId = window.PetAuth?.currentUser?.id;
+  const greetingEl = document.getElementById("pet-greeting");
+  if (!db || !userId || !greetingEl) return;
+
+  try {
+    const { data: pets } = await db
+      .from("pets")
+      .select("name, species, photo_url")
+      .eq("user_id", userId)
+      .order("created_at")
+      .limit(1);
+    if (!pets?.length) return;
+
+    const pet = pets[0];
+    const nickRaw = window.PetAuth.getDisplayName?.() || "";
+    const nick = nickRaw ? escapeHtml(nickRaw) : "보호자";
+
+    const avatarEl = document.getElementById("pet-greeting-avatar");
+    const textEl = document.getElementById("pet-greeting-text");
+    if (!avatarEl || !textEl) return;
+
+    avatarEl.innerHTML = pet.photo_url
+      ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />`
+      : `<span>${pet.species === "고양이" ? "🐱" : "🐶"}</span>`;
+
+    textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>! 🐾<br><span>${escapeHtml(pet.name)}와 함께 오셨군요</span>`;
+    greetingEl.hidden = false;
+  } catch { /* ignore */ }
+}
+
 async function loadBanner() {
   const db = window.supabaseClient;
   const slot = document.getElementById("banner-slot");
@@ -1650,6 +1730,7 @@ async function openPlaceDetail(place) {
       .eq("place_name", place.name)
       .eq("is_verified", true)
       .eq("status", "approved")
+      .or("is_hidden.is.null,is_hidden.eq.false")
       .order("created_at", { ascending: false });
     if (error) throw error;
     data = rows;
@@ -1760,11 +1841,16 @@ function init() {
     updateHeaderAuth();
     if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
       closeLoginModal();
-      // 로그인 완료 후 대기 중이던 폼 복원
-      if (window.PetAuth?.isLoggedIn()) restoreFormDraft();
+      if (window.PetAuth?.isLoggedIn()) {
+        restoreFormDraft();
+        loadPetGreeting();
+      }
     }
   })
-  .then(() => updateHeaderAuth())
+  .then(() => {
+    updateHeaderAuth();
+    if (window.PetAuth?.isLoggedIn()) loadPetGreeting();
+  })
   .catch(() => updateHeaderAuth());
 
   bindLoginModal();

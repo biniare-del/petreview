@@ -152,10 +152,13 @@
       } else {
         badgeHtml = '<span style="font-size:11px;color:#aaa;">미인증</span>';
       }
+      const hiddenBadge = r.is_hidden ? '<span class="badge-hidden" style="font-size:11px;background:#555;color:#eee;padding:2px 8px;border-radius:6px;margin-left:6px;">👁 숨김</span>' : "";
+      const hideToggleLabel = r.is_hidden ? "숨김 해제" : "숨김";
+      const hideToggleClass = r.is_hidden ? "btn-approve review-unhide-btn" : "btn-delete review-hide-btn";
       return `
-      <div class="admin-card" data-review-id="${escapeHtml(r.id)}"${cardStyle}>
+      <div class="admin-card" data-review-id="${escapeHtml(r.id)}" data-is-hidden="${r.is_hidden ? "1" : "0"}"${cardStyle}>
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <h3>${escapeHtml(r.place_name)} <small style="color:#aaa;">(${CATEGORY_LABEL[r.category] ?? r.category})</small></h3>
+          <h3>${escapeHtml(r.place_name)} <small style="color:#aaa;">(${CATEGORY_LABEL[r.category] ?? r.category})</small>${hiddenBadge}</h3>
           ${badgeHtml}
         </div>
         <p>지역: 서울특별시 ${escapeHtml(r.region ?? "")} · 방문일: ${escapeHtml(r.visit_date ?? "")}</p>
@@ -164,7 +167,7 @@
         <div class="card-actions">
           <button class="btn-approve review-approve-btn" data-id="${escapeHtml(r.id)}">인증승인</button>
           <button class="btn-pending review-pending-btn" data-id="${escapeHtml(r.id)}">보류</button>
-          <button class="btn-delete review-delete-btn" data-id="${escapeHtml(r.id)}">삭제</button>
+          <button class="${hideToggleClass}" data-id="${escapeHtml(r.id)}">${hideToggleLabel}</button>
         </div>
       </div>`;
     }).join("");
@@ -197,15 +200,43 @@
       });
     });
 
-    container.querySelectorAll(".review-delete-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("이 리뷰를 삭제하시겠습니까?")) return;
-        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.id);
-        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
-        container.querySelector(`[data-review-id="${btn.dataset.id}"]`)?.remove();
-        loadStats();
+    function bindHideToggle(selector, hideValue) {
+      container.querySelectorAll(selector).forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const action = hideValue ? "숨김 처리" : "숨김 해제";
+          if (!confirm(`이 리뷰를 ${action}하시겠습니까?`)) return;
+          const { error: updErr } = await db.from("reviews").update({ is_hidden: hideValue }).eq("id", btn.dataset.id);
+          if (updErr) { alert(`${action} 실패: ` + updErr.message); return; }
+          // Toggle button and badge in-place
+          const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
+          if (card) {
+            card.dataset.isHidden = hideValue ? "1" : "0";
+            const h3 = card.querySelector("h3");
+            const existingBadge = h3?.querySelector(".badge-hidden");
+            if (hideValue) {
+              if (h3 && !existingBadge) {
+                h3.insertAdjacentHTML("beforeend", '<span class="badge-hidden" style="font-size:11px;background:#555;color:#eee;padding:2px 8px;border-radius:6px;margin-left:6px;">👁 숨김</span>');
+              }
+              btn.textContent = "숨김 해제";
+              btn.className = "btn-approve review-unhide-btn";
+              btn.dataset.id = btn.dataset.id; // keep
+            } else {
+              existingBadge?.remove();
+              btn.textContent = "숨김";
+              btn.className = "btn-delete review-hide-btn";
+            }
+            // Re-bind the swapped button
+            const newBtn = btn; // same element, class changed
+            newBtn.replaceWith(newBtn.cloneNode(true));
+            bindHideToggle(".review-hide-btn", true);
+            bindHideToggle(".review-unhide-btn", false);
+          }
+          loadStats();
+        });
       });
-    });
+    }
+    bindHideToggle(".review-hide-btn", true);
+    bindHideToggle(".review-unhide-btn", false);
   }
 
   // ===== 신고 관리 =====
@@ -235,8 +266,8 @@
         <p>리뷰 내용: ${escapeHtml(r.reviews?.short_review || "")}</p>
         <p class="helper-text">신고일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
         <div class="card-actions">
-          <button class="btn-approve resolve-report-btn" data-id="${escapeHtml(r.id)}">처리 완료</button>
-          <button class="btn-reject delete-reported-review-btn" data-review-id="${escapeHtml(r.review_id)}" data-report-id="${escapeHtml(r.id)}">리뷰 삭제</button>
+          <button class="btn-approve resolve-report-btn" data-id="${escapeHtml(r.id)}">신고 무시 (처리완료)</button>
+          <button class="btn-reject hide-reported-review-btn" data-review-id="${escapeHtml(r.review_id)}" data-report-id="${escapeHtml(r.id)}">리뷰 숨김</button>
         </div>
       </div>`).join("");
 
@@ -251,11 +282,11 @@
       });
     });
 
-    container.querySelectorAll(".delete-reported-review-btn").forEach((btn) => {
+    container.querySelectorAll(".hide-reported-review-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if (!confirm("리뷰를 삭제하시겠습니까?")) return;
-        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.reviewId);
-        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        if (!confirm("리뷰를 숨김 처리하시겠습니까?\n(뷰 페이지에서 보이지 않으며, 관리자 페이지에는 남습니다.)")) return;
+        const { error: hideErr } = await db.from("reviews").update({ is_hidden: true }).eq("id", btn.dataset.reviewId);
+        if (hideErr) { alert("숨김 처리 실패: " + hideErr.message); return; }
         await db.from("review_reports").update({ is_resolved: true }).eq("id", btn.dataset.reportId);
         btn.closest(".admin-card").remove();
         if (!container.querySelector(".admin-card")) {

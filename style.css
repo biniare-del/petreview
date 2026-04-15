@@ -1230,6 +1230,52 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 /* ===== 배너 슬롯 ===== */
+/* 마이펫 인사 바 */
+.pet-greeting-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  margin: 16px 0 0;
+  background: linear-gradient(135deg, #e8f8f3, #f0faf7);
+  border: 1px solid #c2e8dc;
+  border-radius: 16px;
+}
+
+.pet-greeting-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #c8ede3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+
+.pet-greeting-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pet-greeting-text {
+  font-size: 14px;
+  color: #2a5a47;
+  line-height: 1.5;
+}
+
+.pet-greeting-text strong {
+  color: #0f6e56;
+}
+
+.pet-greeting-text span {
+  font-size: 13px;
+  color: #5a8c7a;
+}
+
 .banner-slot {
   margin: 12px 0 0;
   border-radius: 16px;
@@ -1299,6 +1345,68 @@ body[data-theme="grooming"] .place-phone-link {
 .featured-tag.tag-event {
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
   color: #fff;
+}
+
+/* ===== 미용샵 이벤트 섹션 ===== */
+.grooming-events-section {
+  padding: 0 20px 12px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.grooming-events-section .section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #72243e;
+  margin: 0 0 10px;
+}
+
+.grooming-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grooming-event-card {
+  background: linear-gradient(160deg, #fff0f5, #fde8ef);
+  border: 1px solid #f9c7d6;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grooming-event-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #5a1a2e;
+}
+
+.grooming-event-region {
+  font-size: 12px;
+  color: #a05070;
+  font-weight: 500;
+}
+
+.grooming-event-phone {
+  display: inline-block;
+  font-size: 13px;
+  color: #c84b6e;
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.grooming-event-phone:hover {
+  text-decoration: underline;
+}
+
+.grooming-event-placeholder {
+  text-align: center;
+  padding: 28px 0;
+  color: #c084a0;
+  font-size: 14px;
 }
 
 /* ===== 위치정보 상태 ===== */
@@ -1581,15 +1689,23 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .card-pet-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   background: #e1f5ee;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 22px;
+  font-size: 26px;
+  overflow: hidden;
+}
+
+.pet-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
 }
 
 .pet-icon--dog::before { content: "🐶"; }

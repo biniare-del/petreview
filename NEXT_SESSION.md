@@ -23,12 +23,21 @@ git checkout claude/fix-community-modal-close-6eTry
 
 ---
 
-## 1. 즉시 처리할 버그/기능 (우선순위 순)
+## ⚠️ Supabase SQL 실행 필요
 
-### [ ] #12 — admin.html 배너/우수협력병원 테이블 오류 수정
-- 증상: "Could not find the table 'public.banners' in the schema cache" 오류
-- 할 일: `admin.js`에서 해당 쿼리 찾아서 테이블 없을 때 graceful 처리 (오류 숨기기 또는 안내 메시지)
-- Supabase SQL로 `banners`, `partner_hospitals` 테이블 생성 스크립트도 별도 파일(`supabase/schema_banners.sql`)로 준비
+> 아래 SQL을 Supabase → SQL Editor에서 직접 실행해야 합니다.
+
+### 1. `supabase/add_is_hidden.sql`
+```sql
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_hidden boolean DEFAULT false;
+UPDATE reviews SET is_hidden = false WHERE is_hidden IS NULL;
+```
+
+### 2. `supabase/create_banners.sql` (banners, featured_places 테이블)
+
+---
+
+## 1. 즉시 처리할 버그/기능 (우선순위 순)
 
 ### [ ] #11 — 배너/우수협력병원 플레이스홀더 (관리자가 등록 전 샘플 표시)
 - 메인(index.html)에 배너 섹션이 있다면: 관리자가 등록한 배너 없을 때 샘플 카드 표시
@@ -47,17 +56,8 @@ git checkout claude/fix-community-modal-close-6eTry
 
 ## 2. 아이디어성 작업 (논의 후 진행)
 
-### [ ] #9 — 마이펫 사진 메인화면 노출
+### [ ] #9 — 마이펫 사진 메인화면 노출 ← 구현 완료, 실서비스 미적용 (Supabase SQL 실행 필요)
 - 로그인 + 마이펫 등록된 사람이면 메인 상단에 반려동물 사진 + "안녕하세요 보리맘님 🐾"
-- 구현 전 디자인 먼저 논의
-
-### [ ] #13 — 마이펫 사진 → 리뷰 아바타 연동
-- 리뷰 작성 시 펫 선택하면 그 펫 사진이 리뷰 카드 아바타로 표시
-- 구현 전 리뷰 테이블 컬럼 확인 필요
-
-### [ ] #4 — 관리자 신고처리 버튼 역할 분리
-- 현재 "처리완료" 버튼이 무엇을 하는지 admin.js에서 확인
-- 글삭제 / 상태변경 / 신고무시를 별도 버튼으로 분리
 
 ---
 
@@ -69,3 +69,9 @@ git checkout claude/fix-community-modal-close-6eTry
 - [x] #3 체중기록 미래날짜 차단 (weight-date-input max=today)
 - [x] #7 방문일 클릭 시 달력 자동 펼치기 (showPicker)
 - [x] #8 결제금액 step=10 + 영수증 자동입력 안내
+- [x] #5 업종 필터 큰 탭 버튼 (category-tab-bar)
+- [x] #9 메인 마이펫 인사 바 (pet-greeting-bar)
+- [x] #10 미용샵 탭 이벤트 섹션 (grooming-events-section)
+- [x] #13 리뷰 아바타 펫사진 연동 + 영수증 비공개
+- [x] #4 신고처리 소프트삭제 (is_hidden toggle, 신고 무시/리뷰 숨김 분리)
+- [x] #12 admin.html banners/featured_places 테이블 없을 때 graceful 처리
