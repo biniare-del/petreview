@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 4. 매직링크 생성 → 자동 로그인
+    // 4. 매직링크 생성 → 토큰 추출
     const linkRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
       method: "POST",
       headers: adminHeaders,
@@ -110,19 +110,26 @@ export default async function handler(req, res) {
     });
     const linkData = await linkRes.json();
 
-    // 응답 형식 두 가지 대응
-    const actionLink =
-      linkData.action_link ||
-      linkData?.properties?.action_link ||
-      linkData?.data?.properties?.action_link;
-
+    const actionLink = linkData.action_link;
     if (!actionLink) {
       console.error("Generate link failed:", JSON.stringify(linkData));
       return res.redirect(`${SITE_URL}?login_error=naver_link`);
     }
 
-    // 5. 매직링크로 리다이렉트 → 브라우저가 Supabase 세션 자동 처리
-    return res.redirect(actionLink);
+    // PKCE 호환을 위해 action_link를 브라우저가 따라가는 대신
+    // 토큰을 프론트엔드로 전달 → 클라이언트에서 verifyOtp 호출
+    const actionUrl = new URL(actionLink);
+    const verifyToken = actionUrl.searchParams.get("token");
+
+    if (!verifyToken) {
+      console.error("No token in action_link:", actionLink);
+      return res.redirect(`${SITE_URL}?login_error=naver_link`);
+    }
+
+    const finalUrl = new URL(SITE_URL);
+    finalUrl.searchParams.set("naver_email", virtualEmail);
+    finalUrl.searchParams.set("naver_token", verifyToken);
+    return res.redirect(finalUrl.toString());
   } catch (err) {
     console.error("Naver auth error:", err);
     return res.redirect(`${SITE_URL}?login_error=naver_unknown`);

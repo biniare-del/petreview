@@ -27,25 +27,47 @@
       const db = window.supabaseClient;
       if (!db) return;
 
-      // 1. 먼저 getSession()으로 현재 세션 확인 (URL의 ?code= 교환 포함)
-      try {
-        const { data: { session }, error } = await db.auth.getSession();
-        if (error) {
-          console.warn("[펫리뷰] 세션 복원 실패:", error.message);
-        } else if (session?.user) {
-          this.currentUser = session.user;
-          this.currentProfile = await this._fetchProfile(session.user.id);
+      // 네이버 로그인 OTP 처리 (PKCE 호환 방식)
+      const urlParams = new URLSearchParams(window.location.search);
+      const naverEmail = urlParams.get("naver_email");
+      const naverToken = urlParams.get("naver_token");
+
+      if (naverEmail && naverToken) {
+        // URL 즉시 정리
+        window.history.replaceState({}, document.title, window.location.pathname);
+        try {
+          const { data, error } = await db.auth.verifyOtp({
+            email: naverEmail,
+            token: naverToken,
+            type: "magiclink",
+          });
+          if (!error && data.session?.user) {
+            this.currentUser = data.session.user;
+            this.currentProfile = await this._fetchProfile(data.session.user.id);
+          } else if (error) {
+            console.warn("[펫리뷰] 네이버 OTP 검증 실패:", error.message);
+          }
+        } catch (err) {
+          console.warn("[펫리뷰] 네이버 로그인 처리 오류:", err);
         }
-      } catch (err) {
-        console.warn("[펫리뷰] 인증 초기화 오류:", err);
-      } finally {
-        // 코드 교환 성공/실패 관계없이 URL 파라미터 정리
-        cleanOAuthParams();
+      } else {
+        // 일반 세션 복원 (구글/카카오 등)
+        try {
+          const { data: { session }, error } = await db.auth.getSession();
+          if (error) {
+            console.warn("[펫리뷰] 세션 복원 실패:", error.message);
+          } else if (session?.user) {
+            this.currentUser = session.user;
+            this.currentProfile = await this._fetchProfile(session.user.id);
+          }
+        } catch (err) {
+          console.warn("[펫리뷰] 인증 초기화 오류:", err);
+        } finally {
+          cleanOAuthParams();
+        }
       }
 
-      // 2. 이후 상태 변화 감지 (로그인/로그아웃)
-      // getSession() 이후에 등록하므로 INITIAL_SESSION 의 빈 세션으로
-      // currentUser 가 null 로 덮어쓰이는 문제를 방지
+      // 이후 상태 변화 감지
       db.auth.onAuthStateChange(async (event, session) => {
         this.currentUser = session?.user ?? null;
         this.currentProfile = session?.user
