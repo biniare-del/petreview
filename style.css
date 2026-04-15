@@ -356,6 +356,41 @@ textarea {
   object-fit: cover;
 }
 
+/* 업종 탭 버튼 */
+.category-tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.category-tab-btn {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 14px;
+  border: 2px solid #e8ddd7;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  color: #999;
+  transition: all 0.18s;
+}
+
+.category-tab-btn.is-active,
+.category-tab-btn:hover {
+  border-color: #0f6e56;
+  background: #0f6e56;
+  color: #fff;
+}
+
+[data-theme="grooming"] .category-tab-btn.is-active,
+[data-theme="grooming"] .category-tab-btn:hover {
+  border-color: #e07b39;
+  background: #e07b39;
+  color: #fff;
+}
+
 /* 리뷰 목록 섹션 */
 .review-filters {
   margin-top: 14px;
@@ -493,6 +528,24 @@ textarea {
   background: #0f6e56;
   border-color: #0f6e56;
   color: #fff;
+}
+
+.pet-add-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px dashed #0f6e56;
+  background: #fff;
+  font-size: 13px;
+  color: #0f6e56;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.pet-add-link:hover {
+  background: #e7f5f1;
 }
 
 .sort-btn {
@@ -1199,6 +1252,28 @@ body[data-theme="grooming"] .place-phone-link {
   max-height: 200px;
   object-fit: cover;
   border-radius: 16px;
+}
+
+.banner-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  width: 100%;
+  justify-content: center;
+}
+.banner-placeholder-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #bbb;
+  border-radius: 4px;
+  padding: 2px 7px;
+  letter-spacing: 0.5px;
+}
+.banner-placeholder-text {
+  font-size: 13px;
+  color: #aaa;
 }
 
 /* ===== 우수협력병원/이벤트 고정 카드 ===== */

@@ -1102,6 +1102,17 @@ function bindServiceTags() {
 }
 
 function bindReviewFilters() {
+  // 업종 탭 버튼
+  document.querySelectorAll(".category-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".category-tab-btn").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      els.filterCategory.value = btn.dataset.cat;
+      // 테마 전환
+      document.body.dataset.theme = btn.dataset.cat === "grooming" ? "grooming" : "hospital";
+      renderReviewList();
+    });
+  });
   els.filterCategory.addEventListener("change", renderReviewList);
   els.filterRegion.addEventListener("change", renderReviewList);
 }
@@ -1181,9 +1192,17 @@ async function loadBanner() {
       .eq("is_active", true)
       .order("sort_order")
       .limit(1);
-    if (!data?.length) return;
-    const b = data[0];
     slot.hidden = false;
+    if (!data?.length) {
+      // 등록된 배너 없을 때 플레이스홀더
+      slot.innerHTML = `
+        <div class="banner-placeholder">
+          <span class="banner-placeholder-label">ADS</span>
+          <span class="banner-placeholder-text">광고 배너 모집 중 · 문의는 관리자에게</span>
+        </div>`;
+      return;
+    }
+    const b = data[0];
     const img = `<img src="${escapeHtml(b.image_url || "")}" alt="${escapeHtml(b.alt_text || "")}" class="banner-img" />`;
     slot.innerHTML = b.link_url
       ? `<a href="${escapeHtml(b.link_url)}" target="_blank" rel="noopener noreferrer">${img}</a>`
@@ -1300,18 +1319,21 @@ async function loadPetSelector() {
   }
 
   const { data: pets } = await db.from("pets").select("id, name, species").eq("user_id", userId);
-  if (!pets?.length) {
-    container.innerHTML = `<a href="mypage.html#pets" style="font-size:13px;color:#0f6e56;">+ 마이페이지에서 반려동물 등록하기 →</a>`;
-    return;
-  }
 
   selectedPetName = "";
   selectedPetSpecies = "";
 
+  const addBtn = `<a href="mypage.html" class="pet-add-link">＋ 마이펫 추가</a>`;
+
+  if (!pets?.length) {
+    container.innerHTML = addBtn;
+    return;
+  }
+
   container.innerHTML = pets.map(p => {
     const icon = p.species === "고양이" ? "🐱" : "🐶";
     return `<button type="button" class="pet-select-btn" data-name="${escapeHtml(p.name)}" data-species="${escapeHtml(p.species || "")}">${icon} ${escapeHtml(p.name)}</button>`;
-  }).join("");
+  }).join("") + addBtn;
 
   container.querySelectorAll(".pet-select-btn").forEach(btn => {
     btn.addEventListener("click", () => {

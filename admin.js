@@ -329,8 +329,13 @@
       .select("*")
       .order("sort_order");
 
-    if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
-    if (!data?.length) { container.innerHTML = '<p class="placeholder-text">등록된 배너가 없습니다.</p>'; return; }
+    if (error) {
+      const isNoTable = error.message?.includes("schema cache") || error.code === "PGRST200";
+      container.innerHTML = isNoTable
+        ? `<p class="placeholder-text">banners 테이블이 아직 생성되지 않았습니다.<br><small style="color:#aaa;">Supabase에서 테이블을 먼저 생성해주세요.</small></p>`
+        : `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
 
     container.innerHTML = data.map((b) => `
       <div class="admin-card" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
@@ -377,8 +382,13 @@
       .select("*")
       .order("sort_order");
 
-    if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
-    if (!data?.length) { container.innerHTML = '<p class="placeholder-text">등록된 업체가 없습니다.</p>'; return; }
+    if (error) {
+      const isNoTable = error.message?.includes("schema cache") || error.code === "PGRST200";
+      container.innerHTML = isNoTable
+        ? `<p class="placeholder-text">featured_places 테이블이 아직 생성되지 않았습니다.<br><small style="color:#aaa;">Supabase에서 테이블을 먼저 생성해주세요.</small></p>`
+        : `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
 
     container.innerHTML = data.map((fp) => `
       <div class="admin-card" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
