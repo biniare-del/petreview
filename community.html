@@ -795,7 +795,13 @@
       document.getElementById("write-modal-overlay").hidden = true;
       document.body.style.overflow = "";
       editingPostId = null;
-      document.getElementById("write-submit-btn").textContent = "등록하기";
+      selectedWriteTag = null;
+      document.getElementById("write-title").value = "";
+      document.getElementById("write-content").value = "";
+      document.getElementById("write-result").textContent = "";
+      document.querySelectorAll(".tag-select-btn").forEach(b => b.classList.remove("is-active"));
+      const submitBtn = document.getElementById("write-submit-btn");
+      if (submitBtn) { submitBtn.textContent = "등록하기"; submitBtn.disabled = false; }
     }
 
     async function submitPost() {
@@ -835,22 +841,15 @@
           closeWriteModal();
           renderPosts();
         } else {
-          const { data, error } = await db
+          const { error } = await db
             .from("posts")
-            .insert([{ user_id: userId, tag: selectedWriteTag, title, content }])
-            .select("*")
-            .single();
+            .insert([{ user_id: userId, tag: selectedWriteTag, title, content }]);
 
           btn.disabled = false;
           btn.textContent = "등록하기";
           if (error) { resultEl.textContent = "등록 실패: " + error.message; return; }
           closeWriteModal();
-          if (data) {
-            data.comments = [];
-            data.profiles = { nickname: window.PetAuth?.getDisplayName() || "나" };
-            allPosts.unshift(data);
-            renderPosts();
-          }
+          await loadPosts();
         }
       } catch (e) {
         btn.disabled = false;
