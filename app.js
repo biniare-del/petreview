@@ -400,13 +400,23 @@ async function loadReviews() {
     return;
   }
 
-  const { data, error } = await db
+  let { data, error } = await db
     .from("reviews")
     .select("*")
     .or("status.eq.approved,status.is.null")
     .or("is_hidden.is.null,is_hidden.eq.false")
     .order("is_verified", { ascending: false })
     .order("created_at", { ascending: false });
+
+  // is_hidden 컬럼이 아직 없을 경우(PGRST200) → 컬럼 없이 재시도
+  if (error && (error.code === "PGRST200" || error.message?.includes("is_hidden"))) {
+    ({ data, error } = await db
+      .from("reviews")
+      .select("*")
+      .or("status.eq.approved,status.is.null")
+      .order("is_verified", { ascending: false })
+      .order("created_at", { ascending: false }));
+  }
 
   if (error) {
     console.error("[펫리뷰] 리뷰 로드 실패:", error);
@@ -1724,7 +1734,7 @@ async function openPlaceDetail(place) {
 
   let data;
   try {
-    const { data: rows, error } = await db
+    let { data: rows, error } = await db
       .from("reviews")
       .select("*")
       .eq("place_name", place.name)
@@ -1732,6 +1742,16 @@ async function openPlaceDetail(place) {
       .eq("status", "approved")
       .or("is_hidden.is.null,is_hidden.eq.false")
       .order("created_at", { ascending: false });
+    // is_hidden 컬럼 없을 경우 재시도
+    if (error && (error.code === "PGRST200" || error.message?.includes("is_hidden"))) {
+      ({ data: rows, error } = await db
+        .from("reviews")
+        .select("*")
+        .eq("place_name", place.name)
+        .eq("is_verified", true)
+        .eq("status", "approved")
+        .order("created_at", { ascending: false }));
+    }
     if (error) throw error;
     data = rows;
   } catch (err) {
