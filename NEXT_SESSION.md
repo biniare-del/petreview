@@ -13,6 +13,12 @@ git remote set-url origin https://<PAT_TOKEN>@github.com/biniare-del/petreview.g
 > PAT 토큰은 GitHub Settings → Developer settings → Personal access tokens에서 확인.  
 > 이유: 환경이 세션마다 remote를 로컬 프록시로 초기화해버림. push 전에 반드시 먼저 실행.
 
+⚠️ **배포 필수**: 작업 완료 후 항상 main 머지 + 푸시해야 실제 사이트 반영됨.
+```bash
+git checkout main && git merge claude/fix-community-modal-close-6eTry --no-edit && git push origin main
+git checkout claude/fix-community-modal-close-6eTry
+```
+
 작업 브랜치: `claude/fix-community-modal-close-6eTry`
 
 ---
