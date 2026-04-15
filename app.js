@@ -1201,8 +1201,8 @@ function updateHeaderAuth() {
     const name = window.PetAuth.getDisplayName();
     const avatar = window.PetAuth.getAvatarUrl();
     const avatarHtml = avatar
-      ? `<img src="${escapeHtml(avatar)}" class="header-avatar" alt="프로필" />`
-      : `<span class="header-avatar-placeholder">${escapeHtml(name[0] || "?")}</span>`;
+      ? `<a href="mypage.html"><img src="${escapeHtml(avatar)}" class="header-avatar" alt="프로필" /></a>`
+      : `<a href="mypage.html"><span class="header-avatar-placeholder">${escapeHtml(name[0] || "?")}</span></a>`;
     const adminLink = window.PetAuth.isAdmin()
       ? `<a href="admin.html" class="header-auth-link">관리자</a>`
       : "";
