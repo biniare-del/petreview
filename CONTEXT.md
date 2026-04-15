@@ -18,7 +18,12 @@
 ## 현재 구현 상태 요약
 
 ### 인증 / 계정
-- 구글 OAuth 로그인 (Supabase PKCE)
+- 구글 OAuth 로그인 (Supabase PKCE) ✅
+- 네이버 로그인 (Vercel 서버리스 커스텀 OAuth) ✅
+- 카카오 로그인 코드 구현 완료, 단 **비즈니스 앱 등록 전까지 미작동** ⚠️
+  - 카카오 KOE205 에러: account_email 권한은 비즈 앱만 허용
+  - 앱 출시 전 카카오 비즈니스 채널 등록 + 비즈 앱 전환 필요
+  - 등록 후 카카오 동의항목에서 이메일 활성화하면 정상 동작
 - 세션 만료 자동 감지 → 로그인 모달 (requireAuthUserId 헬퍼)
 - 관리자 계정 (profiles.is_admin)
 - 비로그인 상태에서 로그인 필요한 액션 → signInWithGoogle() 직접 호출 (redirect 아님)
