@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 4. 매직링크 생성 → 토큰 추출
+    // 4. 매직링크 생성 → 브라우저가 직접 따라감 (implicit flow 호환)
     const linkRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
       method: "POST",
       headers: adminHeaders,
@@ -116,20 +116,8 @@ export default async function handler(req, res) {
       return res.redirect(`${SITE_URL}?login_error=naver_link`);
     }
 
-    // PKCE 호환을 위해 action_link를 브라우저가 따라가는 대신
-    // 토큰을 프론트엔드로 전달 → 클라이언트에서 verifyOtp 호출
-    const actionUrl = new URL(actionLink);
-    const verifyToken = actionUrl.searchParams.get("token");
-
-    if (!verifyToken) {
-      console.error("No token in action_link:", actionLink);
-      return res.redirect(`${SITE_URL}?login_error=naver_link`);
-    }
-
-    const finalUrl = new URL(SITE_URL);
-    finalUrl.searchParams.set("naver_email", virtualEmail);
-    finalUrl.searchParams.set("naver_token", verifyToken);
-    return res.redirect(finalUrl.toString());
+    // Supabase verify URL → 브라우저가 방문 → #access_token= 으로 리다이렉트
+    return res.redirect(actionLink);
   } catch (err) {
     console.error("Naver auth error:", err);
     return res.redirect(`${SITE_URL}?login_error=naver_unknown`);

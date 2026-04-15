@@ -27,44 +27,19 @@
       const db = window.supabaseClient;
       if (!db) return;
 
-      // 네이버 로그인 OTP 처리 (PKCE 호환 방식)
-      const urlParams = new URLSearchParams(window.location.search);
-      const naverEmail = urlParams.get("naver_email");
-      const naverToken = urlParams.get("naver_token");
-
-      if (naverEmail && naverToken) {
-        // URL 즉시 정리
-        window.history.replaceState({}, document.title, window.location.pathname);
-        try {
-          const { data, error } = await db.auth.verifyOtp({
-            email: naverEmail,
-            token: naverToken,
-            type: "magiclink",
-          });
-          if (!error && data.session?.user) {
-            this.currentUser = data.session.user;
-            this.currentProfile = await this._fetchProfile(data.session.user.id);
-          } else if (error) {
-            console.warn("[펫리뷰] 네이버 OTP 검증 실패:", error.message);
-          }
-        } catch (err) {
-          console.warn("[펫리뷰] 네이버 로그인 처리 오류:", err);
+      // 세션 복원 (OAuth 리다이렉트 코드/토큰 처리 포함)
+      try {
+        const { data: { session }, error } = await db.auth.getSession();
+        if (error) {
+          console.warn("[펫리뷰] 세션 복원 실패:", error.message);
+        } else if (session?.user) {
+          this.currentUser = session.user;
+          this.currentProfile = await this._fetchProfile(session.user.id);
         }
-      } else {
-        // 일반 세션 복원 (구글/카카오 등)
-        try {
-          const { data: { session }, error } = await db.auth.getSession();
-          if (error) {
-            console.warn("[펫리뷰] 세션 복원 실패:", error.message);
-          } else if (session?.user) {
-            this.currentUser = session.user;
-            this.currentProfile = await this._fetchProfile(session.user.id);
-          }
-        } catch (err) {
-          console.warn("[펫리뷰] 인증 초기화 오류:", err);
-        } finally {
-          cleanOAuthParams();
-        }
+      } catch (err) {
+        console.warn("[펫리뷰] 인증 초기화 오류:", err);
+      } finally {
+        cleanOAuthParams();
       }
 
       // 이후 상태 변화 감지
