@@ -78,10 +78,12 @@
     },
 
     async signInWithNaver() {
-      await window.supabaseClient?.auth.signInWithOAuth({
-        provider: "naver",
-        options: { redirectTo: SITE_URL },
-      });
+      const clientId = "ioqxPmIhg53d4OclcRAU";
+      const redirectUri = encodeURIComponent("https://petreview.vercel.app/api/naver-callback");
+      const state = Math.random().toString(36).slice(2);
+      window.location.href =
+        `https://nid.naver.com/oauth2.0/authorize?response_type=code` +
+        `&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
     },
 
     async signInWithGoogle() {
