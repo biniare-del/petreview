@@ -1815,14 +1815,31 @@ async function openPlaceDetail(place) {
       </tr>`;
     });
 
+  // 전체 진료비 범위 (리뷰 1건 이상이면 항상 표시)
+  const allPrices = data.filter(r => r.total_price).map(r => Number(r.total_price));
+  let overallRangeHtml = "";
+  if (allPrices.length) {
+    const minP = Math.min(...allPrices);
+    const maxP = Math.max(...allPrices);
+    overallRangeHtml = minP === maxP
+      ? `<p style="font-size:13px;color:#555;margin:0 0 10px;">1회 방문 기준 <strong>₩ ${minP.toLocaleString("ko-KR")}</strong></p>`
+      : `<p style="font-size:13px;color:#555;margin:0 0 10px;">1회 방문 기준 <strong>₩ ${minP.toLocaleString("ko-KR")} ~ ${maxP.toLocaleString("ko-KR")}</strong></p>`;
+  }
+
   const priceContainer = document.getElementById("detail-price-table");
   if (priceRows.length) {
     priceContainer.innerHTML = `
       <h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 8px;">진료항목별 진료비</h4>
+      ${overallRangeHtml}
       <table class="price-table">
         <thead><tr><th>항목</th><th>평균 (범위)</th><th>리뷰 수</th></tr></thead>
         <tbody>${priceRows.join("")}</tbody>
       </table>`;
+  } else if (overallRangeHtml) {
+    priceContainer.innerHTML = `
+      <h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 8px;">진료비</h4>
+      ${overallRangeHtml}
+      <p style="font-size:12px;color:#bbb;margin:0;">항목별 평균은 같은 항목 리뷰 3건 이상 쌓이면 표시됩니다.</p>`;
   }
 
   // 다항목 별점 평균
