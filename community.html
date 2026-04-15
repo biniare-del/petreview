@@ -657,14 +657,28 @@
       }
       countEl.textContent = error ? "?" : comments.length;
 
+      const isLoggedIn = window.PetAuth?.isLoggedIn();
+      const currentUserId = window.PetAuth?.currentUser?.id;
+
       listEl.innerHTML = comments.length === 0
         ? '<p style="font-size:13px;color:#aaa;padding:12px 0;">첫 댓글을 남겨보세요.</p>'
         : comments.map(c => `
-            <div class="comment-item">
-              <span class="comment-author">${escH(c.profiles?.nickname || "익명")}</span>
-              <span class="comment-time">${formatTime(c.created_at)}</span>
+            <div class="comment-item" data-comment-id="${escH(c.id)}">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <span>
+                  <span class="comment-author">${escH(c.profiles?.nickname || "익명")}</span>
+                  <span class="comment-time">${formatTime(c.created_at)}</span>
+                </span>
+                ${isLoggedIn && c.user_id !== currentUserId
+                  ? `<button class="comment-report-btn" data-comment-id="${escH(c.id)}" style="font-size:11px;color:#ccc;background:none;border:none;cursor:pointer;padding:2px 4px;">신고</button>`
+                  : ""}
+              </div>
               <p class="comment-content">${escH(c.content)}</p>
             </div>`).join("");
+
+      listEl.querySelectorAll(".comment-report-btn").forEach(btn => {
+        btn.addEventListener("click", () => reportComment(btn.dataset.commentId));
+      });
 
       const formArea = document.getElementById("comment-form-area");
       if (window.PetAuth?.isLoggedIn()) {
@@ -757,6 +771,24 @@
       const { error } = await db.from("post_reports").insert([{ post_id: postId, user_id: userId, reason }]);
       if (error) {
         alert(error.code === "23505" ? "이미 신고한 게시글입니다." : "신고 처리 중 오류가 발생했습니다.");
+      } else {
+        alert("신고가 접수됐습니다. 검토 후 처리해드리겠습니다.");
+      }
+    }
+
+    // ===== 댓글 신고 =====
+    async function reportComment(commentId) {
+      if (!window.PetAuth?.isLoggedIn()) {
+        window.PetAuth?.signInWithGoogle();
+        return;
+      }
+      const reason = prompt("신고 사유를 입력해주세요.\n(허위정보 / 욕설비방 / 광고성 / 기타)");
+      if (!reason) return;
+      const db = window.supabaseClient;
+      const userId = window.PetAuth.currentUser.id;
+      const { error } = await db.from("comment_reports").insert([{ comment_id: commentId, user_id: userId, reason }]);
+      if (error) {
+        alert(error.code === "23505" ? "이미 신고한 댓글입니다." : "신고 처리 중 오류가 발생했습니다.");
       } else {
         alert("신고가 접수됐습니다. 검토 후 처리해드리겠습니다.");
       }

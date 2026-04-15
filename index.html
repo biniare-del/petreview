@@ -145,7 +145,7 @@
     <section id="review-form-section" class="section review-form-section" aria-label="리뷰 작성">
       <header class="section-header">
         <h2>리뷰 작성하기</h2>
-        <p>방문한 동물병원·미용샵의 영수증으로 솔직한 후기를 남겨주세요.</p>
+        <p>영수증 없어도 괜찮아요! 방문 후기만 남겨도 등록됩니다. 영수증 첨부 시 인증 뱃지가 부여됩니다.</p>
       </header>
 
       <!-- Step 1: 업종 선택 -->
@@ -235,14 +235,14 @@
         </div>
         <!-- 영수증 업로드 -->
         <div class="form-group">
-          <label for="receipt-image">영수증 사진 업로드 <span class="helper-text" style="display:inline;">(선택)</span></label>
+          <label for="receipt-image">영수증 사진 업로드 <span class="badge-optional">선택</span></label>
           <input
             type="file"
             id="receipt-image"
             name="receipt-image"
             accept="image/*"
           />
-          <p class="helper-text">영수증이 없어도 후기를 남길 수 있어요. 영수증 첨부 시 인증 뱃지가 부여됩니다.</p>
+          <p class="helper-text">첨부하면 ✔ 인증 뱃지가 붙어요. 없으면 그냥 넘어가세요.</p>
           <div id="ocr-status" class="ocr-status" hidden></div>
           <div class="receipt-preview" id="receipt-preview"></div>
         </div>

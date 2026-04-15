@@ -334,6 +334,7 @@ function renderReviewList() {
             <div class="card-pet-owner">
               ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
               ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
+              ${review.reviewSeq ? `<span class="review-seq-badge">${review.reviewSeq}번째 리뷰</span>` : ""}
             </div>
           </div>
           <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
@@ -368,6 +369,8 @@ function rowToReview(row) {
   const storagePath = row.receipt_image_url || "";
   return {
     id: row.id,
+    userId: row.user_id || "",
+    createdAt: row.created_at || "",
     placeName: row.place_name,
     category: row.category,
     region: row.region,
@@ -387,6 +390,7 @@ function rowToReview(row) {
     scoreWait: row.score_wait || null,
     reviewPhotoUrls: row.review_photo_urls || [],
     userNickname: row.profiles?.nickname || "",
+    reviewSeq: 0, // 사용자별 누적 순번 (loadReviews에서 계산)
   };
 }
 
@@ -454,6 +458,14 @@ async function loadReviews() {
         r.receiptImage = signed?.signedUrl || "";
       })
   );
+
+  // 사용자별 누적 순번 계산 (오래된 리뷰부터 1번)
+  const userSeqMap = {};
+  [...rawReviews].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).forEach((r) => {
+    if (!r.userId) return;
+    userSeqMap[r.userId] = (userSeqMap[r.userId] || 0) + 1;
+    r.reviewSeq = userSeqMap[r.userId];
+  });
 
   reviews = rawReviews;
   await loadLikes();

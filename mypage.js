@@ -702,7 +702,13 @@
     }
 
     const greetingEl = document.getElementById("mypage-greeting");
-    if (greetingEl) greetingEl.textContent = `안녕하세요, ${name}님! · 리뷰 ${reviewCount}개 작성`;
+    if (greetingEl) greetingEl.textContent = `안녕하세요, ${name}님!`;
+
+    const badgeEl = document.getElementById("profile-review-count-badge");
+    if (badgeEl) {
+      badgeEl.textContent = `✍️ 작성한 리뷰 ${reviewCount}개`;
+      badgeEl.hidden = false;
+    }
 
     const nicknameDisplay = document.getElementById("profile-nickname-display");
     if (nicknameDisplay) nicknameDisplay.textContent = name;
