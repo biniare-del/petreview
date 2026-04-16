@@ -15,7 +15,7 @@ body {
   font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   color: #333333;
-  background-color: #fff7f2; /* 따뜻한 크림톤 배경 */
+  background-color: #f6fdf9; /* 따뜻한 크림톤 배경 */
 }
 
 /* 공통 레이아웃 */
@@ -43,7 +43,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #ffb998, #ff8a65);
+  background: linear-gradient(135deg, #86efac, #22c55e);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,21 +73,21 @@ body {
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
-  color: #e06438;
+  color: #0f6e56;
   padding: 7px 15px;
   border-radius: 999px;
-  border: 1.5px solid rgba(255, 138, 101, 0.45);
-  background-color: rgba(255, 138, 101, 0.07);
+  border: 1.5px solid rgba(15, 110, 86, 0.35);
+  background-color: rgba(15, 110, 86, 0.07);
   letter-spacing: -0.1px;
   transition: background-color 0.18s ease, color 0.18s ease,
     border-color 0.18s ease, box-shadow 0.18s ease, transform 0.08s ease;
 }
 
 .site-nav a:hover {
-  background-color: rgba(255, 138, 101, 0.16);
-  color: #c94e20;
-  border-color: #ff8a65;
-  box-shadow: 0 2px 8px rgba(255, 112, 67, 0.2);
+  background-color: rgba(15, 110, 86, 0.12);
+  color: #166534;
+  border-color: #22c55e;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.15);
   transform: translateY(-1px);
 }
 
@@ -128,25 +128,25 @@ body {
   align-items: center;
   justify-content: center;
   padding: 10px 18px;
-  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #ffffff;
   border: none;
   border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(255, 112, 67, 0.35);
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
   transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
 }
 
 .primary-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 15px rgba(255, 112, 67, 0.4);
+  box-shadow: 0 6px 15px rgba(22, 163, 74, 0.3);
 }
 
 .primary-btn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 5px rgba(255, 112, 67, 0.35);
+  box-shadow: 0 2px 5px rgba(22, 163, 74, 0.25);
   opacity: 0.9;
 }
 
@@ -185,7 +185,7 @@ textarea {
   font-size: 14px;
   border-radius: 10px;
   border: 1px solid #e0d7d2;
-  background-color: #fffdfb;
+  background-color: #ffffff;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease,
     background-color 0.15s ease;
@@ -199,8 +199,8 @@ input[type="file"] {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #ff8a65;
-  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.18);
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(15, 110, 86, 0.15);
   background-color: #ffffff;
 }
 
@@ -230,9 +230,9 @@ textarea {
   display: inline-block;
   font-size: 12px;
   font-weight: 600;
-  color: #ff8a65;
-  background: #fff3ee;
-  border: 1px solid #ffd0b5;
+  color: #22c55e;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   border-radius: 20px;
   padding: 2px 10px;
 }
@@ -241,8 +241,8 @@ textarea {
   display: inline-block;
   font-size: 11px;
   font-weight: 600;
-  color: #7c5f3a;
-  background: #fdf3e3;
+  color: #0f6e56;
+  background: #f0fdf4;
   border-radius: 4px;
   padding: 1px 6px;
   margin-left: 4px;
@@ -286,8 +286,8 @@ textarea {
   width: 210px;
   padding: 14px 16px;
   border-radius: 20px;
-  background: linear-gradient(145deg, #ffe1d5, #ffc9b3);
-  box-shadow: 0 10px 30px rgba(255, 138, 101, 0.35);
+  background: linear-gradient(145deg, #dcfce7, #bbf7d0);
+  box-shadow: 0 10px 30px rgba(22, 163, 74, 0.25);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -307,14 +307,14 @@ textarea {
 .hero-pet-info span {
   display: block;
   font-size: 13px;
-  color: #7a4c35;
+  color: #166534;
 }
 
 .hero-pet-info strong {
   display: block;
   margin-top: 4px;
   font-size: 18px;
-  color: #5c2e15;
+  color: #14532d;
 }
 
 /* 검색 섹션 */
@@ -339,7 +339,7 @@ textarea {
   display: inline-flex;
   padding: 2px;
   border-radius: 999px;
-  background-color: #fff2eb;
+  background-color: #f0fdf4;
 }
 
 .toggle-btn {
@@ -349,22 +349,27 @@ textarea {
   border-radius: 999px;
   font-size: 13px;
   cursor: pointer;
-  color: #a17056;
+  color: #166534;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .toggle-btn.is-active {
-  background-color: #ff8a65;
+  background-color: #22c55e;
   color: #ffffff;
 }
 
 /* 검색 결과/리뷰 카드 공통 */
 .card {
-  border-radius: 16px;
-  background-color: #fffaf7;
-  border: 1px solid #f5ded2;
-  padding: 12px 14px;
-  margin-bottom: 10px;
+  border-radius: 18px;
+  background-color: #ffffff;
+  border: 1px solid #e2f5eb;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  transition: box-shadow 0.15s;
+}
+.card:hover {
+  box-shadow: 0 4px 16px rgba(15, 110, 86, 0.1);
 }
 
 /* 리뷰 작성 섹션 */
@@ -420,8 +425,8 @@ textarea {
 
 [data-theme="grooming"] .category-tab-btn.is-active,
 [data-theme="grooming"] .category-tab-btn:hover {
-  border-color: #e07b39;
-  background: #e07b39;
+  border-color: #f472b6;
+  background: #f472b6;
   color: #fff;
 }
 
@@ -612,21 +617,21 @@ textarea {
 .pagination-btn {
   min-width: 90px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #ffffff;
   border: none;
   border-radius: 999px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(255, 112, 67, 0.35);
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
   transition: transform 0.08s ease, box-shadow 0.08s ease, opacity 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .pagination-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 15px rgba(255, 112, 67, 0.4);
+  box-shadow: 0 6px 15px rgba(22, 163, 74, 0.3);
 }
 
 .pagination-btn:active:not(:disabled) {
@@ -681,7 +686,7 @@ textarea {
 
 .autocomplete-dropdown li:hover,
 .autocomplete-dropdown li.is-active {
-  background-color: #fff2eb;
+  background-color: #f0fdf4;
 }
 
 .autocomplete-name {
@@ -702,8 +707,8 @@ textarea {
 
 /* 검색어 강조 */
 .autocomplete-highlight {
-  background: #fff3e0;
-  color: #e65100;
+  background: #dcfce7;
+  color: #14532d;
   border-radius: 2px;
   font-weight: 700;
   padding: 0 1px;
@@ -738,7 +743,7 @@ textarea {
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #ff7043;
+  color: #16a34a;
   text-decoration: none;
   font-weight: 600;
 }
@@ -768,7 +773,7 @@ textarea {
 }
 
 .tag-btn.is-selected {
-  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   border-color: transparent;
   color: #ffffff;
   font-weight: 700;
@@ -863,20 +868,20 @@ body[data-theme="grooming"] .place-phone-link {
 
 .auth-login-btn {
   padding: 7px 16px;
-  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #ffffff;
   border: none;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 3px 8px rgba(255, 112, 67, 0.35);
+  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.25);
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
 .auth-login-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 5px 12px rgba(255, 112, 67, 0.4);
+  box-shadow: 0 5px 12px rgba(22, 163, 74, 0.3);
 }
 
 .header-avatar {
@@ -884,14 +889,14 @@ body[data-theme="grooming"] .place-phone-link {
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #ff8a65;
+  border: 2px solid #22c55e;
 }
 
 .header-avatar-placeholder {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -913,7 +918,7 @@ body[data-theme="grooming"] .place-phone-link {
 
 .header-auth-link {
   font-size: 13px;
-  color: #ff7043;
+  color: #16a34a;
   text-decoration: none;
   font-weight: 600;
   padding: 4px 8px;
@@ -922,7 +927,7 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .header-auth-link:hover {
-  background-color: rgba(255, 112, 67, 0.1);
+  background-color: rgba(22, 163, 74, 0.08);
 }
 
 .header-logout-btn {
@@ -1079,8 +1084,8 @@ body[data-theme="grooming"] .place-phone-link {
 .favorite-btn {
   padding: 5px 12px;
   background: transparent;
-  color: #ff7043;
-  border: 1.5px solid #ff7043;
+  color: #16a34a;
+  border: 1.5px solid #16a34a;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
@@ -1090,12 +1095,12 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .favorite-btn:hover {
-  background: #ff7043;
+  background: #16a34a;
   color: #fff;
 }
 
 .favorite-btn.is-saved {
-  background: #ff7043;
+  background: #16a34a;
   color: #fff;
 }
 
@@ -1104,13 +1109,13 @@ body[data-theme="grooming"] .place-phone-link {
   font-size: 16px;
   padding: 14px 28px;
   border-radius: 999px;
-  box-shadow: 0 6px 20px rgba(255, 112, 67, 0.45);
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35);
   letter-spacing: -0.2px;
 }
 
 .hero-cta-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(255, 112, 67, 0.5);
+  box-shadow: 0 10px 28px rgba(22, 163, 74, 0.4);
 }
 
 /* ===== 리뷰 폼 스텝 ===== */
@@ -1139,8 +1144,8 @@ body[data-theme="grooming"] .place-phone-link {
   gap: 8px;
   padding: 28px 16px;
   border-radius: 20px;
-  border: 2px solid #f0e8e2;
-  background: #fffaf7;
+  border: 2px solid #d1fae5;
+  background: #ffffff;
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease,
     border-color 0.12s ease, background 0.12s ease;
@@ -1149,9 +1154,9 @@ body[data-theme="grooming"] .place-phone-link {
 
 .category-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(255, 112, 67, 0.2);
-  border-color: #ff8a65;
-  background: #fff5f0;
+  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.15);
+  border-color: #22c55e;
+  background: #f0fdf4;
 }
 
 .category-card:active {
@@ -1187,9 +1192,9 @@ body[data-theme="grooming"] .place-phone-link {
   gap: 10px;
   margin-bottom: 20px;
   padding: 10px 14px;
-  background: #fff5f0;
+  background: #f0fdf4;
   border-radius: 12px;
-  border: 1px solid #ffd5c2;
+  border: 1px solid #bbf7d0;
 }
 
 .form-category-badge {
@@ -1197,7 +1202,7 @@ body[data-theme="grooming"] .place-phone-link {
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
 }
 
@@ -1207,7 +1212,7 @@ body[data-theme="grooming"] .place-phone-link {
 
 .form-category-change-btn {
   font-size: 12px;
-  color: #ff7043;
+  color: #16a34a;
   background: none;
   border: none;
   cursor: pointer;
@@ -1218,7 +1223,7 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .form-category-change-btn:hover {
-  background: rgba(255, 112, 67, 0.08);
+  background: rgba(22, 163, 74, 0.08);
 }
 
 /* 폼 step 2 테마 */
@@ -1315,7 +1320,7 @@ body[data-theme="grooming"] .place-phone-link {
   border-radius: 16px;
   overflow: hidden;
   text-align: center;
-  background: #f5f0eb;
+  background: #e8f5ed;
   min-height: 80px;
   display: flex;
   align-items: center;
@@ -1370,7 +1375,7 @@ body[data-theme="grooming"] .place-phone-link {
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
   white-space: nowrap;
   flex-shrink: 0;
@@ -1504,14 +1509,14 @@ body[data-theme="grooming"] .place-phone-link {
   border: none;
   cursor: pointer;
   font-size: 22px;
-  color: #ff7043;
+  color: #16a34a;
   padding: 4px 8px;
   line-height: 1;
   border-radius: 6px;
   flex-shrink: 0;
   transition: background 0.15s ease;
 }
-.header-hamburger-btn:hover { background: rgba(255, 112, 67, 0.1); }
+.header-hamburger-btn:hover { background: rgba(22, 163, 74, 0.08); }
 
 .header-mobile-nav {
   display: none;
@@ -1519,7 +1524,7 @@ body[data-theme="grooming"] .place-phone-link {
   flex-direction: column;
   gap: 0;
   padding: 8px 0 4px;
-  border-top: 1px solid #f0e8e2;
+  border-top: 1px solid #d1fae5;
 }
 .header-mobile-nav.is-open { display: flex; }
 
@@ -1527,10 +1532,10 @@ body[data-theme="grooming"] .place-phone-link {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #ff7043;
+  color: #16a34a;
   text-decoration: none;
   padding: 11px 4px;
-  border-bottom: 1px solid #f5f0eb;
+  border-bottom: 1px solid #e8f5ed;
 }
 .mobile-logout-btn {
   margin-top: 8px;
@@ -1576,14 +1581,14 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .like-btn:hover {
-  border-color: #ff8a65;
-  color: #ff7043;
+  border-color: #22c55e;
+  color: #16a34a;
 }
 
 .like-btn.is-liked {
-  background: #fff0eb;
-  color: #ff7043;
-  border-color: #ff8a65;
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #22c55e;
 }
 
 .like-count {
@@ -1635,7 +1640,7 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .price-table th {
-  background: #fff5f0;
+  background: #f0fdf4;
   font-weight: 700;
   color: #555;
 }
@@ -1644,9 +1649,9 @@ body[data-theme="grooming"] .place-phone-link {
 .map-link-btn {
   display: inline-block;
   padding: 6px 14px;
-  background: #fff0eb;
-  color: #ff7043;
-  border: 1.5px solid #ff8a65;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1.5px solid #22c55e;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
@@ -1655,7 +1660,7 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .map-link-btn:hover {
-  background: #ffe0d5;
+  background: #dcfce7;
 }
 
 /* ===== 문의하기 페이지 ===== */
@@ -1696,7 +1701,7 @@ body[data-theme="grooming"] .place-phone-link {
   font-size: 14px;
   border-radius: 10px;
   border: 1px solid #e0d7d2;
-  background: #fffdfb;
+  background: #ffffff;
   outline: none;
   font-family: inherit;
   transition: border-color 0.15s ease;
@@ -1705,7 +1710,7 @@ body[data-theme="grooming"] .place-phone-link {
 .contact-form input:focus,
 .contact-form select:focus,
 .contact-form textarea:focus {
-  border-color: #ff8a65;
+  border-color: #22c55e;
 }
 
 .contact-form textarea {
@@ -1723,16 +1728,17 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .card-pet-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   background: #e1f5ee;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 26px;
+  font-size: 32px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15, 110, 86, 0.12);
 }
 
 .pet-avatar-img {
@@ -1751,41 +1757,48 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .card-pet-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary, #2a2520);
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.2;
 }
 
 .card-pet-species {
   font-size: 12px;
-  font-weight: 400;
-  color: var(--text-secondary, #888);
+  font-weight: 500;
+  color: #999;
   margin-left: 4px;
 }
 
 .card-pet-owner {
   font-size: 12px;
-  color: var(--text-secondary, #888);
-  margin-top: 2px;
+  color: #aaa;
+  margin-top: 3px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .card-place-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 10px;
+  padding: 6px 10px;
+  background: #f6fdf9;
+  border-radius: 8px;
 }
 
 .card-place-name {
-  font-size: 14px;
-  font-weight: 600;
-  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f6e56;
 }
 
 .card-place-region {
   font-size: 12px;
-  color: var(--text-secondary, #888);
+  color: #aaa;
 }
 
 .category-tag {
@@ -1848,19 +1861,22 @@ body[data-theme="grooming"] .place-phone-link {
 .card-price-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 6px 0 4px;
+  gap: 8px;
+  margin: 8px 0 6px;
 }
 
 .card-price {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1d9e75;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f6e56;
+  background: #f0fdf4;
+  padding: 3px 10px;
+  border-radius: 20px;
 }
 
 .card-service-detail {
   font-size: 12px;
-  color: var(--text-secondary, #888);
+  color: #888;
 }
 
 .card-review-text {
