@@ -5,6 +5,12 @@
   <title>개인정보처리방침 – 펫리뷰</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="/petreview/manifest.json" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="펫리뷰" />
+  <link rel="apple-touch-icon" href="/petreview/icons/icon-192.svg" />
   <style>
     .doc-container { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
     .doc-container h2 { font-size: 22px; margin: 0 0 6px; }
@@ -137,5 +143,6 @@
       <a href="contact.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">문의하기</a>
     </div>
   </footer>
+  <script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/petreview/sw.js").catch(() => {}); }</script>
 </body>
 </html>

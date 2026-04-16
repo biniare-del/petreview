@@ -1,0 +1,39 @@
+{
+  "name": "펫리뷰",
+  "short_name": "펫리뷰",
+  "description": "영수증으로 인증된 반려동물 병원·미용샵 리뷰 플랫폼",
+  "start_url": "/petreview/",
+  "scope": "/petreview/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6fdf9",
+  "theme_color": "#16a34a",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/petreview/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/petreview/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "health"],
+  "shortcuts": [
+    {
+      "name": "후기 남기기",
+      "url": "/petreview/?action=write",
+      "description": "새 리뷰 작성"
+    },
+    {
+      "name": "마이페이지",
+      "url": "/petreview/mypage.html",
+      "description": "내 정보 및 마이펫"
+    }
+  ]
+}

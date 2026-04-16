@@ -5,6 +5,12 @@
   <title>관리자 – 펫리뷰</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="/petreview/manifest.json" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="펫리뷰" />
+  <link rel="apple-touch-icon" href="/petreview/icons/icon-192.svg" />
   <style>
     .admin-container { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
     .admin-tabs {
@@ -224,6 +230,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>
   <script src="auth.js"></script>
+  <script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/petreview/sw.js").catch(() => {}); }</script>
   <script src="admin.js"></script>
 </body>
 </html>
