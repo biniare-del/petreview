@@ -82,6 +82,7 @@ let reportingReviewId = null;    // 신고 처리 중인 review ID
 let selectedScores = {};         // 별점 입력 값 { score_kindness, score_price, score_facility, score_wait }
 let selectedPetName = "";        // 선택된 마이펫 이름
 let selectedPetSpecies = "";     // 선택된 마이펫 종류
+let selectedPetPhotoUrl = "";    // 선택된 마이펫 저장 사진 URL
 
 const els = {
   searchRegion: document.getElementById("search-region"),
@@ -831,7 +832,7 @@ function bindReviewForm() {
         total_price: Number(formData.get("total-price")),
         short_review: String(formData.get("short-review")).trim(),
         receipt_image_url: receiptPath,
-        pet_photo_url: petPhotoUrl || null,
+        pet_photo_url: petPhotoUrl || selectedPetPhotoUrl || null,
         review_photo_urls: reviewPhotoUrls.length ? reviewPhotoUrls : null,
         is_verified: false,
         status: receiptPath ? "pending" : "approved",
@@ -886,6 +887,7 @@ function bindReviewForm() {
       selectedScores = {};
       selectedPetName = "";
       selectedPetSpecies = "";
+      selectedPetPhotoUrl = "";
       document.querySelectorAll(".star-select button").forEach((b) => b.classList.remove("is-selected"));
       renderServiceTags(selectedSearchCategory);
       renderReviewList();
@@ -1430,10 +1432,11 @@ async function loadPetSelector() {
     return;
   }
 
-  const { data: pets } = await db.from("pets").select("id, name, species").eq("user_id", userId);
+  const { data: pets } = await db.from("pets").select("id, name, species, photo_url").eq("user_id", userId);
 
   selectedPetName = "";
   selectedPetSpecies = "";
+  selectedPetPhotoUrl = "";
 
   const addBtn = `<a href="mypage.html#pets" class="pet-add-link">＋ 마이펫 추가</a>`;
 
@@ -1444,7 +1447,8 @@ async function loadPetSelector() {
 
   container.innerHTML = pets.map(p => {
     const icon = p.species === "고양이" ? "🐱" : "🐶";
-    return `<button type="button" class="pet-select-btn" data-name="${escapeHtml(p.name)}" data-species="${escapeHtml(p.species || "")}">${icon} ${escapeHtml(p.name)}</button>`;
+    const photoAttr = p.photo_url ? ` data-photo="${escapeHtml(p.photo_url)}"` : "";
+    return `<button type="button" class="pet-select-btn" data-name="${escapeHtml(p.name)}" data-species="${escapeHtml(p.species || "")}"${photoAttr}>${icon} ${escapeHtml(p.name)}</button>`;
   }).join("") + addBtn;
 
   container.querySelectorAll(".pet-select-btn").forEach(btn => {
@@ -1453,6 +1457,14 @@ async function loadPetSelector() {
       btn.classList.add("is-active");
       selectedPetName = btn.dataset.name;
       selectedPetSpecies = btn.dataset.species;
+      selectedPetPhotoUrl = btn.dataset.photo || "";
+
+      // 펫 사진이 있으면 미리보기에 반영 (새 파일 업로드 없는 경우 사용)
+      const previewEl = document.getElementById("pet-photo-preview");
+      const fileInput = document.getElementById("pet-photo");
+      if (previewEl && selectedPetPhotoUrl && (!fileInput?.files?.length)) {
+        previewEl.innerHTML = `<img src="${escapeHtml(selectedPetPhotoUrl)}" style="width:72px;height:72px;object-fit:cover;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" />`;
+      }
     });
   });
 }
