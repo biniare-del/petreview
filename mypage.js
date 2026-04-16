@@ -577,6 +577,16 @@
     }
     loadWeightLogs(pet.id);
     loadPetVisitHistory(pet.name);
+    loadHealthRecords(pet.id, "진료메모", "health-note-list");
+    loadHealthRecords(pet.id, "심장사상충", "heartworm-list");
+    loadHealthRecords(pet.id, "예방접종", "vaccine-list");
+
+    // 날짜 기본값 = 오늘
+    const today = new Date().toISOString().split("T")[0];
+    ["health-note-date", "heartworm-date", "vaccine-date"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = today; el.max = today; }
+    });
   }
 
   function closeHealthModal() {
@@ -654,6 +664,87 @@
       </div>`).join("");
   }
 
+  // ===== 건강기록 (C3/C4/C5) =====
+  async function loadHealthRecords(petId, recordType, containerId) {
+    const db = window.supabaseClient;
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const { data, error } = await db
+      .from("pet_health_records")
+      .select("*")
+      .eq("pet_id", petId)
+      .eq("record_type", recordType)
+      .order("record_date", { ascending: false })
+      .limit(30);
+
+    if (error) {
+      container.innerHTML = '<p class="placeholder-text" style="padding:12px 0;">기록을 불러올 수 없습니다.</p>';
+      return;
+    }
+    if (!data?.length) {
+      container.innerHTML = '<p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p>';
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    container.innerHTML = data.map(r => {
+      const isDue = r.next_due_date && r.next_due_date <= today;
+      const isSoon = r.next_due_date && !isDue &&
+        Math.ceil((new Date(r.next_due_date) - new Date(today)) / 86400000) <= 7;
+      const nextBadge = r.next_due_date
+        ? `<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${isDue ? "#fee2e2" : isSoon ? "#fef3c7" : "#f0fdf4"};color:${isDue ? "#991b1b" : isSoon ? "#92400e" : "#166534"};">
+            ${isDue ? "⚠️ 기한 초과" : isSoon ? "⏰ 곧 예정" : "✓"} 다음: ${r.next_due_date}
+          </span>`
+        : "";
+      return `
+        <div style="padding:10px 0;border-top:1px solid #f5ede8;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="flex:1;">
+            <div style="font-size:13px;color:#888;">${escapeHtml(r.record_date)}</div>
+            <div style="font-size:14px;font-weight:600;color:#2a2520;margin-top:2px;">${escapeHtml(r.content || "")}</div>
+            ${nextBadge ? `<div style="margin-top:4px;">${nextBadge}</div>` : ""}
+          </div>
+          <button class="btn-delete" style="padding:2px 8px;font-size:11px;flex-shrink:0;" data-hr-id="${escapeHtml(String(r.id))}">삭제</button>
+        </div>`;
+    }).join("");
+
+    container.querySelectorAll(".btn-delete[data-hr-id]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await db.from("pet_health_records").delete().eq("id", btn.dataset.hrId);
+        loadHealthRecords(petId, recordType, containerId);
+      });
+    });
+  }
+
+  async function addHealthRecord(recordType, dateId, contentId, listId, nextDueDays) {
+    if (!currentHealthPet) return;
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    const date = document.getElementById(dateId)?.value;
+    const content = document.getElementById(contentId)?.value?.trim() || "";
+    if (!date) { alert("날짜를 선택해주세요."); return; }
+
+    let next_due_date = null;
+    if (nextDueDays && date) {
+      const d = new Date(date);
+      d.setDate(d.getDate() + nextDueDays);
+      next_due_date = d.toISOString().split("T")[0];
+    }
+
+    const { error } = await db.from("pet_health_records").insert([{
+      pet_id: currentHealthPet.id,
+      user_id: userId,
+      record_type: recordType,
+      record_date: date,
+      content: content || null,
+      next_due_date,
+    }]);
+
+    if (error) { alert("저장 실패: " + error.message); return; }
+    if (document.getElementById(contentId)) document.getElementById(contentId).value = "";
+    loadHealthRecords(currentHealthPet.id, recordType, listId);
+  }
+
   function bindHealthModal() {
     document.getElementById("health-modal-close")?.addEventListener("click", closeHealthModal);
     document.getElementById("health-modal")?.addEventListener("click", (e) => {
@@ -681,6 +772,21 @@
       if (error) { alert("저장 실패: " + error.message); return; }
       document.getElementById("weight-input").value = "";
       loadWeightLogs(currentHealthPet.id);
+    });
+
+    // 진료/처방 메모 (C3)
+    document.getElementById("health-note-add-btn")?.addEventListener("click", () => {
+      addHealthRecord("진료메모", "health-note-date", "health-note-content", "health-note-list", null);
+    });
+
+    // 심장사상충 (C4) — 다음 투약일 +30일
+    document.getElementById("heartworm-add-btn")?.addEventListener("click", () => {
+      addHealthRecord("심장사상충", "heartworm-date", "heartworm-content", "heartworm-list", 30);
+    });
+
+    // 예방접종 (C5) — 다음 접종일 +365일
+    document.getElementById("vaccine-add-btn")?.addEventListener("click", () => {
+      addHealthRecord("예방접종", "vaccine-date", "vaccine-content", "vaccine-list", 365);
     });
   }
 
