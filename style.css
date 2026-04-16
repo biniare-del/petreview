@@ -2027,3 +2027,131 @@ body[data-theme="grooming"] .place-phone-link {
 .tab-item.is-active {
   color: #1d9e75;
 }
+/* ===== 리뷰 상세 모달 ===== */
+.review-detail-modal {
+  max-width: 520px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px 20px 28px;
+  border-radius: 20px;
+}
+
+.review-detail-modal .review-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.review-detail-modal .review-detail-pet-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: #e2f5eb;
+  flex-shrink: 0;
+}
+
+.review-detail-modal .review-detail-pet-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.review-detail-modal .review-detail-place-box {
+  background: #f6fdf9;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: 12px;
+}
+
+.review-detail-modal .review-detail-place-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f6e56;
+}
+
+.review-detail-modal .review-detail-place-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 3px;
+}
+
+.review-detail-comment {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.review-detail-comment:last-child {
+  border-bottom: none;
+}
+
+.review-detail-comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2f5eb;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.review-detail-comment-body {
+  flex: 1;
+}
+
+.review-detail-comment-author {
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+}
+
+.review-detail-comment-text {
+  font-size: 13px;
+  color: #444;
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+.review-detail-comment-time {
+  font-size: 11px;
+  color: #bbb;
+  margin-top: 3px;
+}
+
+.review-detail-comment-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.review-detail-comment-input-row input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  font-size: 13px;
+  outline: none;
+}
+
+.review-detail-comment-input-row input:focus {
+  border-color: #22c55e;
+}
+
+.review-detail-comment-input-row button {
+  padding: 9px 16px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}

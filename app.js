@@ -318,7 +318,7 @@ function renderReviewList() {
           ${review.scoreWait ? `<div class="score-row"><span class="score-label">대기시간</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreWait * 20}%"></div></div><span class="score-val">${review.scoreWait}.0</span></div>` : ""}
         </div>` : "";
       return `
-      <article class="card${review.isVerified ? " card--verified" : ""}">
+      <article class="card${review.isVerified ? " card--verified" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
         <div class="card-pet-header">
           <div class="card-pet-avatar">
             ${review.petPhoto
@@ -496,7 +496,7 @@ function renderRecentReviews() {
         ${review.scoreWait ? `<div class="score-row"><span class="score-label">대기시간</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreWait * 20}%"></div></div><span class="score-val">${review.scoreWait}.0</span></div>` : ""}
       </div>` : "";
     return `
-    <article class="card${review.isVerified ? " card--verified" : ""}">
+    <article class="card${review.isVerified ? " card--verified" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
       <div class="card-pet-header">
         <div class="card-pet-avatar">
           ${review.petPhoto
@@ -1633,10 +1633,13 @@ function bindReviewActions() {
     if (reportBtn) {
       if (!window.PetAuth?.isLoggedIn()) { openLoginModal(); return; }
       openReportModal(reportBtn.dataset.reviewId);
+      return;
     }
+    // 카드 클릭 → 리뷰 상세 모달
+    const card = e.target.closest(".card[data-review-id]");
+    if (card) openReviewDetailModal(card.dataset.reviewId);
   }
   els.reviewList.addEventListener("click", handleReviewClick);
-  // 최근후기 섹션도 동일하게 바인딩
   document.getElementById("recent-review-list")?.addEventListener("click", handleReviewClick);
 }
 
@@ -1674,6 +1677,139 @@ function bindReportModal() {
       alert("신고가 접수되었습니다. 검토 후 처리해드리겠습니다.");
     }
     document.getElementById("report-modal").hidden = true;
+  });
+}
+
+// ===== 리뷰 상세 모달 =====
+async function openReviewDetailModal(reviewId) {
+  const review = reviews.find(r => r.id === reviewId);
+  if (!review) return;
+
+  const modal = document.getElementById("review-detail-modal");
+  if (!modal) return;
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+
+  // 리뷰 내용 렌더링
+  const scoresHtml = (review.scoreKindness || review.scorePrice || review.scoreFacility || review.scoreWait) ? `
+    <div class="card-scores" style="margin:12px 0;">
+      ${review.scoreKindness ? `<div class="score-row"><span class="score-label">친절도</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreKindness*20}%"></div></div><span class="score-val">${review.scoreKindness}.0</span></div>` : ""}
+      ${review.scorePrice ? `<div class="score-row"><span class="score-label">진료비</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scorePrice*20}%"></div></div><span class="score-val">${review.scorePrice}.0</span></div>` : ""}
+      ${review.scoreFacility ? `<div class="score-row"><span class="score-label">시설</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreFacility*20}%"></div></div><span class="score-val">${review.scoreFacility}.0</span></div>` : ""}
+      ${review.scoreWait ? `<div class="score-row"><span class="score-label">대기</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreWait*20}%"></div></div><span class="score-val">${review.scoreWait}.0</span></div>` : ""}
+    </div>` : "";
+
+  document.getElementById("review-detail-content").innerHTML = `
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;">
+      <div class="card-pet-avatar" style="width:72px;height:72px;font-size:36px;border-radius:20px;flex-shrink:0;">
+        ${review.petPhoto ? `<img src="${escapeHtml(review.petPhoto)}" style="width:100%;height:100%;object-fit:cover;border-radius:20px;" />` : `<div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>`}
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:800;color:#1a1a1a;">${review.petName ? escapeHtml(review.petName) : "반려동물"} <span style="font-size:13px;font-weight:400;color:#999;">${escapeHtml(review.petSpecies || "")}</span></div>
+        <div style="font-size:13px;color:#aaa;margin-top:3px;">${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate || "")}${review.isVerified ? ' <span class="verified-badge" style="font-size:10px;">✔ 영수증 인증</span>' : ""}</div>
+      </div>
+    </div>
+    ${scoresHtml}
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+      <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
+      <span style="font-size:12px;color:#888;">${escapeHtml(review.serviceDetail || "")}</span>
+    </div>
+    <p style="font-size:15px;line-height:1.6;color:#333;margin:10px 0;">${escapeHtml(review.shortReview || "")}</p>
+    ${(review.reviewPhotoUrls || []).length ? `<div class="review-images">${(review.reviewPhotoUrls).map(u => `<img src="${escapeHtml(u)}" class="review-thumb" />`).join("")}</div>` : ""}`;
+
+  // 병원 정보
+  const mapQ = encodeURIComponent(`서울 ${review.region} ${review.placeName}`);
+  document.getElementById("review-detail-place").innerHTML = `
+    <div style="background:#f6fdf9;border-radius:12px;padding:12px 14px;">
+      <div style="font-size:15px;font-weight:700;color:#0f6e56;">${escapeHtml(review.placeName)}</div>
+      <div style="font-size:12px;color:#aaa;margin-top:2px;">서울 ${escapeHtml(review.region || "")}</div>
+      <a href="https://map.naver.com/v5/search/${mapQ}" target="_blank" rel="noopener noreferrer" class="map-link-btn" style="margin-top:10px;display:inline-block;">🗺️ 지도 보기</a>
+    </div>`;
+
+  // 댓글 로드
+  loadReviewComments(reviewId);
+}
+
+function closeReviewDetailModal() {
+  document.getElementById("review-detail-modal").hidden = true;
+  document.body.style.overflow = "";
+}
+
+async function loadReviewComments(reviewId) {
+  const db = window.supabaseClient;
+  const countEl = document.getElementById("review-detail-comment-count");
+  const listEl = document.getElementById("review-detail-comments");
+  const formEl = document.getElementById("review-detail-comment-form");
+
+  if (!db) { listEl.innerHTML = ""; return; }
+
+  const { data, error } = await db
+    .from("review_comments")
+    .select("*")
+    .eq("review_id", reviewId)
+    .order("created_at", { ascending: true });
+
+  if (error) { listEl.innerHTML = '<p class="placeholder-text">댓글을 불러올 수 없습니다.</p>'; return; }
+
+  let comments = data || [];
+
+  // 닉네임 조회
+  if (comments.length) {
+    const uids = [...new Set(comments.map(c => c.user_id).filter(Boolean))];
+    if (uids.length) {
+      const { data: pd } = await db.from("profiles").select("id, nickname").in("id", uids);
+      const pm = {};
+      (pd || []).forEach(p => { pm[p.id] = p; });
+      comments = comments.map(c => ({ ...c, nickname: pm[c.user_id]?.nickname || "익명" }));
+    }
+  }
+
+  if (countEl) countEl.textContent = comments.length;
+
+  listEl.innerHTML = comments.length === 0
+    ? '<p class="placeholder-text">첫 댓글을 남겨보세요.</p>'
+    : comments.map(c => `
+      <div style="padding:10px 0;border-top:1px solid #f0f0f0;">
+        <span style="font-size:13px;font-weight:600;color:#444;">${escapeHtml(c.nickname || "익명")}</span>
+        <span style="font-size:11px;color:#bbb;margin-left:6px;">${(c.created_at || "").slice(0, 10)}</span>
+        <p style="margin:4px 0 0;font-size:14px;color:#333;line-height:1.5;">${escapeHtml(c.content)}</p>
+      </div>`).join("");
+
+  // 댓글 폼
+  const isLoggedIn = window.PetAuth?.isLoggedIn();
+  if (formEl) {
+    if (isLoggedIn) {
+      formEl.innerHTML = `
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <input id="review-comment-input" type="text" placeholder="댓글을 입력하세요." maxlength="300"
+            style="flex:1;padding:8px 12px;border:1px solid #e0e0e0;border-radius:20px;font-size:14px;font-family:inherit;outline:none;" />
+          <button id="review-comment-submit" class="primary-btn" style="padding:8px 16px;font-size:13px;border-radius:20px;">등록</button>
+        </div>`;
+      const submitBtn = document.getElementById("review-comment-submit");
+      const input = document.getElementById("review-comment-input");
+      const doSubmit = async () => {
+        const content = input.value.trim();
+        if (!content) return;
+        const userId = window.PetAuth.currentUser.id;
+        submitBtn.disabled = true;
+        const { error: insErr } = await db.from("review_comments").insert([{ review_id: reviewId, user_id: userId, content }]);
+        if (insErr) { alert("댓글 등록 실패: " + insErr.message); submitBtn.disabled = false; return; }
+        input.value = "";
+        submitBtn.disabled = false;
+        loadReviewComments(reviewId);
+      };
+      submitBtn.addEventListener("click", doSubmit);
+      input.addEventListener("keydown", e => { if (e.key === "Enter") doSubmit(); });
+    } else {
+      formEl.innerHTML = `<p style="font-size:13px;color:#aaa;text-align:center;padding:10px 0;">댓글을 달려면 <button onclick="openLoginModal()" style="background:none;border:none;color:#0f6e56;font-weight:600;font-size:13px;cursor:pointer;padding:0;">로그인</button>이 필요합니다.</p>`;
+    }
+  }
+}
+
+function bindReviewDetailModal() {
+  document.getElementById("review-detail-close")?.addEventListener("click", closeReviewDetailModal);
+  document.getElementById("review-detail-modal")?.addEventListener("click", e => {
+    if (e.target === e.currentTarget) closeReviewDetailModal();
   });
 }
 
@@ -1931,6 +2067,7 @@ function init() {
   bindReviewActions();
   bindReportModal();
   bindPlaceDetailModal();
+  bindReviewDetailModal();
   bindPlaceNameAutocomplete();
   bindServiceTags();
   void loadReviews();

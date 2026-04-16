@@ -450,6 +450,23 @@
     </div>
   </div>
 
+  <!-- 리뷰 상세 모달 -->
+  <div class="modal-overlay" id="review-detail-modal" hidden>
+    <div class="modal review-detail-modal">
+      <button class="modal-close" id="review-detail-close" aria-label="닫기">✕</button>
+      <!-- 펫 + 리뷰 정보 -->
+      <div id="review-detail-content"></div>
+      <!-- 병원 정보 -->
+      <div id="review-detail-place" style="margin-top:14px;"></div>
+      <!-- 댓글 섹션 -->
+      <div style="margin-top:18px;">
+        <p style="font-size:13px;font-weight:700;color:#555;margin:0 0 10px;">💬 댓글 <span id="review-detail-comment-count">0</span></p>
+        <div id="review-detail-comments"><p class="placeholder-text">불러오는 중...</p></div>
+        <div id="review-detail-comment-form" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- 리뷰 신고 모달 -->
   <div class="modal-overlay" id="report-modal" hidden>
     <div class="modal" style="max-width:340px;">
