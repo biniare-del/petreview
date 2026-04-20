@@ -1,6 +1,6 @@
 # 다음 세션 시작 시 자동 실행 목록
 
-> 이 파일을 보고 있다면: 아래 순서대로 바로 실행할 것.
+> **세션 시작 시 이 파일 + CONTEXT.md + CONTEXT_IDEAS.md 세 개 모두 읽을 것**
 
 ---
 
@@ -24,9 +24,12 @@ git checkout claude/fix-community-modal-close-6eTry
 
 ---
 
----
-
 ## 1. 다음 우선순위 기능 (할 것)
+
+### [ ] 강아지/고양이 탭 필터 버그 확인
+- 리뷰 저장 시 펫 버튼 선택 안 하면 `pet_species = null` 저장됨 → 필터 안 됨
+- Supabase에서 먼저 확인: `SELECT pet_species, count(*) FROM reviews GROUP BY pet_species`
+- null 많으면 데이터 문제. 폼에서 수동 입력 시에도 species 저장되도록 수정 필요
 
 ### [ ] 단골병원 새 리뷰 푸시 알림 (D3)
 - 즐겨찾기(favorites)한 병원에 새 approved 리뷰 등록 시 알림
@@ -38,11 +41,23 @@ git checkout claude/fix-community-modal-close-6eTry
 
 ### [ ] 검색 결과 지도 뷰
 - 카드 목록 외에 지도 핀으로 보기
-- Kakao Map JS SDK 활용 (이미 API 키 있음)
+- **Kakao Map JS SDK** 사용 (네이버 클라우드는 유료)
+- 이미 Kakao API 키 있음
 
 ---
 
-## 2. 나중에 할 것 (규모 크거나 트래픽 필요)
+## 2. 알고 있을 것 (나중에 할 것)
+
+### 미용샵 / 동물병원 완전 분리 (데이터 쌓이면)
+- 상단 탭 선택 시 전체 레이아웃·CSS 전환
+- 미용샵: 이벤트 배너 + 미용샵 리뷰만 표시
+- 동물병원: 기존 레이아웃
+- **지금은 데이터 부족해서 보류**
+
+### 리뷰 아바타
+- 현재: 리뷰에 `pet_photo_url` 있으면 펫 사진, 없으면 기본 아이콘
+- 기존 리뷰는 `pet_photo_url` 없어서 기본 아이콘 나오는 게 정상 (버그 아님)
+- 새 리뷰는 펫 선택하면 자동으로 등록 사진 저장됨 ✅
 
 | 항목 | 이유 |
 |------|------|
@@ -63,11 +78,11 @@ git checkout claude/fix-community-modal-close-6eTry
 - [x] 신고처리 버튼 3개 분리 (신고만처리/리뷰숨김/리뷰삭제)
 - [x] 마이펫 인라인 등록 (리뷰폼 내 이탈 없이 등록)
 - [x] 영수증 없어도 됩니다 안내 (초록 박스)
-- [x] 리뷰 사진 안내 문구
+- [x] 리뷰 사진 안내 문구 + 3장 첨부
 - [x] 업종 탭 큰 버튼 (동물병원/미용샵 테마 전환)
 - [x] 마이펫 사진 메인 인사바
 - [x] 미용샵 이벤트 섹션
-- [x] 마이펫 사진 → 리뷰 아바타
+- [x] 마이펫 사진 → 리뷰 아바타 (new reviews)
 - [x] 병원별 URL (hospital.html?kakao_id=...)
 - [x] PWA (manifest, SW, 홈화면 설치)
 - [x] 푸시 알림 인프라 (VAPID, push-cron.js, 구독/해제)
@@ -86,4 +101,4 @@ git checkout claude/fix-community-modal-close-6eTry
 - [x] 리뷰 댓글 + 좋아요/신고/소프트삭제
 - [x] Web Share API 공유 버튼
 - [x] 인앱 브라우저 Google 로그인 차단 → Chrome 유도
-- [x] 카카오/네이버/구글 소셜 로그인 (auth.js signInWithOAuth)
+- [x] 카카오/네이버/구글 소셜 로그인
