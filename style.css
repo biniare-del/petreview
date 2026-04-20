@@ -375,6 +375,7 @@ textarea {
 /* 리뷰 작성 섹션 */
 .review-form-section {
   margin-top: 30px;
+  scroll-margin-top: 120px; /* sticky 헤더 + 카테고리 탭 높이 보정 */
 }
 
 .review-form {
