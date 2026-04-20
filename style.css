@@ -382,6 +382,17 @@ textarea {
   margin-top: 14px;
 }
 
+.form-no-receipt-notice {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #166534;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
 .receipt-preview {
   margin-top: 8px;
   display: flex;
@@ -1744,6 +1755,28 @@ body[data-theme="grooming"] .place-phone-link {
   color: #e57373;
   border-color: #e57373;
 }
+
+.admin-hide-btn,
+.admin-delete-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: opacity 0.15s;
+}
+.admin-hide-btn {
+  background: #fff8e1;
+  color: #b45309;
+  border-color: #fcd34d;
+}
+.admin-delete-btn {
+  background: #fff1f0;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+.admin-hide-btn:hover,
+.admin-delete-btn:hover { opacity: 0.75; }
 
 /* ===== 병원 상세 모달 ===== */
 .place-detail-modal {

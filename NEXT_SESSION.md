@@ -58,6 +58,13 @@ CREATE INDEX IF NOT EXISTS reviews_kakao_place_id_idx ON reviews (kakao_place_id
 - hospital.html → "후기 남기기" → index.html prefill_kakao_id 전달
 - SQL: supabase/add_kakao_place_id.sql 실행 필요
 
+### [x] 영수증 없어도 됩니다 안내 (초록 박스, 폼 상단)
+### [x] 리뷰 사진 안내 문구 (병원 내부, 간판, 처방전 등)
+### [x] 즐겨찾기에 kakao_place_id 저장 (favorites 테이블 업데이트 필요)
+### [x] 관리자 인라인 버튼 (일반 리뷰 카드에 🔒숨기기/🗑️삭제 버튼)
+> Supabase favorites 테이블에 kakao_place_id 컬럼 추가 필요:
+> `ALTER TABLE favorites ADD COLUMN IF NOT EXISTS kakao_place_id text;`
+
 ### [ ] 병원 즐겨찾기 → 신규 리뷰 푸시 알림
 - 단골 등록(favorites) 병원에 새 approved 리뷰 등록 시 알림
 - api/push-cron.js에 favorites + push_subscriptions 조인 로직 추가

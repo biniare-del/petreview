@@ -186,6 +186,7 @@
       <div id="form-step-2" hidden>
         <!-- 선택 업종 표시 + 변경 버튼 -->
         <div class="form-selected-category" id="form-selected-category"></div>
+        <div class="form-no-receipt-notice">📌 영수증 없어도 후기 작성이 가능합니다. 영수증 첨부 시 <strong>✔ 인증 뱃지</strong>가 붙어요.</div>
         <form id="review-form" class="review-form">
           <!-- 업종은 hidden input으로 (step 1에서 설정) -->
           <input type="hidden" id="place-category" name="place-category" />
@@ -269,6 +270,7 @@
         <!-- 리뷰 사진 업로드 -->
         <div class="form-group">
           <label for="review-photos">리뷰 사진 <span class="helper-text" style="display:inline">(선택, 최대 3장)</span></label>
+          <p class="helper-text">병원·미용샵 내부, 간판, 처방전 사진 등을 올려주시면 다른 분들에게 큰 도움이 돼요.</p>
           <input
             type="file"
             id="review-photos"

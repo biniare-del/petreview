@@ -229,7 +229,7 @@ function renderSearchPage(page) {
       <article class="card search-place-card" style="cursor:pointer;" data-place-id="${escapeHtml(place.kakaoId || "")}" data-place-name="${escapeHtml(place.name)}" data-place-category="${escapeHtml(place.category)}" data-place-city="${escapeHtml(els.searchCity?.value || "서울")}" data-place-region="${escapeHtml(place.region)}" data-place-address="${escapeHtml(place.address || "")}" data-place-phone="${escapeHtml(place.phone || "")}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
-          <button class="favorite-btn${isSaved ? " is-saved" : ""}" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">${escapeHtml(favLabel)}</button>
+          <button class="favorite-btn${isSaved ? " is-saved" : ""}" data-fav-id="${escapeHtml(place.kakaoId || "")}" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">${escapeHtml(favLabel)}</button>
         </div>
         <p>${CATEGORY_LABEL[place.category]} · ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
@@ -447,6 +447,10 @@ function renderReviewList() {
           <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
           <span class="comment-count-badge">💬 ${commentCounts[review.id] || 0}</span>
           <button class="report-btn" data-review-id="${escapeHtml(review.id)}">🚨 신고</button>
+          ${window.PetAuth?.isAdmin() ? `
+          <button class="admin-hide-btn" data-review-id="${escapeHtml(review.id)}" data-hidden="${review.isHidden ? "1" : "0"}" title="관리자: 숨기기/공개">${review.isHidden ? "🔓 공개" : "🔒 숨기기"}</button>
+          <button class="admin-delete-btn" data-review-id="${escapeHtml(review.id)}" title="관리자: 삭제">🗑️ 삭제</button>
+          ` : ""}
         </div>
       </article>`;
     })
@@ -483,6 +487,8 @@ function rowToReview(row) {
     reviewPhotoUrls: row.review_photo_urls || [],
     userNickname: row.profiles?.nickname || "",
     reviewSeq: 0, // 사용자별 누적 순번 (loadReviews에서 계산)
+    isHidden: row.is_hidden || false,
+    kakaoPlaceId: row.kakao_place_id || "",
   };
 }
 
@@ -1424,14 +1430,16 @@ function bindSearchResultsSelection() {
         const cnt = favCounts[placeName];
         favBtn.textContent = cnt > 0 ? `♡ 단골 ${cnt}` : "♡ 단골";
       } else {
-        const { error } = await db.from("favorites").insert([{
+        const favInsert = {
           user_id: userId,
           place_name: placeName,
           category: favBtn.dataset.favCategory,
           region: favBtn.dataset.favRegion,
           address: favBtn.dataset.favAddress,
           phone: favBtn.dataset.favPhone,
-        }]);
+        };
+        if (favBtn.dataset.favId) favInsert.kakao_place_id = favBtn.dataset.favId;
+        const { error } = await db.from("favorites").insert([favInsert]);
         if (!error) {
           favBtn.classList.add("is-saved");
           userFavs.add(placeName);
@@ -1873,6 +1881,34 @@ function bindReviewActions() {
     if (reportBtn) {
       if (!window.PetAuth?.isLoggedIn()) { openLoginModal(); return; }
       openReportModal(reportBtn.dataset.reviewId);
+      return;
+    }
+    // 관리자: 숨기기/공개
+    const hideBtn = e.target.closest(".admin-hide-btn");
+    if (hideBtn && window.PetAuth?.isAdmin()) {
+      const db = window.supabaseClient;
+      const reviewId = hideBtn.dataset.reviewId;
+      const isHidden = hideBtn.dataset.hidden === "1";
+      const { error } = await db.from("reviews").update({ is_hidden: !isHidden }).eq("id", reviewId);
+      if (!error) {
+        hideBtn.dataset.hidden = isHidden ? "0" : "1";
+        hideBtn.textContent = isHidden ? "🔒 숨기기" : "🔓 공개";
+        const review = reviews.find(r => r.id === reviewId);
+        if (review) review.isHidden = !isHidden;
+      }
+      return;
+    }
+    // 관리자: 삭제
+    const deleteBtn = e.target.closest(".admin-delete-btn");
+    if (deleteBtn && window.PetAuth?.isAdmin()) {
+      if (!confirm("리뷰를 완전히 삭제하시겠습니까?")) return;
+      const db = window.supabaseClient;
+      const reviewId = deleteBtn.dataset.reviewId;
+      const { error } = await db.from("reviews").delete().eq("id", reviewId);
+      if (!error) {
+        reviews = reviews.filter(r => r.id !== reviewId);
+        renderReviewList();
+      }
       return;
     }
     // 카드 클릭 → 리뷰 상세 모달
