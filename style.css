@@ -1578,6 +1578,19 @@ body[data-theme="grooming"] .place-phone-link {
   .search-controls .form-group { min-width: 0; width: 100%; }
 }
 
+/* ===== 댓글 수 뱃지 ===== */
+.comment-count-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  color: #888;
+  padding: 5px 8px;
+  border-radius: 20px;
+  border: 1px solid #e8e8e8;
+  background: #fafafa;
+  user-select: none;
+}
+
 /* ===== 리뷰 액션 (좋아요 / 신고) ===== */
 .review-actions {
   display: flex;
@@ -1680,6 +1693,38 @@ body[data-theme="grooming"] .place-phone-link {
 .map-link-btn:hover {
   background: #dcfce7;
 }
+
+/* ===== 이달의 추천 ===== */
+.best-places-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.best-place-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e2f5eb;
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+  color: inherit;
+}
+
+.best-place-card:hover { box-shadow: 0 2px 12px rgba(22,163,74,0.1); }
+
+.best-rank { font-size: 22px; flex-shrink: 0; }
+
+.best-info { flex: 1; min-width: 0; }
+
+.best-name { font-size: 15px; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.best-meta { font-size: 12px; color: #999; margin-top: 2px; }
+
+.best-stars { margin-top: 3px; }
 
 /* ===== 최상단 카테고리 탭 ===== */
 .top-category-tabs {

@@ -80,6 +80,7 @@ let userFavs = new Set();  // 현재 유저가 즐겨찾기한 place_name 집합
 let geoState = 'pending';  // 'pending' | 'granted' | 'denied'
 let reviewLikes = {};            // { reviewId: likeCount }
 let userLikedReviews = new Set(); // 현재 유저가 좋아요한 review ID 집합
+let commentCounts = {};          // { reviewId: commentCount }
 let reportingReviewId = null;    // 신고 처리 중인 review ID
 let selectedScores = {};         // 별점 입력 값 { score_kindness, score_price, score_facility, score_wait }
 let selectedPetName = "";        // 선택된 마이펫 이름
@@ -146,10 +147,21 @@ const els = {
   ctaButton: document.querySelector("[data-scroll-target]"),
 };
 
-// 시/도 변경 시 datalist 업데이트
-els.searchCity?.addEventListener("change", () => updateDistrictDatalist(els.searchCity.value, "search-region"));
-els.placeCity?.addEventListener("change", () => updateDistrictDatalist(els.placeCity.value, "place-region-datalist"));
-els.filterCity?.addEventListener("change", () => updateDistrictDatalist(els.filterCity.value, "filter-region"));
+// 시/도 변경 시 구 목록 갱신 + 선택값 초기화
+els.searchCity?.addEventListener("change", () => {
+  updateDistrictDatalist(els.searchCity.value, "search-region");
+  if (els.searchRegion) els.searchRegion.value = "";
+});
+els.placeCity?.addEventListener("change", () => {
+  updateDistrictDatalist(els.placeCity.value, "place-region-datalist");
+  const placeReg = document.getElementById("place-region");
+  if (placeReg) placeReg.value = "";
+});
+els.filterCity?.addEventListener("change", () => {
+  updateDistrictDatalist(els.filterCity.value, "filter-region");
+  if (els.filterRegion) els.filterRegion.value = "";
+  renderReviewList();
+});
 // 초기 구/시/군 목록
 updateDistrictDatalist("서울", "search-region");
 updateDistrictDatalist("서울", "place-region-datalist");
@@ -408,6 +420,7 @@ function renderReviewList() {
         </div>` : ""}
         <div class="review-actions">
           <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
+          <span class="comment-count-badge">💬 ${commentCounts[review.id] || 0}</span>
           <button class="report-btn" data-review-id="${escapeHtml(review.id)}">🚨 신고</button>
         </div>
       </article>`;
@@ -522,9 +535,10 @@ async function loadReviews() {
   });
 
   reviews = rawReviews;
-  await loadLikes();
+  await Promise.all([loadLikes(), loadCommentCounts()]);
   renderReviewList();
   renderRecentReviews();
+  renderBestPlaces();
 }
 
 function renderRecentReviews() {
@@ -586,9 +600,77 @@ function renderRecentReviews() {
       </div>` : ""}
       <div class="review-actions">
         <button class="like-btn${isLiked ? " is-liked" : ""}" data-review-id="${escapeHtml(review.id)}">👍 도움이 됐어요${likeCount > 0 ? ` <span class="like-count">${likeCount}</span>` : ""}</button>
+        <span class="comment-count-badge">💬 ${commentCounts[review.id] || 0}</span>
         <button class="report-btn" data-review-id="${escapeHtml(review.id)}">🚨 신고</button>
       </div>
     </article>`;
+  }).join("");
+}
+
+// ===== 이달의 추천 =====
+function renderBestPlaces() {
+  const el = document.getElementById("best-places-list");
+  if (!el) return;
+
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  // 이달 인증 리뷰만
+  const monthlyVerified = reviews.filter(
+    (r) => r.isVerified && r.visitDate?.startsWith(thisMonth)
+  );
+
+  if (!monthlyVerified.length) {
+    // 이달 데이터 없으면 전체 최근 기준
+    const allVerified = reviews.filter((r) => r.isVerified);
+    if (!allVerified.length) {
+      el.innerHTML = '<p class="placeholder-text">아직 인증 후기가 없습니다.</p>';
+      return;
+    }
+    renderBestFromList(el, allVerified, "최근 인증 후기 기준");
+    return;
+  }
+  renderBestFromList(el, monthlyVerified, `${now.getMonth() + 1}월 기준`);
+}
+
+function renderBestFromList(el, list, label) {
+  // place_name별 집계
+  const placeMap = {};
+  list.forEach((r) => {
+    if (!placeMap[r.placeName]) {
+      placeMap[r.placeName] = { name: r.placeName, category: r.category, city: r.city || "서울", region: r.region, scores: [], count: 0 };
+    }
+    const p = placeMap[r.placeName];
+    p.count++;
+    const avg = [r.scoreKindness, r.scorePrice, r.scoreFacility, r.scoreWait].filter(Boolean);
+    if (avg.length) p.scores.push(avg.reduce((s, v) => s + v, 0) / avg.length);
+  });
+
+  const ranked = Object.values(placeMap)
+    .map((p) => ({ ...p, avg: p.scores.length ? p.scores.reduce((s, v) => s + v, 0) / p.scores.length : 0 }))
+    .filter((p) => p.count >= 1)
+    .sort((a, b) => b.avg - a.avg || b.count - a.count)
+    .slice(0, 5);
+
+  if (!ranked.length) {
+    el.innerHTML = '<p class="placeholder-text">추천 병원/미용샵이 없습니다.</p>';
+    return;
+  }
+
+  const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+  el.innerHTML = ranked.map((p, i) => {
+    const stars = p.avg > 0 ? "★".repeat(Math.round(p.avg)) + "☆".repeat(5 - Math.round(p.avg)) : "";
+    const catLabel = CATEGORY_LABEL[p.category] || p.category;
+    const hParams = new URLSearchParams({ name: p.name, city: p.city, region: p.region || "", category: p.category || "hospital" });
+    return `
+    <a href="hospital.html?${hParams}" class="best-place-card" style="text-decoration:none;">
+      <span class="best-rank">${medals[i]}</span>
+      <div class="best-info">
+        <div class="best-name">${escapeHtml(p.name)}</div>
+        <div class="best-meta">${escapeHtml(catLabel)} · ${escapeHtml(p.city)} ${escapeHtml(p.region || "")}</div>
+        ${p.avg > 0 ? `<div class="best-stars" style="color:#f59e0b;font-size:13px;">${stars} <span style="color:#888;font-size:11px;">${p.avg.toFixed(1)} (${p.count}건)</span></div>` : `<div style="font-size:12px;color:#aaa;">${p.count}건 리뷰</div>`}
+      </div>
+    </a>`;
   }).join("");
 }
 
@@ -1350,16 +1432,22 @@ async function loadPetGreeting() {
       .eq("user_id", userId)
       .order("created_at")
       .limit(1);
-    if (!pets?.length) return;
-
-    const pet = pets[0];
-    const nickRaw = window.PetAuth.getDisplayName?.() || "";
-    const nick = nickRaw ? escapeHtml(nickRaw) : "보호자";
-
     const avatarEl = document.getElementById("pet-greeting-avatar");
     const textEl = document.getElementById("pet-greeting-text");
     if (!avatarEl || !textEl) return;
 
+    const nickRaw = window.PetAuth.getDisplayName?.() || "";
+    const nick = nickRaw ? escapeHtml(nickRaw) : "보호자";
+
+    if (!pets?.length) {
+      // 펫 미등록: 등록 유도
+      avatarEl.innerHTML = `<span>🐾</span>`;
+      textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>!<br><span style="color:#16a34a;font-weight:600;">반려동물을 등록해보세요 →</span>`;
+      greetingEl.hidden = false;
+      return;
+    }
+
+    const pet = pets[0];
     avatarEl.innerHTML = pet.photo_url
       ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />`
       : `<span>${pet.species === "고양이" ? "🐱" : "🐶"}</span>`;
@@ -1676,6 +1764,21 @@ async function loadLikes() {
       (data || []).forEach((l) => userLikedReviews.add(l.review_id));
     } catch { /* ignore */ }
   }
+}
+
+// ===== 댓글 수 로드 =====
+async function loadCommentCounts() {
+  const db = window.supabaseClient;
+  if (!db || !reviews.length) return;
+  const ids = reviews.map((r) => r.id).filter(Boolean);
+  if (!ids.length) return;
+  try {
+    const { data } = await db.from("review_comments").select("review_id").in("review_id", ids);
+    commentCounts = {};
+    (data || []).forEach((c) => {
+      commentCounts[c.review_id] = (commentCounts[c.review_id] || 0) + 1;
+    });
+  } catch { /* ignore */ }
 }
 
 // ===== 좋아요 처리 =====
