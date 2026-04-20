@@ -263,11 +263,19 @@
           <span class="badge-pending">처리 대기</span>
         </div>
         <p>신고 사유: <strong>${escapeHtml(r.reason)}</strong></p>
-        <p>리뷰 내용: ${escapeHtml(r.reviews?.short_review || "")}</p>
+        <p style="font-size:13px;color:#555;background:#fafafa;padding:8px 10px;border-radius:8px;margin:6px 0;">
+          "${escapeHtml((r.reviews?.short_review || "").slice(0, 80))}${(r.reviews?.short_review || "").length > 80 ? "…" : ""}"
+        </p>
         <p class="helper-text">신고일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
-        <div class="card-actions">
-          <button class="btn-approve resolve-report-btn" data-id="${escapeHtml(r.id)}">신고 무시 (처리완료)</button>
-          <button class="btn-reject hide-reported-review-btn" data-review-id="${escapeHtml(r.review_id)}" data-report-id="${escapeHtml(r.id)}">리뷰 숨김</button>
+        <div class="card-actions" style="flex-wrap:wrap;gap:6px;">
+          <button class="btn-approve resolve-report-btn" data-id="${escapeHtml(r.id)}"
+            title="신고만 처리완료로 표시. 리뷰는 그대로 유지됩니다.">✅ 신고만 처리</button>
+          <button class="btn-edit hide-reported-review-btn"
+            data-review-id="${escapeHtml(r.review_id)}" data-report-id="${escapeHtml(r.id)}"
+            title="리뷰를 숨김. DB에는 남아있어 관리자가 복구 가능합니다.">🔒 리뷰 숨김</button>
+          <button class="btn-reject delete-reported-review-btn"
+            data-review-id="${escapeHtml(r.review_id)}" data-report-id="${escapeHtml(r.id)}"
+            title="리뷰를 완전히 삭제합니다. 복구 불가.">🗑️ 리뷰 삭제</button>
         </div>
       </div>`).join("");
 
@@ -276,22 +284,30 @@
         const { error: updErr } = await db.from("review_reports").update({ is_resolved: true }).eq("id", btn.dataset.id);
         if (updErr) { alert("처리 실패: " + updErr.message); return; }
         btn.closest(".admin-card").remove();
-        if (!container.querySelector(".admin-card")) {
-          container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>';
-        }
+        if (!container.querySelector(".admin-card")) container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>';
       });
     });
 
     container.querySelectorAll(".hide-reported-review-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if (!confirm("리뷰를 숨김 처리하시겠습니까?\n(뷰 페이지에서 보이지 않으며, 관리자 페이지에는 남습니다.)")) return;
+        if (!confirm("리뷰를 숨김 처리합니다.\n일반 사용자에게 안 보이며, 관리자 페이지에서 복구 가능합니다.")) return;
         const { error: hideErr } = await db.from("reviews").update({ is_hidden: true }).eq("id", btn.dataset.reviewId);
         if (hideErr) { alert("숨김 처리 실패: " + hideErr.message); return; }
         await db.from("review_reports").update({ is_resolved: true }).eq("id", btn.dataset.reportId);
         btn.closest(".admin-card").remove();
-        if (!container.querySelector(".admin-card")) {
-          container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>';
-        }
+        if (!container.querySelector(".admin-card")) container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>';
+        loadStats();
+      });
+    });
+
+    container.querySelectorAll(".delete-reported-review-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("리뷰를 완전히 삭제합니다.\n이 작업은 되돌릴 수 없습니다.")) return;
+        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.reviewId);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        await db.from("review_reports").update({ is_resolved: true }).eq("id", btn.dataset.reportId);
+        btn.closest(".admin-card").remove();
+        if (!container.querySelector(".admin-card")) container.innerHTML = '<p class="placeholder-text">미처리 신고가 없습니다.</p>';
         loadStats();
       });
     });
@@ -317,15 +333,19 @@
     container.innerHTML = data.map((r) => `
       <div class="admin-card" data-comment-report-id="${escapeHtml(r.id)}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <h3>댓글 신고</h3>
+          <h3>리뷰 댓글 신고</h3>
           <span class="badge-pending">처리 대기</span>
         </div>
         <p>신고 사유: <strong>${escapeHtml(r.reason)}</strong></p>
-        <p>댓글 내용: ${escapeHtml(r.comments?.content || "(알 수 없음)")}</p>
+        <p style="font-size:13px;color:#555;background:#fafafa;padding:8px 10px;border-radius:8px;margin:6px 0;">
+          "${escapeHtml((r.comments?.content || "(알 수 없음)").slice(0, 100))}"
+        </p>
         <p class="helper-text">신고일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
         <div class="card-actions">
-          <button class="btn-approve resolve-comment-report-btn" data-id="${escapeHtml(r.id)}">신고 무시</button>
-          <button class="btn-reject delete-comment-btn" data-comment-id="${escapeHtml(r.comment_id)}" data-report-id="${escapeHtml(r.id)}">댓글 삭제</button>
+          <button class="btn-approve resolve-comment-report-btn" data-id="${escapeHtml(r.id)}"
+            title="댓글은 그대로 두고 신고만 처리완료로 표시합니다.">✅ 신고만 처리</button>
+          <button class="btn-reject delete-comment-btn" data-comment-id="${escapeHtml(r.comment_id)}" data-report-id="${escapeHtml(r.id)}"
+            title="댓글을 완전히 삭제합니다. 복구 불가.">🗑️ 댓글 삭제</button>
         </div>
       </div>`).join("");
 
@@ -374,11 +394,15 @@
           <span class="badge-pending">처리 대기</span>
         </div>
         <p>신고 사유: <strong>${escapeHtml(r.reason)}</strong></p>
-        <p>글 내용: ${escapeHtml((r.posts?.content || "").slice(0, 80))}${(r.posts?.content || "").length > 80 ? "…" : ""}</p>
+        <p style="font-size:13px;color:#555;background:#fafafa;padding:8px 10px;border-radius:8px;margin:6px 0;">
+          "${escapeHtml((r.posts?.content || "").slice(0, 80))}${(r.posts?.content || "").length > 80 ? "…" : ""}"
+        </p>
         <p class="helper-text">신고일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
         <div class="card-actions">
-          <button class="btn-approve resolve-post-report-btn" data-id="${escapeHtml(r.id)}">신고 무시</button>
-          <button class="btn-reject delete-post-btn" data-post-id="${escapeHtml(r.post_id)}" data-report-id="${escapeHtml(r.id)}">글 삭제</button>
+          <button class="btn-approve resolve-post-report-btn" data-id="${escapeHtml(r.id)}"
+            title="글은 그대로 두고 신고만 처리완료로 표시합니다.">✅ 신고만 처리</button>
+          <button class="btn-reject delete-post-btn" data-post-id="${escapeHtml(r.post_id)}" data-report-id="${escapeHtml(r.id)}"
+            title="게시글을 완전히 삭제합니다. 복구 불가.">🗑️ 글 삭제</button>
         </div>
       </div>`).join("");
 
