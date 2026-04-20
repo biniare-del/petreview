@@ -49,9 +49,7 @@ git checkout claude/fix-community-modal-close-6eTry
 | E1~E4 병원 관리자 계정 | 별도 role, 규모 커지면 |
 | B3 카카오 OG 태그 | Vercel Edge Function 필요 |
 | I2 신고자 처리결과 알림 | PWA 안정화 후 |
-| D3/D4 알림 고도화 | 트래픽 쌓인 후 |
 | Google AdSense | Analytics 붙이면서 같이 |
-| 카카오/네이버 소셜 로그인 | 얼추 완성 후 |
 
 ---
 
@@ -88,3 +86,4 @@ git checkout claude/fix-community-modal-close-6eTry
 - [x] 리뷰 댓글 + 좋아요/신고/소프트삭제
 - [x] Web Share API 공유 버튼
 - [x] 인앱 브라우저 Google 로그인 차단 → Chrome 유도
+- [x] 카카오/네이버/구글 소셜 로그인 (auth.js signInWithOAuth)
