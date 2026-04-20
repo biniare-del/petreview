@@ -422,6 +422,22 @@
           </div>
         </div>
       </div>
+      <!-- 반려동물 종류 + 정렬 필터 -->
+      <div class="review-sub-filters">
+        <div class="pet-species-filter">
+          <button class="species-btn is-active" data-species="all">전체</button>
+          <button class="species-btn" data-species="강아지">🐶 강아지</button>
+          <button class="species-btn" data-species="고양이">🐱 고양이</button>
+        </div>
+        <div class="review-sort-filter">
+          <select id="review-sort-select">
+            <option value="verified">인증순</option>
+            <option value="rating">별점순</option>
+            <option value="price_asc">가격낮은순</option>
+            <option value="recent">최신순</option>
+          </select>
+        </div>
+      </div>
       <!-- 리뷰 리스트 -->
       <div class="review-list" id="review-list">
         <!-- JS로 리뷰 카드가 렌더링될 영역 -->
@@ -431,6 +447,11 @@
       </div>
     </section>
   </main>
+  <!-- 이미지 확대 뷰어 (lightbox) -->
+  <div id="lightbox" class="lightbox-overlay" hidden role="dialog" aria-modal="true">
+    <button class="lightbox-close" id="lightbox-close" aria-label="닫기">✕</button>
+    <img id="lightbox-img" src="" alt="확대 이미지" class="lightbox-img" />
+  </div>
   <!-- 병원 상세 모달 -->
   <div class="modal-overlay" id="place-detail-modal" hidden>
     <div class="modal place-detail-modal">

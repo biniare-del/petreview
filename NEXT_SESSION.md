@@ -1,7 +1,6 @@
 # 다음 세션 시작 시 자동 실행 목록
 
-> 이 파일을 보고 있다면: 아래 순서대로 바로 실행할 것.  
-> 완료된 항목은 체크하고, 완료 후 git push까지 마치면 이 파일도 업데이트할 것.
+> 이 파일을 보고 있다면: 아래 순서대로 바로 실행할 것.
 
 ---
 
@@ -10,10 +9,9 @@
 ```bash
 git remote set-url origin https://<PAT_TOKEN>@github.com/biniare-del/petreview.git
 ```
-> PAT 토큰은 GitHub Settings → Developer settings → Personal access tokens에서 확인.  
-> 이유: 환경이 세션마다 remote를 로컬 프록시로 초기화해버림. push 전에 반드시 먼저 실행.
+> PAT 토큰은 GitHub Settings → Developer settings → Personal access tokens에서 확인.
 
-⚠️ **배포 필수**: 작업 완료 후 항상 main 머지 + 푸시해야 실제 사이트 반영됨.
+⚠️ **배포**: 작업 완료 후 main 머지 + 푸시해야 사이트 반영됨.
 ```bash
 git checkout main && git merge claude/fix-community-modal-close-6eTry --no-edit && git push origin main
 git checkout claude/fix-community-modal-close-6eTry
@@ -25,53 +23,62 @@ git checkout claude/fix-community-modal-close-6eTry
 
 ## ⚠️ Supabase SQL 실행 필요
 
-> 아래 SQL을 Supabase → SQL Editor에서 직접 실행해야 합니다.
+> Supabase → SQL Editor에서 직접 실행
 
-### 1. `supabase/add_is_hidden.sql`
+### 1. `supabase/create_review_comments.sql` ← **댓글 안 보이는 버그 해결**
 ```sql
-ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_hidden boolean DEFAULT false;
-UPDATE reviews SET is_hidden = false WHERE is_hidden IS NULL;
+-- review_comments 테이블 + SELECT 전체 허용 RLS 정책
+-- (파일 내용 그대로 실행)
 ```
 
-### 2. `supabase/create_banners.sql` (banners, featured_places 테이블)
+### 2. `supabase/add_is_hidden.sql`
+```sql
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_hidden boolean DEFAULT false;
+```
 
 ---
 
-## 1. 즉시 처리할 버그/기능 (우선순위 순)
+## 1. 다음 우선순위 기능
 
-### [ ] #11 — 배너/우수협력병원 플레이스홀더 (관리자가 등록 전 샘플 표시)
-- 메인(index.html)에 배너 섹션이 있다면: 관리자가 등록한 배너 없을 때 샘플 카드 표시
-- "광고 문의 | 지금 모집 중" 같은 텍스트로 공간 표시
-- 관리자가 Supabase에 데이터 넣으면 자동 교체
+### [ ] 병원 즐겨찾기 → 신규 리뷰 푸시 알림
+- 단골 등록(favorites) 병원에 새 approved 리뷰 등록 시 알림
+- api/push-cron.js에 favorites + push_subscriptions 조인 로직 추가
 
-### [ ] #5 — 실제 방문자 리뷰 업종 필터를 큰 버튼으로
-- index.html + app.js: 현재 드롭다운 또는 작은 버튼 → 동물병원 / 미용샵 / 기타를 큰 탭 버튼으로
-- 클릭 시 배경색/테마 전환 효과
+### [ ] 리뷰 이미지 첨부 (반려동물 사진과 별개로 리뷰 사진)
+- 현재: `pet_photo_url` 1장만 가능
+- 목표: 병원/미용샵 내부 사진, 처방전 사진 등 별도 첨부 (review_photos 버킷)
 
-### [ ] #6 — 리뷰 작성 "어떤 아이와 다녀오셨어요"에 마이펫 빠른 추가
-- index.html 리뷰 폼: 마이펫 없을 때 인라인 "마이펫 추가" 버튼
-- 클릭 시 mypage.html 마이펫 탭으로 이동 (또는 간단 모달)
+### [ ] 검색 결과 지도 뷰
+- 카드 목록 외에 지도 핀으로 보기 (Naver Map 또는 Kakao Map JS SDK)
 
----
-
-## 2. 아이디어성 작업 (논의 후 진행)
-
-### [ ] #9 — 마이펫 사진 메인화면 노출 ← 구현 완료, 실서비스 미적용 (Supabase SQL 실행 필요)
-- 로그인 + 마이펫 등록된 사람이면 메인 상단에 반려동물 사진 + "안녕하세요 보리맘님 🐾"
+### [ ] 포인트/이벤트 시스템
+- 리뷰 작성 시 포인트 적립 or 이벤트 배너만 (미결 결정)
 
 ---
 
-## 3. 완료된 항목 (참고용)
+## 2. 완료된 항목 (참고용)
 
-- [x] community.html 글쓰기 모달 버그 2종 (insert 후 모달 안 닫힘, 폼 초기화 누락)
-- [x] #1 최근후기 좋아요/신고 반응 없음 (bindReviewActions에 recent-review-list 추가)
-- [x] #2 마이페이지 내 리뷰에 단골병원 등록 버튼
-- [x] #3 체중기록 미래날짜 차단 (weight-date-input max=today)
-- [x] #7 방문일 클릭 시 달력 자동 펼치기 (showPicker)
-- [x] #8 결제금액 step=10 + 영수증 자동입력 안내
-- [x] #5 업종 필터 큰 탭 버튼 (category-tab-bar)
-- [x] #9 메인 마이펫 인사 바 (pet-greeting-bar)
-- [x] #10 미용샵 탭 이벤트 섹션 (grooming-events-section)
-- [x] #13 리뷰 아바타 펫사진 연동 + 영수증 비공개
-- [x] #4 신고처리 소프트삭제 (is_hidden toggle, 신고 무시/리뷰 숨김 분리)
-- [x] #12 admin.html banners/featured_places 테이블 없을 때 graceful 처리
+### 최근 완료
+- [x] 병원/미용샵 상세 페이지 (hospital.html + hospital.js)
+- [x] 검색 카드에 리뷰 수 + 평균 가격 배지
+- [x] 댓글 수 뱃지 (리뷰 카드에 💬 N)
+- [x] 리뷰 정렬 옵션 (인증순/별점순/가격낮은순/최신순)
+- [x] 동물 종류 필터 (강아지/고양이/전체)
+- [x] 이미지 확대 뷰어 lightbox
+- [x] 이달의 추천 섹션 (상위 5개 병원/미용샵)
+- [x] 최상단 카테고리 탭 (동물병원/미용샵 sticky)
+- [x] 시/도 변경 시 구 select 자동 초기화
+- [x] 마이펫 미등록 인사바 → 등록 유도
+- [x] 인사바 클릭 → 마이페이지 링크
+- [x] 커뮤니티 아바타 클릭 → 마이페이지
+- [x] 전국 확대 (17 시/도 + 구/시/군 datalist→select)
+- [x] PWA (manifest, SW, 홈화면 설치)
+- [x] 푸시 알림 (VAPID, 구독/해제, Vercel cron)
+- [x] 건강 기록 C3/C4/C5 (진료메모, 심장사상충, 예방접종)
+- [x] 인앱 브라우저 Google 로그인 차단 → Chrome 유도
+- [x] 리뷰 댓글 (review_comments) + SQL RLS
+- [x] community.html 글쓰기 모달 버그
+- [x] 리뷰 좋아요/신고/소프트삭제
+- [x] 마이펫 등록/수정/삭제 (사진 포함)
+- [x] 단골병원 즐겨찾기
+- [x] 관리자: 영수증 검수, 리뷰/신고/회원/광고 관리

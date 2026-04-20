@@ -81,6 +81,8 @@ let geoState = 'pending';  // 'pending' | 'granted' | 'denied'
 let reviewLikes = {};            // { reviewId: likeCount }
 let userLikedReviews = new Set(); // 현재 유저가 좋아요한 review ID 집합
 let commentCounts = {};          // { reviewId: commentCount }
+let filterPetSpecies = "all";    // 동물 종류 필터
+let reviewSortMode = "verified"; // 리뷰 정렬 모드
 let reportingReviewId = null;    // 신고 처리 중인 review ID
 let selectedScores = {};         // 별점 입력 값 { score_kindness, score_price, score_facility, score_wait }
 let selectedPetName = "";        // 선택된 마이펫 이름
@@ -214,6 +216,14 @@ function renderSearchPage(page) {
       const count = favCounts[place.name] || 0;
       const isSaved = userFavs.has(place.name);
       const favLabel = (isSaved ? "♥ 단골" : "♡ 단골") + (count > 0 ? ` ${count}` : "");
+      // 리뷰 통계 (in-memory)
+      const placeReviews = reviews.filter((r) => r.placeName === place.name && r.isVerified);
+      const reviewBadge = placeReviews.length
+        ? (() => {
+            const avgPrice = Math.round(placeReviews.reduce((s, r) => s + (r.totalPrice || 0), 0) / placeReviews.length);
+            return `<span class="place-review-badge">리뷰 ${placeReviews.length}건 · 평균 ₩${avgPrice.toLocaleString("ko-KR")}</span>`;
+          })()
+        : "";
       return `
       <article class="card search-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(place.name)}" data-place-category="${escapeHtml(place.category)}" data-place-city="${escapeHtml(els.searchCity?.value || "서울")}" data-place-region="${escapeHtml(place.region)}" data-place-address="${escapeHtml(place.address || "")}" data-place-phone="${escapeHtml(place.phone || "")}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
@@ -223,6 +233,7 @@ function renderSearchPage(page) {
         <p>${CATEGORY_LABEL[place.category]} · ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
         ${place.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(place.phone)}">📞 ${escapeHtml(place.phone)}</a></p>` : ""}
+        ${reviewBadge}
       </article>`;
     })
     .join("");
@@ -359,7 +370,8 @@ function renderReviewList() {
     const categoryMatch = category === "all" || review.category === category;
     const cityMatch = !cityFilter || (review.city || "서울") === cityFilter;
     const regionMatch = !regionKeyword || (review.region ?? "").includes(regionKeyword);
-    return categoryMatch && cityMatch && regionMatch;
+    const speciesMatch = filterPetSpecies === "all" || (review.petSpecies || "").includes(filterPetSpecies);
+    return categoryMatch && cityMatch && regionMatch && speciesMatch;
   });
 
   if (filtered.length === 0) {
@@ -368,8 +380,20 @@ function renderReviewList() {
     return;
   }
 
-  // 영수증 인증 리뷰 상단 노출
-  const sorted = [...filtered].sort((a, b) => b.isVerified - a.isVerified);
+  // 정렬
+  const sorted = [...filtered].sort((a, b) => {
+    if (reviewSortMode === "rating") {
+      const aScore = [a.scoreKindness, a.scorePrice, a.scoreFacility, a.scoreWait].filter(Boolean);
+      const bScore = [b.scoreKindness, b.scorePrice, b.scoreFacility, b.scoreWait].filter(Boolean);
+      const aAvg = aScore.length ? aScore.reduce((s, v) => s + v, 0) / aScore.length : 0;
+      const bAvg = bScore.length ? bScore.reduce((s, v) => s + v, 0) / bScore.length : 0;
+      return bAvg - aAvg;
+    }
+    if (reviewSortMode === "price_asc") return a.totalPrice - b.totalPrice;
+    if (reviewSortMode === "recent") return b.createdAt.localeCompare(a.createdAt);
+    // default: verified first
+    return b.isVerified - a.isVerified;
+  });
 
   const items = sorted
     .map((review) => {
@@ -2244,6 +2268,54 @@ async function openPlaceDetail(place) {
     </div>`).join("");
 }
 
+// ===== 동물 종류 필터 =====
+function bindPetSpeciesFilter() {
+  document.querySelectorAll(".species-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      filterPetSpecies = btn.dataset.species;
+      document.querySelectorAll(".species-btn").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      renderReviewList();
+    });
+  });
+}
+
+// ===== 리뷰 정렬 =====
+function bindReviewSort() {
+  const sel = document.getElementById("review-sort-select");
+  if (!sel) return;
+  sel.addEventListener("change", () => {
+    reviewSortMode = sel.value;
+    renderReviewList();
+  });
+}
+
+// ===== 이미지 확대 뷰어 (lightbox) =====
+function bindLightbox() {
+  const lb = document.getElementById("lightbox");
+  const lbImg = document.getElementById("lightbox-img");
+  if (!lb || !lbImg) return;
+
+  document.addEventListener("click", (e) => {
+    const thumb = e.target.closest(".review-thumb");
+    if (!thumb) return;
+    lbImg.src = thumb.src;
+    lb.hidden = false;
+    document.body.style.overflow = "hidden";
+  });
+
+  document.getElementById("lightbox-close")?.addEventListener("click", closeLightbox);
+  lb.addEventListener("click", (e) => { if (e.target === lb) closeLightbox(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLightbox(); });
+}
+
+function closeLightbox() {
+  const lb = document.getElementById("lightbox");
+  if (!lb) return;
+  lb.hidden = true;
+  document.body.style.overflow = "";
+}
+
 function init() {
   // PetAuth 초기화 — 실패해도 나머지 앱 기능은 정상 동작
   window.PetAuth?.init((event) => {
@@ -2285,6 +2357,9 @@ function init() {
   bindReviewDetailModal();
   bindPlaceNameAutocomplete();
   bindServiceTags();
+  bindPetSpeciesFilter();
+  bindReviewSort();
+  bindLightbox();
   void loadReviews();
   void loadBanner();
   void initGeolocation();
