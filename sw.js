@@ -1,4 +1,4 @@
-const CACHE_NAME = "petreview-v1";
+const CACHE_NAME = "petreview-v2";
 const STATIC_ASSETS = [
   "/petreview/",
   "/petreview/index.html",

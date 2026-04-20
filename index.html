@@ -590,7 +590,26 @@
   <script src="supabase-client.js"></script>
   <!-- 인증 모듈 -->
   <script src="auth.js"></script>
-  <script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/petreview/sw.js").catch(() => {}); }</script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/petreview/sw.js").then((reg) => {
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              // 새 버전 감지 → 상단 배너 표시
+              const banner = document.createElement("div");
+              banner.id = "sw-update-banner";
+              banner.innerHTML = `새 버전이 있어요! <button onclick="location.reload()">지금 업데이트</button>`;
+              banner.style.cssText = "position:fixed;top:0;left:0;right:0;background:#16a34a;color:#fff;text-align:center;padding:10px;z-index:99999;font-size:14px;font-weight:600;";
+              banner.querySelector("button").style.cssText = "margin-left:12px;padding:4px 14px;border:2px solid #fff;background:none;color:#fff;border-radius:20px;font-weight:700;cursor:pointer;";
+              document.body.appendChild(banner);
+            }
+          });
+        });
+      }).catch(() => {});
+    }
+  </script>
   <!-- 데이터 제공자(모의 -> 실데이터로 교체 가능) -->
   <script src="dataProvider.js" defer></script>
   <!-- 앱 로직 -->
