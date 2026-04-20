@@ -1,4 +1,10 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "crons": [
+    {
+      "path": "/api/push-cron",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }

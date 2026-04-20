@@ -956,7 +956,95 @@
     bindHealthModal();
     bindApptModal();
     bindProfile();
+    bindPushNotification();
     await loadMyReviews();
+  }
+
+  // ===== 푸시 알림 =====
+  const VAPID_PUBLIC_KEY = "BDVblzZO_JDFguJ0SzmNtUwyLCg2zxyYbPsdjmv0hamJLD5GY0z0rWBogIUWHPVyXRmfOmjCrcBbqOfYmCvoD8c";
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const raw = atob(base64);
+    return new Uint8Array([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  function bindPushNotification() {
+    const btn = document.getElementById("push-subscribe-btn");
+    const statusEl = document.getElementById("push-status-text");
+    if (!btn) return;
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      if (statusEl) statusEl.textContent = "이 브라우저는 푸시 알림을 지원하지 않습니다.";
+      btn.disabled = true;
+      return;
+    }
+
+    const perm = Notification.permission;
+    if (perm === "granted") {
+      if (statusEl) statusEl.textContent = "✅ 알림이 허용되어 있습니다.";
+      btn.textContent = "알림 해제하기";
+      btn.style.background = "#e5e7eb";
+      btn.style.color = "#555";
+    } else if (perm === "denied") {
+      if (statusEl) statusEl.textContent = "🚫 알림이 차단되었습니다. 브라우저 설정에서 허용해주세요.";
+      btn.disabled = true;
+    }
+
+    btn.addEventListener("click", async () => {
+      const db = window.supabaseClient;
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!db || !userId) return;
+
+      if (Notification.permission === "granted") {
+        // 구독 해제
+        const sw = await navigator.serviceWorker.ready;
+        const sub = await sw.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+          await db.from("push_subscriptions").delete().eq("user_id", userId);
+        }
+        if (statusEl) statusEl.textContent = "알림이 해제되었습니다.";
+        btn.textContent = "알림 허용하기";
+        btn.style.background = "";
+        btn.style.color = "";
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        if (statusEl) statusEl.textContent = "알림 권한이 거부되었습니다.";
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.textContent = "처리 중...";
+        const sw = await navigator.serviceWorker.ready;
+        const sub = await sw.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+        const { endpoint, keys } = sub.toJSON();
+        await db.from("push_subscriptions").upsert([{
+          user_id: userId,
+          endpoint,
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+        }], { onConflict: "user_id" });
+
+        if (statusEl) statusEl.textContent = "✅ 알림이 설정되었습니다.";
+        btn.textContent = "알림 해제하기";
+        btn.style.background = "#e5e7eb";
+        btn.style.color = "#555";
+        btn.disabled = false;
+      } catch (err) {
+        if (statusEl) statusEl.textContent = "알림 설정 실패: " + err.message;
+        btn.disabled = false;
+        btn.textContent = "알림 허용하기";
+      }
+    });
   }
 
   init();
