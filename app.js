@@ -1659,10 +1659,21 @@ async function loadPetSelector() {
   selectedPetSpecies = "";
   selectedPetPhotoUrl = "";
 
-  const addBtn = `<a href="mypage.html#pets" class="pet-add-link">＋ 마이펫 추가</a>`;
+  const addInlineBtn = `<button type="button" class="pet-add-inline-btn" id="pet-add-inline-toggle">＋ 마이펫 추가</button>`;
+  const inlineForm = `
+    <div id="pet-inline-form" class="pet-inline-form" hidden>
+      <input type="text" id="pet-inline-name" placeholder="이름 (예: 보리)" maxlength="20" class="pet-inline-input" />
+      <select id="pet-inline-species" class="pet-inline-select">
+        <option value="강아지">🐶 강아지</option>
+        <option value="고양이">🐱 고양이</option>
+        <option value="기타">기타</option>
+      </select>
+      <button type="button" id="pet-inline-save" class="pet-inline-save-btn">등록</button>
+    </div>`;
 
   if (!pets?.length) {
-    container.innerHTML = addBtn;
+    container.innerHTML = addInlineBtn + inlineForm;
+    bindPetInlineForm(container, userId);
     return;
   }
 
@@ -1670,7 +1681,9 @@ async function loadPetSelector() {
     const icon = p.species === "고양이" ? "🐱" : "🐶";
     const photoAttr = p.photo_url ? ` data-photo="${escapeHtml(p.photo_url)}"` : "";
     return `<button type="button" class="pet-select-btn" data-name="${escapeHtml(p.name)}" data-species="${escapeHtml(p.species || "")}"${photoAttr}>${icon} ${escapeHtml(p.name)}</button>`;
-  }).join("") + addBtn;
+  }).join("") + addInlineBtn + inlineForm;
+
+  bindPetInlineForm(container, userId);
 
   container.querySelectorAll(".pet-select-btn").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -1686,6 +1699,42 @@ async function loadPetSelector() {
       if (previewEl && selectedPetPhotoUrl && (!fileInput?.files?.length)) {
         previewEl.innerHTML = `<img src="${escapeHtml(selectedPetPhotoUrl)}" style="width:72px;height:72px;object-fit:cover;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.1);" />`;
       }
+    });
+  });
+}
+
+function bindPetInlineForm(container, userId) {
+  const toggle = container.querySelector("#pet-add-inline-toggle");
+  const form = container.querySelector("#pet-inline-form");
+  if (!toggle || !form) return;
+
+  toggle.addEventListener("click", () => {
+    form.hidden = !form.hidden;
+    if (!form.hidden) container.querySelector("#pet-inline-name")?.focus();
+  });
+
+  container.querySelector("#pet-inline-save")?.addEventListener("click", async () => {
+    const name = container.querySelector("#pet-inline-name")?.value.trim();
+    const species = container.querySelector("#pet-inline-species")?.value;
+    if (!name) { container.querySelector("#pet-inline-name").focus(); return; }
+
+    const db = window.supabaseClient;
+    const saveBtn = container.querySelector("#pet-inline-save");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "저장 중...";
+
+    const { data, error } = await db.from("pets").insert([{ user_id: userId, name, species }]).select().single();
+    if (error) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "등록";
+      alert("등록 실패: " + error.message);
+      return;
+    }
+    // 등록 성공 → 셀렉터 새로고침
+    await loadPetSelector();
+    // 방금 등록한 펫 자동 선택
+    container.querySelectorAll(".pet-select-btn").forEach(btn => {
+      if (btn.dataset.name === name) btn.click();
     });
   });
 }

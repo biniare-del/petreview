@@ -617,6 +617,63 @@ textarea {
   background: #e7f5f1;
 }
 
+.pet-add-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px dashed #0f6e56;
+  background: #fff;
+  font-size: 13px;
+  color: #0f6e56;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pet-add-inline-btn:hover { background: #e7f5f1; }
+
+.pet-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px;
+  background: #f9f5f2;
+  border-radius: 12px;
+  border: 1px solid #f0e8e2;
+}
+.pet-inline-input {
+  flex: 1;
+  min-width: 100px;
+  padding: 7px 10px;
+  border: 1px solid #e0d7d2;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+.pet-inline-input:focus { border-color: #0f6e56; }
+.pet-inline-select {
+  padding: 7px 10px;
+  border: 1px solid #e0d7d2;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  font-family: inherit;
+  outline: none;
+}
+.pet-inline-save-btn {
+  padding: 7px 16px;
+  background: #0f6e56;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pet-inline-save-btn:disabled { opacity: 0.6; cursor: default; }
+
 .sort-btn {
   padding: 5px 14px;
   border-radius: 20px;
