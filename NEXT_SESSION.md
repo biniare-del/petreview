@@ -50,6 +50,10 @@ CREATE INDEX IF NOT EXISTS reviews_kakao_place_id_idx ON reviews (kakao_place_id
 
 ## 1. 다음 우선순위 기능
 
+### [x] 커뮤니티 신고 모달 (prompt → 라디오 모달)
+### [x] 관리자 커뮤니티 글 신고 관리 탭 추가
+> Supabase SQL 실행 필요: supabase/create_post_reports.sql
+
 ### [x] kakao_place_id 정규화 (완료)
 - api/facilities.js에서 카카오 장소 ID 전달
 - 자동완성 선택 시 selectedKakaoPlaceId 저장

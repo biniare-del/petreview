@@ -170,6 +170,23 @@
     }
     .community-modal-header h3 { margin: 0; font-size: 17px; }
 
+    .report-reason-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #444;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1.5px solid #f0e8e2;
+      transition: border-color 0.15s;
+    }
+    .report-reason-row:has(input:checked) {
+      border-color: #e57373;
+      background: #fff5f5;
+    }
+
     .modal-close-btn {
       background: none;
       border: none;
@@ -434,6 +451,27 @@
         <textarea class="write-content-input" id="write-content" placeholder="내용을 입력하세요."></textarea>
         <button class="write-submit-btn" id="write-submit-btn">등록하기</button>
         <p id="write-result" style="text-align:center;font-size:13px;margin-top:8px;color:#e57373;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 신고 모달 -->
+  <div class="community-modal-overlay" id="report-modal-overlay" hidden>
+    <div class="community-modal" style="max-width:360px;">
+      <div class="community-modal-header">
+        <h3 id="report-modal-title">신고하기</h3>
+        <button class="modal-close-btn" id="report-modal-close-btn">✕</button>
+      </div>
+      <div style="padding:0 20px 20px;">
+        <p style="font-size:13px;color:#888;margin:0 0 14px;">신고 사유를 선택해주세요.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="허위정보" /> 허위정보</label>
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="욕설/비방" /> 욕설/비방</label>
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="광고성" /> 광고성 게시물</label>
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="기타" /> 기타</label>
+        </div>
+        <button class="write-submit-btn" id="report-submit-btn" style="margin-top:18px;background:linear-gradient(135deg,#e57373,#ef5350);">신고 접수</button>
+        <p id="report-result" style="font-size:12px;color:#888;text-align:center;margin-top:8px;"></p>
       </div>
     </div>
   </div>
@@ -765,40 +803,58 @@
       renderPosts();
     }
 
-    // ===== 게시글 신고 =====
-    async function reportPost(postId) {
-      if (!window.PetAuth?.isLoggedIn()) {
-        window.PetAuth?.signInWithGoogle();
-        return;
-      }
-      const reason = prompt("신고 사유를 입력해주세요.\n(허위정보 / 욕설비방 / 광고성 / 기타)");
-      if (!reason) return;
+    // ===== 신고 모달 =====
+    let reportTarget = null; // { type: "post"|"comment", id: "..." }
+
+    function openReportModal(type, id, label) {
+      reportTarget = { type, id };
+      document.getElementById("report-modal-title").textContent = type === "post" ? "게시글 신고" : "댓글 신고";
+      document.querySelectorAll("input[name='comm-report-reason']").forEach(r => r.checked = false);
+      document.getElementById("report-result").textContent = "";
+      document.getElementById("report-modal-overlay").hidden = false;
+    }
+
+    document.getElementById("report-modal-close-btn").addEventListener("click", () => {
+      document.getElementById("report-modal-overlay").hidden = true;
+    });
+    document.getElementById("report-modal-overlay").addEventListener("click", (e) => {
+      if (e.target.id === "report-modal-overlay") e.currentTarget.hidden = true;
+    });
+    document.getElementById("report-submit-btn").addEventListener("click", async () => {
+      const reason = document.querySelector("input[name='comm-report-reason']:checked")?.value;
+      if (!reason) { document.getElementById("report-result").textContent = "사유를 선택해주세요."; return; }
+      if (!reportTarget) return;
       const db = window.supabaseClient;
-      const userId = window.PetAuth.currentUser.id;
-      const { error } = await db.from("post_reports").insert([{ post_id: postId, user_id: userId, reason }]);
-      if (error) {
-        alert(error.code === "23505" ? "이미 신고한 게시글입니다." : "신고 처리 중 오류가 발생했습니다.");
+      const userId = window.PetAuth?.currentUser?.id;
+      if (!db || !userId) return;
+
+      const resultEl = document.getElementById("report-result");
+      let error;
+      if (reportTarget.type === "post") {
+        ({ error } = await db.from("post_reports").insert([{ post_id: reportTarget.id, user_id: userId, reason }]));
       } else {
-        alert("신고가 접수됐습니다. 검토 후 처리해드리겠습니다.");
+        ({ error } = await db.from("comment_reports").insert([{ comment_id: reportTarget.id, user_id: userId, reason }]));
       }
+      if (error) {
+        resultEl.style.color = "#e57373";
+        resultEl.textContent = error.code === "23505" ? "이미 신고한 항목입니다." : "신고 처리 중 오류가 발생했습니다.";
+      } else {
+        resultEl.style.color = "#22c55e";
+        resultEl.textContent = "신고가 접수됐습니다.";
+        setTimeout(() => { document.getElementById("report-modal-overlay").hidden = true; }, 1200);
+      }
+    });
+
+    // ===== 게시글 신고 =====
+    function reportPost(postId) {
+      if (!window.PetAuth?.isLoggedIn()) { window.PetAuth?.signInWithGoogle(); return; }
+      openReportModal("post", postId);
     }
 
     // ===== 댓글 신고 =====
-    async function reportComment(commentId) {
-      if (!window.PetAuth?.isLoggedIn()) {
-        window.PetAuth?.signInWithGoogle();
-        return;
-      }
-      const reason = prompt("신고 사유를 입력해주세요.\n(허위정보 / 욕설비방 / 광고성 / 기타)");
-      if (!reason) return;
-      const db = window.supabaseClient;
-      const userId = window.PetAuth.currentUser.id;
-      const { error } = await db.from("comment_reports").insert([{ comment_id: commentId, user_id: userId, reason }]);
-      if (error) {
-        alert(error.code === "23505" ? "이미 신고한 댓글입니다." : "신고 처리 중 오류가 발생했습니다.");
-      } else {
-        alert("신고가 접수됐습니다. 검토 후 처리해드리겠습니다.");
-      }
+    function reportComment(commentId) {
+      if (!window.PetAuth?.isLoggedIn()) { window.PetAuth?.signInWithGoogle(); return; }
+      openReportModal("comment", commentId);
     }
 
     // ===== 글쓰기 =====
