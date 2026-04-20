@@ -1153,7 +1153,12 @@ function bindPlaceNameAutocomplete() {
 
   function renderDropdown(places, keyword) {
     if (!places.length) {
-      dropdown.innerHTML = `<li class="autocomplete-empty">검색 결과가 없어요</li>`;
+      dropdown.innerHTML = `
+        <li class="autocomplete-empty">검색 결과가 없어요</li>
+        <li class="autocomplete-direct" data-direct="${escapeHtml(keyword)}">
+          <div class="autocomplete-name">✏️ "<strong>${escapeHtml(keyword)}</strong>" 직접 입력</div>
+          <div class="autocomplete-meta">목록에 없는 업체도 등록 가능해요</div>
+        </li>`;
       dropdown.hidden = false;
       return;
     }
@@ -1250,6 +1255,14 @@ function bindPlaceNameAutocomplete() {
   });
 
   dropdown.addEventListener("mousedown", (e) => {
+    // 직접 입력 선택
+    const directLi = e.target.closest("li[data-direct]");
+    if (directLi) {
+      e.preventDefault();
+      input.value = directLi.dataset.direct;
+      hideDropdown();
+      return;
+    }
     const li = e.target.closest("li[data-idx]");
     if (!li) return;
     e.preventDefault();

@@ -756,6 +756,18 @@ textarea {
   pointer-events: none;
 }
 
+/* 직접 입력 항목 */
+.autocomplete-direct {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-top: 1px solid #f0f0f0;
+  background: #fafff7;
+}
+
+.autocomplete-direct:hover {
+  background: #f0fdf4;
+}
+
 /* 전화번호 링크 */
 .place-phone-link {
   display: inline-flex;

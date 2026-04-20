@@ -19,6 +19,9 @@ git checkout claude/fix-community-modal-close-6eTry
 
 작업 브랜치: `claude/fix-community-modal-close-6eTry`
 
+⚠️ **배포할 때마다** `sw.js`의 `CACHE_NAME` 버전 올릴 것 (현재 `petreview-v2`)
+→ 안 올리면 PWA 설치 사용자가 구버전 캐시 계속 사용함
+
 ---
 
 ## ⚠️ Supabase SQL 실행 필요

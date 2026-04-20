@@ -110,8 +110,11 @@
 | 항목 | 내용 |
 |------|------|
 | 카카오 로그인 | 비즈앱 전환 전까지 비활성 |
-| 댓글 사라짐 | review_comments RLS SELECT 정책 없으면 비로그인 조회 불가 → supabase/create_review_comments.sql 실행 |
-| 자동완성 | Vercel 프록시 느릴 때 5초 대기 후 "없음" 표시. Kakao API 의존 |
+| 댓글 사라짐 | review_comments RLS SELECT 정책 없으면 비로그인 조회 불가 → supabase/create_review_comments.sql 실행 완료 |
+| 자동완성 | Vercel 프록시 느릴 때 5초 대기. 카카오에 없는 업체 → "직접 입력" 항목 제공 |
+| 없는 업체 리뷰 | 자동완성 결과 없을 때 "✏️ 직접 입력" 선택지 표시. 자유 입력 후 제출 가능 |
+| PWA 캐시 | 배포마다 sw.js의 CACHE_NAME 버전 올려야 사용자 앱 갱신됨 (현재 v2). 새 버전 감지 시 상단 업데이트 배너 자동 표시 |
+| 모바일 강제 새로고침 | PWA 설치 시 ?v=2 파라미터 무효 (SW가 캐시 우선). 업데이트 배너 또는 앱 삭제 후 재설치 필요 |
 | api/ocr.js | 미사용 파일 |
 
 ---
