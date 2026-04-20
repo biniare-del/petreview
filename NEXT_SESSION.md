@@ -24,37 +24,9 @@ git checkout claude/fix-community-modal-close-6eTry
 
 ---
 
-## ⚠️ Supabase SQL 실행 필요 (아직 안 한 것)
-
-> Supabase → SQL Editor에서 직접 실행
-
-### 1. 리뷰 이미지 다중 첨부 (review_photos)
-```sql
-CREATE TABLE IF NOT EXISTS review_photos (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  review_id uuid NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
-  photo_url text NOT NULL,
-  created_at timestamptz DEFAULT now()
-);
-ALTER TABLE review_photos ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "누구나 조회" ON review_photos FOR SELECT USING (true);
-CREATE POLICY "본인만 삽입" ON review_photos FOR INSERT WITH CHECK (
-  EXISTS (SELECT 1 FROM reviews WHERE id = review_id AND user_id = auth.uid())
-);
-CREATE POLICY "본인만 삭제" ON review_photos FOR DELETE USING (
-  EXISTS (SELECT 1 FROM reviews WHERE id = review_id AND user_id = auth.uid())
-);
-```
-
 ---
 
 ## 1. 다음 우선순위 기능 (할 것)
-
-### [ ] 리뷰 이미지 3장 첨부 (최우선)
-- 현재: `pet_photo_url` 1장만 (반려동물 사진)
-- 목표: 병원 내부·간판·처방전 등 별도 리뷰 사진 최대 3장
-- 저장: `review_photos` 테이블 (위 SQL 실행 필요)
-- UI: 폼에 파일 3장 업로드 + 카드에 썸네일 표시
 
 ### [ ] 단골병원 새 리뷰 푸시 알림 (D3)
 - 즐겨찾기(favorites)한 병원에 새 approved 리뷰 등록 시 알림
