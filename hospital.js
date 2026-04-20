@@ -48,8 +48,8 @@ function renderHero(place, totalCount, verifiedCount, overallAvg) {
       ${place.phone ? `<p style="font-size:13px;color:#555;margin:0 0 4px;">📞 <a href="tel:${escapeHtml(place.phone)}" style="color:#16a34a;text-decoration:none;">${escapeHtml(place.phone)}</a></p>` : ""}
       ${overallAvg > 0 ? `<p style="font-size:18px;color:#f59e0b;margin:6px 0 0;">${starStars(overallAvg)} <span style="font-size:14px;color:#555;vertical-align:middle;">${overallAvg.toFixed(1)}</span></p>` : ""}
       <div class="hospital-actions">
-        <a href="${mapUrl}" target="_blank" rel="noopener" class="btn-outline-green">🗺️ 지도 보기</a>
-        <button id="share-btn" class="btn-outline-green">📤 공유하기</button>
+        <a href="${mapUrl}" target="_blank" rel="noopener" class="map-link-btn">🗺️ 지도 보기</a>
+        <button id="share-btn" class="map-link-btn">📤 공유하기</button>
       </div>
     </div>
 
