@@ -26,6 +26,7 @@ function saveFormDraft() {
       formCategory:  formCategory,
       formStep:      step2Visible ? 2 : 1,
       placeName:     document.getElementById("place-name")?.value ?? "",
+      placeCity:     document.getElementById("place-city")?.value ?? "서울",
       placeRegion:   document.getElementById("place-region")?.value ?? "",
       visitDate:     document.getElementById("visit-date")?.value ?? "",
       serviceDetail: document.getElementById("service-detail")?.value ?? "",
@@ -53,6 +54,7 @@ function restoreFormDraft() {
     if (d.formStep === 2 && d.formCategory) {
       selectFormCategory(d.formCategory);
       if (d.placeName)     document.getElementById("place-name").value = d.placeName;
+      if (d.placeCity)   { const el = document.getElementById("place-city"); if (el) { el.value = d.placeCity; updateDistrictDatalist(d.placeCity, "place-region-datalist"); } }
       if (d.placeRegion)   document.getElementById("place-region").value = d.placeRegion;
       if (d.visitDate)     document.getElementById("visit-date").value = d.visitDate;
       if (d.serviceDetail) document.getElementById("service-detail").value = d.serviceDetail;
@@ -84,7 +86,27 @@ let selectedPetName = "";        // 선택된 마이펫 이름
 let selectedPetSpecies = "";     // 선택된 마이펫 종류
 let selectedPetPhotoUrl = "";    // 선택된 마이펫 저장 사진 URL
 
+// 시/도별 구/시/군 목록 (datalist용)
+const DISTRICT_MAP = {
+  서울: ["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
+  경기: ["수원시","성남시","고양시","용인시","부천시","안산시","안양시","남양주시","화성시","평택시","의정부시","시흥시","파주시","김포시","광명시","광주시","군포시","하남시","오산시","이천시","안성시","의왕시","양주시","구리시","여주시","동두천시","과천시","포천시","가평군","양평군","연천군","여주군"],
+  인천: ["중구","동구","미추홀구","연수구","남동구","부평구","계양구","서구","강화군","옹진군"],
+  부산: ["중구","서구","동구","영도구","부산진구","동래구","남구","북구","해운대구","사하구","금정구","강서구","연제구","수영구","사상구","기장군"],
+  대구: ["중구","동구","서구","남구","북구","수성구","달서구","달성군"],
+  광주: ["동구","서구","남구","북구","광산구"],
+  대전: ["동구","중구","서구","유성구","대덕구"],
+  울산: ["중구","남구","동구","북구","울주군"],
+};
+
+function updateDistrictDatalist(cityVal, datalistId) {
+  const dl = document.getElementById(datalistId);
+  if (!dl) return;
+  const districts = DISTRICT_MAP[cityVal] || [];
+  dl.innerHTML = districts.map(d => `<option value="${d}">`).join("");
+}
+
 const els = {
+  searchCity: document.getElementById("search-city"),
   searchRegion: document.getElementById("search-region"),
   searchButton: document.getElementById("search-button"),
   searchResults: document.getElementById("search-results"),
@@ -92,6 +114,7 @@ const els = {
   categoryButtons: document.querySelectorAll(".category-toggle .toggle-btn"),
   placeNameInput: document.getElementById("place-name"),
   placeCategorySelect: document.getElementById("place-category"),
+  placeCity: document.getElementById("place-city"),
   placeRegionInput: document.getElementById("place-region"),
   reviewForm: document.getElementById("review-form"),
   receiptInput: document.getElementById("receipt-image"),
@@ -103,9 +126,18 @@ const els = {
   ocrStatus: document.getElementById("ocr-status"),
   reviewList: document.getElementById("review-list"),
   filterCategory: document.getElementById("filter-category"),
+  filterCity: document.getElementById("filter-city"),
   filterRegion: document.getElementById("filter-region"),
   ctaButton: document.querySelector("[data-scroll-target]"),
 };
+
+// 시/도 변경 시 datalist 업데이트
+els.searchCity?.addEventListener("change", () => updateDistrictDatalist(els.searchCity.value, "search-region-datalist"));
+els.placeCity?.addEventListener("change", () => updateDistrictDatalist(els.placeCity.value, "place-region-datalist"));
+els.filterCity?.addEventListener("change", () => updateDistrictDatalist(els.filterCity.value, "filter-region-datalist"));
+// 초기 datalist
+updateDistrictDatalist("서울", "search-region-datalist");
+updateDistrictDatalist("서울", "place-region-datalist");
 
 function formatPrice(amount) {
   return Number(amount).toLocaleString("ko-KR");
@@ -143,7 +175,7 @@ function renderSearchPage(page) {
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(fp.place_name)}</h3>
           <span class="featured-tag${fp.tag === "이벤트" ? " tag-event" : ""}">${escapeHtml(fp.tag || "우수협력병원")}</span>
         </div>
-        <p>${CATEGORY_LABEL[fp.category] || fp.category} · 서울특별시 ${escapeHtml(fp.region || "")}</p>
+        <p>${CATEGORY_LABEL[fp.category] || fp.category} · ${escapeHtml(fp.region || "")}</p>
         ${fp.address ? `<p class="helper-text">주소: ${escapeHtml(fp.address)}</p>` : ""}
         ${fp.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(fp.phone)}">📞 ${escapeHtml(fp.phone)}</a></p>` : ""}
       </article>`).join("");
@@ -160,7 +192,7 @@ function renderSearchPage(page) {
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
           <button class="favorite-btn${isSaved ? " is-saved" : ""}" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">${escapeHtml(favLabel)}</button>
         </div>
-        <p>${CATEGORY_LABEL[place.category]} · 서울특별시 ${escapeHtml(place.region)}</p>
+        <p>${CATEGORY_LABEL[place.category]} · ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
         ${place.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(place.phone)}">📞 ${escapeHtml(place.phone)}</a></p>` : ""}
       </article>`;
@@ -192,7 +224,9 @@ async function renderSearchResults() {
   els.searchResults.innerHTML =
     '<p class="placeholder-text">업체 데이터를 불러오는 중...</p>';
 
-  const regionKeyword = els.searchRegion.value.trim();
+  const cityVal = els.searchCity?.value || "서울";
+  const regionVal = els.searchRegion?.value?.trim() || "";
+  const regionKeyword = regionVal ? `${cityVal} ${regionVal}` : cityVal;
 
   try {
     if (!window.PetReviewDataProvider?.searchPlaces) {
@@ -290,12 +324,14 @@ function renderImagePreview(file, previewEl) {
 
 function renderReviewList() {
   const category = els.filterCategory.value;
-  const regionKeyword = els.filterRegion.value.trim();
+  const cityFilter = els.filterCity?.value || "";
+  const regionKeyword = els.filterRegion?.value?.trim() || "";
 
   const filtered = reviews.filter((review) => {
     const categoryMatch = category === "all" || review.category === category;
-    const regionMatch = regionKeyword === "" || (review.region ?? "").includes(regionKeyword);
-    return categoryMatch && regionMatch;
+    const cityMatch = !cityFilter || (review.city || "서울") === cityFilter;
+    const regionMatch = !regionKeyword || (review.region ?? "").includes(regionKeyword);
+    return categoryMatch && cityMatch && regionMatch;
   });
 
   if (filtered.length === 0) {
@@ -342,7 +378,7 @@ function renderReviewList() {
         </div>
         <div class="card-place-info">
           <span class="card-place-name">${escapeHtml(review.placeName)}</span>
-          <span class="card-place-region">서울 ${escapeHtml(review.region)}</span>
+          <span class="card-place-region">${escapeHtml(review.city || "서울")} ${escapeHtml(review.region)}</span>
         </div>
         ${scoresHtml}
         <div class="card-price-row">
@@ -374,6 +410,7 @@ function rowToReview(row) {
     createdAt: row.created_at || "",
     placeName: row.place_name,
     category: row.category,
+    city: row.city || "서울",
     region: row.region,
     visitDate: row.visit_date,
     serviceDetail: row.service_detail,
@@ -617,25 +654,13 @@ function bindCategoryToggle() {
 
 function updateSearchBtn() {
   const btn = els.searchButton;
-  const region = els.searchRegion;
-  if (!btn || !region) return;
-  btn.disabled = geoState === 'denied' && !region.value;
+  if (!btn) return;
+  // city가 선택돼 있으면 항상 검색 가능
+  btn.disabled = false;
 }
 
 function bindSearch() {
   els.searchButton.addEventListener("click", () => {
-    if (geoState === 'denied' && !els.searchRegion.value) {
-      const geoStatus = document.getElementById("geo-status");
-      if (geoStatus) {
-        geoStatus.textContent = "구를 선택해주세요";
-        geoStatus.className = "geo-status is-error";
-        setTimeout(() => {
-          geoStatus.textContent = "";
-          geoStatus.className = "geo-status";
-        }, 3000);
-      }
-      return;
-    }
     void renderSearchResults();
   });
 }
@@ -664,10 +689,13 @@ async function initGeolocation() {
         );
         const data = await res.json();
         const gu = data.address?.borough || data.address?.city_district;
-        if (gu && els.searchRegion) {
-          const match = Array.from(els.searchRegion.options).find(o => o.value === gu);
-          if (match) els.searchRegion.value = gu;
-        }
+        const state = data.address?.state || data.address?.city || "";
+        // 시/도 매핑
+        const cityMap = { "서울특별시": "서울", "경기도": "경기", "인천광역시": "인천", "부산광역시": "부산", "대구광역시": "대구", "광주광역시": "광주", "대전광역시": "대전", "울산광역시": "울산", "세종특별자치시": "세종", "강원특별자치도": "강원", "강원도": "강원", "충청북도": "충북", "충청남도": "충남", "전라북도": "전북", "전북특별자치도": "전북", "전라남도": "전남", "경상북도": "경북", "경상남도": "경남", "제주특별자치도": "제주" };
+        const detectedCity = cityMap[state] || "서울";
+        if (els.searchCity) els.searchCity.value = detectedCity;
+        if (gu && els.searchRegion) els.searchRegion.value = gu;
+        updateDistrictDatalist(detectedCity, "search-region-datalist");
       } catch { /* ignore */ }
       updateSearchBtn();
     },
@@ -826,6 +854,7 @@ function bindReviewForm() {
       const newRow = {
         place_name: String(formData.get("place-name")).trim(),
         category: String(formData.get("place-category")),
+        city: String(formData.get("place-city") || "서울").trim(),
         region: String(formData.get("place-region")).trim(),
         visit_date: String(formData.get("visit-date")),
         service_detail: String(formData.get("service-detail")).trim(),
@@ -948,6 +977,15 @@ function bindPlaceNameAutocomplete() {
     input.value = place.name;
     if (place.region) els.placeRegionInput.value = place.region;
     if (place.category) els.placeCategorySelect.value = place.category;
+    // address에서 시/도 추론
+    if (place.address && els.placeCity) {
+      const addr = place.address;
+      const cityMatch = Object.keys(DISTRICT_MAP).concat(["인천","부산","대구","광주","대전","울산","세종","강원","충북","충남","전북","전남","경북","경남","제주"]).find(c => addr.includes(c));
+      if (cityMatch) {
+        els.placeCity.value = cityMatch;
+        updateDistrictDatalist(cityMatch, "place-region-datalist");
+      }
+    }
     hideDropdown();
   }
 
@@ -972,7 +1010,7 @@ function bindPlaceNameAutocomplete() {
     currentResults = places.slice(0, 8);
     dropdown.innerHTML = currentResults
       .map((p, i) => {
-        const meta = [p.region ? `서울 ${escapeHtml(p.region)}` : "", escapeHtml(p.address || "")]
+        const meta = [p.region ? escapeHtml(p.region) : "", escapeHtml(p.address || "")]
           .filter(Boolean).join(" · ");
         const badge = p.hasReview
           ? `<span class="autocomplete-review-badge">리뷰 있음</span>`
@@ -1155,7 +1193,8 @@ function bindReviewFilters() {
     });
   });
   els.filterCategory.addEventListener("change", renderReviewList);
-  els.filterRegion.addEventListener("change", renderReviewList);
+  els.filterCity?.addEventListener("change", renderReviewList);
+  els.filterRegion?.addEventListener("input", renderReviewList);
 }
 
 async function loadGroomingEvents() {
@@ -1730,11 +1769,11 @@ async function openReviewDetailModal(reviewId) {
     ${(review.reviewPhotoUrls || []).length ? `<div class="review-images">${(review.reviewPhotoUrls).map(u => `<img src="${escapeHtml(u)}" class="review-thumb" />`).join("")}</div>` : ""}`;
 
   // 병원 정보
-  const mapQ = encodeURIComponent(`서울 ${review.region} ${review.placeName}`);
+  const mapQ = encodeURIComponent(`${review.city || "서울"} ${review.region} ${review.placeName}`);
   document.getElementById("review-detail-place").innerHTML = `
     <div style="background:#f6fdf9;border-radius:12px;padding:12px 14px;">
       <div style="font-size:15px;font-weight:700;color:#0f6e56;">${escapeHtml(review.placeName)}</div>
-      <div style="font-size:12px;color:#aaa;margin-top:2px;">서울 ${escapeHtml(review.region || "")}</div>
+      <div style="font-size:12px;color:#aaa;margin-top:2px;">${escapeHtml(review.city || "서울")} ${escapeHtml(review.region || "")}</div>
       <a href="https://map.naver.com/v5/search/${mapQ}" target="_blank" rel="noopener noreferrer" class="map-link-btn" style="margin-top:10px;display:inline-block;">🗺️ 지도 보기</a>
     </div>`;
 
@@ -1842,7 +1881,7 @@ async function openPlaceDetail(place) {
   // 기본 정보 렌더링
   document.getElementById("detail-place-name").textContent = place.name;
   document.getElementById("detail-place-meta").textContent =
-    `${CATEGORY_LABEL[place.category] || place.category} · 서울특별시 ${place.region}`;
+    `${CATEGORY_LABEL[place.category] || place.category} · ${place.region}`;
 
   const addrEl = document.getElementById("detail-place-address");
   addrEl.textContent = place.address || "";

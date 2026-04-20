@@ -11,8 +11,9 @@
 const KAKAO_REST_API_KEY =
   process.env.KAKAO_REST_API_KEY || "9e5930005d619cae98c2d710200b768f";
 
-function extractGu(address) {
-  const match = String(address || "").match(/[가-힣]+구/);
+function extractDistrict(address) {
+  const addr = String(address || "");
+  const match = addr.match(/[가-힣]+[구군시](?!\s*[가-힣]+[구군시])/);
   return match ? match[0] : "";
 }
 
@@ -36,8 +37,8 @@ export default async function handler(req, res) {
   const query = keyword
     ? `${keyword} ${categoryKeyword}`
     : region
-    ? `서울 ${region} ${categoryKeyword}`
-    : `서울 ${categoryKeyword}`;
+    ? `${region} ${categoryKeyword}`
+    : `${categoryKeyword}`;
 
   // keyword 직접 검색 시 1페이지만, 지역 목록 조회 시 최대 3페이지(45건)
   const maxPages = keyword ? 1 : 3;
@@ -79,7 +80,7 @@ export default async function handler(req, res) {
       .map((doc) => ({
         name: doc.place_name,
         category,
-        region: extractGu(doc.address_name || doc.road_address_name || ""),
+        region: extractDistrict(doc.address_name || doc.road_address_name || ""),
         address: doc.road_address_name || doc.address_name || "",
         phone: doc.phone || "",
       }))

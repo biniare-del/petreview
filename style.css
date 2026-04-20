@@ -461,6 +461,24 @@ textarea {
   width: 100%;
 }
 
+/* 전국 지역 선택 */
+.region-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.region-picker select {
+  flex: 0 0 auto;
+  min-width: 80px;
+}
+
+.region-picker input {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
 /* 영수증 인증 뱃지 */
 .verified-badge {
   display: inline-flex;
