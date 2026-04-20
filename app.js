@@ -179,7 +179,7 @@ function renderSearchPage(page) {
   let featuredHtml = "";
   if (page === 1 && featuredPlaces.length) {
     featuredHtml = featuredPlaces.map((fp) => `
-      <article class="card featured-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(fp.place_name)}" data-place-category="${escapeHtml(fp.category)}" data-place-region="${escapeHtml(fp.region || "")}" data-place-address="${escapeHtml(fp.address || "")}" data-place-phone="${escapeHtml(fp.phone || "")}">
+      <article class="card featured-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(fp.place_name)}" data-place-category="${escapeHtml(fp.category)}" data-place-city="${escapeHtml(els.searchCity?.value || "서울")}" data-place-region="${escapeHtml(fp.region || "")}" data-place-address="${escapeHtml(fp.address || "")}" data-place-phone="${escapeHtml(fp.phone || "")}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(fp.place_name)}</h3>
           <span class="featured-tag${fp.tag === "이벤트" ? " tag-event" : ""}">${escapeHtml(fp.tag || "우수협력병원")}</span>
@@ -196,7 +196,7 @@ function renderSearchPage(page) {
       const isSaved = userFavs.has(place.name);
       const favLabel = (isSaved ? "♥ 단골" : "♡ 단골") + (count > 0 ? ` ${count}` : "");
       return `
-      <article class="card search-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(place.name)}" data-place-category="${escapeHtml(place.category)}" data-place-region="${escapeHtml(place.region)}" data-place-address="${escapeHtml(place.address || "")}" data-place-phone="${escapeHtml(place.phone || "")}">
+      <article class="card search-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(place.name)}" data-place-category="${escapeHtml(place.category)}" data-place-city="${escapeHtml(els.searchCity?.value || "서울")}" data-place-region="${escapeHtml(place.region)}" data-place-address="${escapeHtml(place.address || "")}" data-place-phone="${escapeHtml(place.phone || "")}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
           <button class="favorite-btn${isSaved ? " is-saved" : ""}" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">${escapeHtml(favLabel)}</button>
@@ -1292,6 +1292,7 @@ function bindSearchResultsSelection() {
       openPlaceDetail({
         name: card.dataset.placeName || "",
         category: card.dataset.placeCategory || selectedSearchCategory,
+        city: card.dataset.placeCity || els.searchCity?.value || "서울",
         region: card.dataset.placeRegion || "",
         address: card.dataset.placeAddress || "",
         phone: card.dataset.placePhone || "",
@@ -1889,8 +1890,9 @@ async function openPlaceDetail(place) {
 
   // 기본 정보 렌더링
   document.getElementById("detail-place-name").textContent = place.name;
+  const cityStr = place.city || "서울";
   document.getElementById("detail-place-meta").textContent =
-    `${CATEGORY_LABEL[place.category] || place.category} · ${place.region}`;
+    `${CATEGORY_LABEL[place.category] || place.category} · ${cityStr} ${place.region}`;
 
   const addrEl = document.getElementById("detail-place-address");
   addrEl.textContent = place.address || "";
@@ -1906,9 +1908,23 @@ async function openPlaceDetail(place) {
   }
 
   const mapBtn = document.getElementById("detail-map-btn");
-  const q = encodeURIComponent(`서울 ${place.region} ${place.name}`);
+  const q = encodeURIComponent(`${cityStr} ${place.region} ${place.name}`);
   const mapUrl = `https://map.naver.com/v5/search/${q}`;
   if (mapBtn) mapBtn.href = mapUrl;
+
+  // 상세 페이지 링크
+  const detailPageBtn = document.getElementById("detail-page-btn");
+  if (detailPageBtn) {
+    const hParams = new URLSearchParams({
+      name: place.name,
+      city: cityStr,
+      region: place.region || "",
+      category: place.category || "hospital",
+      address: place.address || "",
+      phone: place.phone || "",
+    });
+    detailPageBtn.href = `hospital.html?${hParams}`;
+  }
 
   // 공유 버튼 (Web Share API)
   const shareBtn = document.getElementById("detail-share-btn");
@@ -1916,7 +1932,7 @@ async function openPlaceDetail(place) {
     shareBtn.onclick = async () => {
       const lines = [
         `📍 ${place.name}`,
-        `${CATEGORY_LABEL[place.category] || place.category} · 서울 ${place.region}`,
+        `${CATEGORY_LABEL[place.category] || place.category} · ${cityStr} ${place.region}`,
         place.address ? `주소: ${place.address}` : "",
         place.phone ? `전화: ${place.phone}` : "",
         `🗺️ ${mapUrl}`,

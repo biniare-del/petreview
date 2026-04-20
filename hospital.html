@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="/petreview/manifest.json" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="펫리뷰" />
+  <!-- OG 태그 (기본값, 병원명은 JS로 동적 변경) -->
+  <title>병원 상세 – 펫리뷰</title>
+  <meta property="og:site_name" content="펫리뷰" />
+  <meta property="og:type" content="website" />
+  <meta id="og-title" property="og:title" content="펫리뷰 – 동물병원 후기" />
+  <meta id="og-description" property="og:description" content="영수증으로 인증된 실제 후기를 확인하세요." />
+  <meta id="og-url" property="og:url" content="https://biniare-del.github.io/petreview/" />
+  <style>
+    .hospital-container { max-width: 680px; margin: 0 auto; padding: 20px 16px 80px; }
+    .hospital-hero {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border-radius: 20px; padding: 24px 20px; margin-bottom: 20px;
+      border: 1px solid #bbf7d0;
+    }
+    .hospital-category-badge {
+      display: inline-block; padding: 3px 12px; border-radius: 99px;
+      font-size: 12px; font-weight: 700; background: #22c55e; color: #fff;
+      margin-bottom: 10px;
+    }
+    .hospital-name { font-size: 24px; font-weight: 800; color: #1a1a1a; margin: 0 0 6px; }
+    .hospital-region { font-size: 14px; color: #666; margin: 0 0 14px; }
+    .hospital-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .hospital-stat-row {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .hospital-stat-card {
+      flex: 1 1 100px; background: #fff; border-radius: 14px;
+      padding: 14px 16px; border: 1px solid #e2f5eb; text-align: center;
+    }
+    .hospital-stat-num { font-size: 22px; font-weight: 800; color: #16a34a; }
+    .hospital-stat-label { font-size: 12px; color: #999; margin-top: 4px; }
+    .score-section {
+      background: #fff; border-radius: 16px; padding: 16px 20px;
+      border: 1px solid #e2f5eb; margin-bottom: 16px;
+    }
+    .score-section h3 { font-size: 14px; font-weight: 700; color: #555; margin: 0 0 12px; }
+    .review-section { margin-top: 20px; }
+    .review-section h3 { font-size: 16px; font-weight: 700; margin: 0 0 12px; }
+    .hospital-review-card {
+      background: #fff; border-radius: 16px; padding: 16px;
+      border: 1px solid #e2f5eb; margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .hospital-review-meta { font-size: 12px; color: #aaa; margin: 4px 0 8px; }
+    .hospital-review-text { font-size: 14px; color: #333; line-height: 1.6; }
+    .hospital-review-price {
+      font-size: 14px; font-weight: 700; color: #16a34a;
+      background: #f0fdf4; padding: 3px 10px; border-radius: 20px;
+      display: inline-block; margin-top: 8px;
+    }
+    .write-review-btn {
+      display: block; width: 100%; padding: 15px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff; border: none; border-radius: 16px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      text-align: center; text-decoration: none; margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo-area">
+      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
+        <div class="logo-icon">🐾</div>
+        <div class="logo-text">
+          <h1>펫리뷰</h1>
+          <p>영수증으로 인증하는 진짜 후기</p>
+        </div>
+      </a>
+    </div>
+    <nav class="site-nav"><a href="index.html">홈으로</a></nav>
+    <div class="header-auth" id="header-auth">
+      <button class="auth-login-btn" id="login-btn">로그인</button>
+    </div>
+    <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기">☰</button>
+    <div class="header-mobile-nav" id="header-mobile-nav">
+      <a href="index.html" class="mobile-nav-link">홈으로</a>
+      <div id="mobile-auth-content"></div>
+    </div>
+  </header>
+
+  <div class="hospital-container">
+    <div id="hospital-content">
+      <p class="placeholder-text" style="margin-top:40px;">불러오는 중...</p>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <small>© 2026 펫리뷰 · 실제 영수증 기반 반려동물 리뷰 플랫폼</small>
+    <div style="margin-top:6px;">
+      <a href="terms.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">이용약관</a>
+      <a href="privacy.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">개인정보처리방침</a>
+      <a href="contact.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">문의하기</a>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/petreview/sw.js").catch(() => {}); }</script>
+  <script src="hospital.js"></script>
+</body>
+</html>
