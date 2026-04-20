@@ -2300,7 +2300,7 @@ function bindLightbox() {
     const thumb = e.target.closest(".review-thumb");
     if (!thumb) return;
     lbImg.src = thumb.src;
-    lb.hidden = false;
+    lb.classList.add("is-open");
     document.body.style.overflow = "hidden";
   });
 
@@ -2312,7 +2312,7 @@ function bindLightbox() {
 function closeLightbox() {
   const lb = document.getElementById("lightbox");
   if (!lb) return;
-  lb.hidden = true;
+  lb.classList.remove("is-open");
   document.body.style.overflow = "";
 }
 
