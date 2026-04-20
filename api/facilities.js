@@ -78,6 +78,7 @@ export default async function handler(req, res) {
 
     const results = allDocuments
       .map((doc) => ({
+        kakaoId: doc.id || "",
         name: doc.place_name,
         category,
         region: extractDistrict(doc.address_name || doc.road_address_name || ""),

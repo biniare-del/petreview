@@ -39,9 +39,24 @@ git checkout claude/fix-community-modal-close-6eTry
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_hidden boolean DEFAULT false;
 ```
 
+### 3. `supabase/add_kakao_place_id.sql` ← **신규 리뷰부터 카카오 장소 ID 저장**
+```sql
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS kakao_place_id text;
+CREATE INDEX IF NOT EXISTS reviews_kakao_place_id_idx ON reviews (kakao_place_id);
+```
+> 기존 리뷰는 kakao_place_id = NULL → place_name으로 fallback 조회됨 (자동 처리)
+
 ---
 
 ## 1. 다음 우선순위 기능
+
+### [x] kakao_place_id 정규화 (완료)
+- api/facilities.js에서 카카오 장소 ID 전달
+- 자동완성 선택 시 selectedKakaoPlaceId 저장
+- 리뷰 저장 시 kakao_place_id 컬럼에 기록
+- 병원 상세 모달/페이지에서 kakao_place_id로 우선 조회, fallback → place_name
+- hospital.html → "후기 남기기" → index.html prefill_kakao_id 전달
+- SQL: supabase/add_kakao_place_id.sql 실행 필요
 
 ### [ ] 병원 즐겨찾기 → 신규 리뷰 푸시 알림
 - 단골 등록(favorites) 병원에 새 approved 리뷰 등록 시 알림

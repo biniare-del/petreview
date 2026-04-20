@@ -18,6 +18,7 @@ function escapeHtml(str) {
 function getParams() {
   const p = new URLSearchParams(location.search);
   return {
+    kakaoId:  p.get("kakao_id") || "",
     name:     p.get("name")     || "",
     city:     p.get("city")     || "서울",
     region:   p.get("region")   || "",
@@ -38,7 +39,7 @@ function renderHero(place, totalCount, verifiedCount, overallAvg) {
   const mapQ = encodeURIComponent(`${locationStr} ${place.name}`);
   const mapUrl = `https://map.naver.com/v5/search/${mapQ}`;
   const hospitalUrl = location.href;
-  const writeUrl = `index.html?prefill_name=${encodeURIComponent(place.name)}&prefill_city=${encodeURIComponent(place.city)}&prefill_region=${encodeURIComponent(place.region)}&prefill_category=${encodeURIComponent(place.category)}`;
+  const writeUrl = `index.html?prefill_name=${encodeURIComponent(place.name)}&prefill_city=${encodeURIComponent(place.city)}&prefill_region=${encodeURIComponent(place.region)}&prefill_category=${encodeURIComponent(place.category)}${place.kakaoId ? `&prefill_kakao_id=${encodeURIComponent(place.kakaoId)}` : ""}`;
 
   return `
     <div class="hospital-hero">
@@ -204,13 +205,20 @@ async function loadHospitalPage() {
 
   let data = [];
   try {
-    const { data: rows, error } = await db
-      .from("reviews")
-      .select("*")
-      .eq("place_name", place.name)
-      .eq("is_verified", true)
-      .eq("status", "approved")
+    let q = db.from("reviews").select("*");
+    if (place.kakaoId) {
+      q = q.eq("kakao_place_id", place.kakaoId);
+    } else {
+      q = q.eq("place_name", place.name);
+    }
+    let { data: rows, error } = await q.eq("is_verified", true).eq("status", "approved")
       .order("created_at", { ascending: false });
+    // kakao_place_id 컬럼 없으면 place_name fallback
+    if (error && (error.code === "PGRST200" || error.message?.includes("kakao_place_id"))) {
+      ({ data: rows, error } = await db.from("reviews").select("*")
+        .eq("place_name", place.name).eq("is_verified", true).eq("status", "approved")
+        .order("created_at", { ascending: false }));
+    }
     if (error) throw error;
     data = rows || [];
   } catch (err) {
@@ -220,11 +228,10 @@ async function loadHospitalPage() {
   // 전체 리뷰 수 (미인증 포함)
   let totalCount = data.length;
   try {
-    const { count } = await db
-      .from("reviews")
-      .select("id", { count: "exact", head: true })
-      .eq("place_name", place.name)
-      .eq("status", "approved");
+    let cq = db.from("reviews").select("id", { count: "exact", head: true });
+    if (place.kakaoId) { cq = cq.eq("kakao_place_id", place.kakaoId); }
+    else { cq = cq.eq("place_name", place.name); }
+    const { count } = await cq.eq("status", "approved");
     if (count != null) totalCount = count;
   } catch { /* ignore */ }
 

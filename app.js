@@ -88,6 +88,7 @@ let selectedScores = {};         // 별점 입력 값 { score_kindness, score_pr
 let selectedPetName = "";        // 선택된 마이펫 이름
 let selectedPetSpecies = "";     // 선택된 마이펫 종류
 let selectedPetPhotoUrl = "";    // 선택된 마이펫 저장 사진 URL
+let selectedKakaoPlaceId = "";   // 자동완성에서 선택된 카카오 장소 ID
 
 // 시/도별 구/시/군 목록 (datalist용)
 const DISTRICT_MAP = {
@@ -225,7 +226,7 @@ function renderSearchPage(page) {
           })()
         : "";
       return `
-      <article class="card search-place-card" style="cursor:pointer;" data-place-name="${escapeHtml(place.name)}" data-place-category="${escapeHtml(place.category)}" data-place-city="${escapeHtml(els.searchCity?.value || "서울")}" data-place-region="${escapeHtml(place.region)}" data-place-address="${escapeHtml(place.address || "")}" data-place-phone="${escapeHtml(place.phone || "")}">
+      <article class="card search-place-card" style="cursor:pointer;" data-place-id="${escapeHtml(place.kakaoId || "")}" data-place-name="${escapeHtml(place.name)}" data-place-category="${escapeHtml(place.category)}" data-place-city="${escapeHtml(els.searchCity?.value || "서울")}" data-place-region="${escapeHtml(place.region)}" data-place-address="${escapeHtml(place.address || "")}" data-place-phone="${escapeHtml(place.phone || "")}">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
           <h3 class="place-name-ellipsis" style="flex:1;margin:0;">${escapeHtml(place.name)}</h3>
           <button class="favorite-btn${isSaved ? " is-saved" : ""}" data-fav-name="${escapeHtml(place.name)}" data-fav-category="${escapeHtml(place.category)}" data-fav-region="${escapeHtml(place.region)}" data-fav-address="${escapeHtml(place.address || "")}" data-fav-phone="${escapeHtml(place.phone || "")}">${escapeHtml(favLabel)}</button>
@@ -1003,6 +1004,7 @@ function bindReviewForm() {
 
       const newRow = {
         place_name: String(formData.get("place-name")).trim(),
+        kakao_place_id: selectedKakaoPlaceId || null,
         category: String(formData.get("place-category")),
         city: String(formData.get("place-city") || "서울").trim(),
         region: String(formData.get("place-region")).trim(),
@@ -1125,6 +1127,7 @@ function bindPlaceNameAutocomplete() {
 
   function selectItem(place) {
     input.value = place.name;
+    selectedKakaoPlaceId = place.kakaoId || "";
     if (place.region) els.placeRegionInput.value = place.region;
     if (place.category) els.placeCategorySelect.value = place.category;
     // address에서 시/도 추론
@@ -1444,6 +1447,7 @@ function bindSearchResultsSelection() {
     const card = event.target.closest(".search-place-card, .featured-place-card");
     if (card) {
       openPlaceDetail({
+        kakaoId: card.dataset.placeId || "",
         name: card.dataset.placeName || "",
         category: card.dataset.placeCategory || selectedSearchCategory,
         city: card.dataset.placeCity || els.searchCity?.value || "서울",
@@ -2098,6 +2102,7 @@ async function openPlaceDetail(place) {
       address: place.address || "",
       phone: place.phone || "",
     });
+    if (place.kakaoId) hParams.set("kakao_id", place.kakaoId);
     detailPageBtn.href = `hospital.html?${hParams}`;
   }
 
@@ -2143,22 +2148,29 @@ async function openPlaceDetail(place) {
 
   let data;
   try {
-    let { data: rows, error } = await db
-      .from("reviews")
-      .select("*")
-      .eq("place_name", place.name)
-      .eq("is_verified", true)
-      .eq("status", "approved")
-      .or("is_hidden.is.null,is_hidden.eq.false")
-      .order("created_at", { ascending: false });
-    // is_hidden 컬럼 없을 경우 재시도
+    const buildQuery = (useKakaoId) => {
+      let q = db.from("reviews").select("*");
+      if (useKakaoId && place.kakaoId) {
+        q = q.eq("kakao_place_id", place.kakaoId);
+      } else {
+        q = q.eq("place_name", place.name);
+      }
+      return q.eq("is_verified", true).eq("status", "approved")
+        .or("is_hidden.is.null,is_hidden.eq.false")
+        .order("created_at", { ascending: false });
+    };
+
+    let { data: rows, error } = await buildQuery(true);
+    // kakao_place_id 컬럼 없으면 place_name fallback
+    if (error && (error.code === "PGRST200" || error.message?.includes("kakao_place_id"))) {
+      ({ data: rows, error } = await buildQuery(false));
+    }
+    // is_hidden 컬럼 없으면 재시도
     if (error && (error.code === "PGRST200" || error.message?.includes("is_hidden"))) {
-      ({ data: rows, error } = await db
-        .from("reviews")
-        .select("*")
-        .eq("place_name", place.name)
-        .eq("is_verified", true)
-        .eq("status", "approved")
+      let q = db.from("reviews").select("*");
+      if (place.kakaoId) { q = q.eq("kakao_place_id", place.kakaoId); }
+      else { q = q.eq("place_name", place.name); }
+      ({ data: rows, error } = await q.eq("is_verified", true).eq("status", "approved")
         .order("created_at", { ascending: false }));
     }
     if (error) throw error;
@@ -2384,6 +2396,31 @@ function init() {
     visitDateInput.addEventListener("click", () => {
       try { visitDateInput.showPicker(); } catch { /* 지원 안 하는 브라우저 무시 */ }
     });
+  }
+
+  // URL prefill (hospital.html → "후기 남기기" 버튼 경유)
+  const urlP = new URLSearchParams(location.search);
+  const prefillName = urlP.get("prefill_name");
+  if (prefillName) {
+    const prefillCategory = urlP.get("prefill_category") || "hospital";
+    selectFormCategory(prefillCategory);
+    document.getElementById("place-name").value = prefillName;
+    const prefillKakaoId = urlP.get("prefill_kakao_id") || "";
+    selectedKakaoPlaceId = prefillKakaoId;
+    const prefillCity = urlP.get("prefill_city") || "서울";
+    const prefillRegion = urlP.get("prefill_region") || "";
+    const placeCity = document.getElementById("place-city");
+    if (placeCity) { placeCity.value = prefillCity; updateDistrictDatalist(prefillCity, "place-region-datalist"); }
+    if (prefillRegion) {
+      const placeRegion = document.getElementById("place-region");
+      if (placeRegion) placeRegion.value = prefillRegion;
+    }
+    setTimeout(() => {
+      document.getElementById("review-form-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+    // URL 파라미터 정리 (뒤로 가기 시 중복 실행 방지)
+    history.replaceState(null, "", location.pathname);
   }
 }
 
