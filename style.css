@@ -1681,6 +1681,35 @@ body[data-theme="grooming"] .place-phone-link {
   background: #dcfce7;
 }
 
+/* ===== 최상단 카테고리 탭 ===== */
+.top-category-tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 2px solid #e8f5e9;
+  position: sticky;
+  top: 60px;
+  z-index: 90;
+}
+
+.top-cat-btn {
+  flex: 1;
+  padding: 14px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #999;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -2px;
+}
+
+.top-cat-btn.is-active {
+  color: #16a34a;
+  border-bottom-color: #16a34a;
+}
+
 /* ===== 문의하기 페이지 ===== */
 .contact-container {
   max-width: 600px;

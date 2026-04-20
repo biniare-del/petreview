@@ -107,11 +107,17 @@ const DISTRICT_MAP = {
   제주: ["제주시","서귀포시"],
 };
 
-function updateDistrictDatalist(cityVal, datalistId) {
-  const dl = document.getElementById(datalistId);
-  if (!dl) return;
+function updateDistrictDatalist(cityVal, targetId) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
   const districts = DISTRICT_MAP[cityVal] || [];
-  dl.innerHTML = districts.map(d => `<option value="${d}">`).join("");
+  if (el.tagName === "SELECT") {
+    el.innerHTML = `<option value="">전체</option>` +
+      districts.map(d => `<option value="${d}">${d}</option>`).join("");
+  } else {
+    // datalist (form용 텍스트 입력)
+    el.innerHTML = districts.map(d => `<option value="${d}">`).join("");
+  }
 }
 
 const els = {
@@ -141,12 +147,13 @@ const els = {
 };
 
 // 시/도 변경 시 datalist 업데이트
-els.searchCity?.addEventListener("change", () => updateDistrictDatalist(els.searchCity.value, "search-region-datalist"));
+els.searchCity?.addEventListener("change", () => updateDistrictDatalist(els.searchCity.value, "search-region"));
 els.placeCity?.addEventListener("change", () => updateDistrictDatalist(els.placeCity.value, "place-region-datalist"));
-els.filterCity?.addEventListener("change", () => updateDistrictDatalist(els.filterCity.value, "filter-region-datalist"));
-// 초기 datalist
-updateDistrictDatalist("서울", "search-region-datalist");
+els.filterCity?.addEventListener("change", () => updateDistrictDatalist(els.filterCity.value, "filter-region"));
+// 초기 구/시/군 목록
+updateDistrictDatalist("서울", "search-region");
 updateDistrictDatalist("서울", "place-region-datalist");
+updateDistrictDatalist("", "filter-region"); // 전체
 
 function formatPrice(amount) {
   return Number(amount).toLocaleString("ko-KR");
@@ -661,6 +668,34 @@ function bindCategoryToggle() {
   });
 }
 
+function bindTopCategoryTabs() {
+  const tabs = document.querySelectorAll("#top-category-tabs .top-cat-btn");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const cat = tab.dataset.category;
+      // 상단 탭 UI 동기화
+      tabs.forEach((t) => t.classList.remove("is-active"));
+      tab.classList.add("is-active");
+      // 기존 category toggle과 동기화
+      els.categoryButtons.forEach((btn) => {
+        btn.classList.toggle("is-active", btn.dataset.category === cat);
+      });
+      selectedSearchCategory = cat;
+      document.body.dataset.theme = cat === "grooming" ? "grooming" : "hospital";
+      renderServiceTags(cat);
+      if (hasSearched) void renderSearchResults();
+      // 검색 섹션으로 스크롤
+      document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+  // 기존 category toggle이 바뀔 때 상단 탭도 동기화
+  els.categoryButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.category === btn.dataset.category));
+    });
+  });
+}
+
 function updateSearchBtn() {
   const btn = els.searchButton;
   if (!btn) return;
@@ -1096,7 +1131,7 @@ function bindPlaceNameAutocomplete() {
   input.addEventListener("input", () => {
     clearTimeout(debounceTimer);
     const val = input.value.trim();
-    if (val.length < 1) { hideDropdown(); return; }
+    if (val.length < 2) { hideDropdown(); return; }
 
     // 로딩 상태 표시
     dropdown.innerHTML = `<li class="autocomplete-empty">검색 중...</li>`;
@@ -2130,6 +2165,7 @@ function init() {
   bindCtaButton();
   bindCategorySelection();
   bindCategoryToggle();
+  bindTopCategoryTabs();
   bindSearchResultsSelection();
   bindSearch();
   bindSortToggle();

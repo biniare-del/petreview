@@ -50,10 +50,12 @@
     </section>
 
     <!-- 마이펫 인사 바 (로그인 + 펫 등록 시 JS로 표시) -->
-    <div id="pet-greeting" class="pet-greeting-bar" hidden>
-      <div class="pet-greeting-avatar" id="pet-greeting-avatar"></div>
-      <div class="pet-greeting-text" id="pet-greeting-text"></div>
-    </div>
+    <a href="mypage.html" style="text-decoration:none;color:inherit;">
+      <div id="pet-greeting" class="pet-greeting-bar" hidden style="cursor:pointer;">
+        <div class="pet-greeting-avatar" id="pet-greeting-avatar"></div>
+        <div class="pet-greeting-text" id="pet-greeting-text"></div>
+      </div>
+    </a>
 
     <!-- 배너 슬롯 (is_active 배너가 있을 때만 JS로 표시) -->
     <div id="banner-slot" class="banner-slot" hidden></div>
@@ -81,6 +83,12 @@
         <button class="see-all-btn" onclick="document.getElementById('review-list-section')?.scrollIntoView({behavior:'smooth',block:'start'})">전체 후기 보기 →</button>
       </div>
     </section>
+
+    <!-- 최상단 카테고리 탭 -->
+    <div class="top-category-tabs" id="top-category-tabs">
+      <button class="top-cat-btn is-active" data-category="hospital">🏥 동물병원</button>
+      <button class="top-cat-btn" data-category="grooming">✂️ 미용샵</button>
+    </div>
 
     <!-- 1. 주변 동물병원/미용샵 검색 섹션 -->
     <section id="search-section" class="section search-section" aria-label="주변 업체 검색">
@@ -110,8 +118,9 @@
               <option value="경남">경남</option>
               <option value="제주">제주</option>
             </select>
-            <input type="text" id="search-region" name="search-region" placeholder="구/시/군 (예: 강남구, 수원시)" list="search-region-datalist" autocomplete="off" />
-            <datalist id="search-region-datalist"></datalist>
+            <select id="search-region" name="search-region">
+              <option value="">전체</option>
+            </select>
           </div>
           <p id="geo-status" class="geo-status"></p>
         </div>
@@ -397,8 +406,9 @@
               <option value="경남">경남</option>
               <option value="제주">제주</option>
             </select>
-            <input type="text" id="filter-region" name="filter-region" placeholder="구/시/군 (선택)" list="filter-region-datalist" autocomplete="off" />
-            <datalist id="filter-region-datalist"></datalist>
+            <select id="filter-region" name="filter-region">
+              <option value="">전체</option>
+            </select>
           </div>
         </div>
       </div>
