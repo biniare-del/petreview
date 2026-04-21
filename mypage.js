@@ -791,6 +791,30 @@
   }
 
   // ===== 프로필 =====
+  const BADGE_DEFS = [
+    { id: "first_review",  emoji: "🐾", label: "첫 발자국",    desc: "첫 리뷰 작성",       theme: "orange", check: (d) => d.reviewCount >= 1  },
+    { id: "review_5",      emoji: "✍️",  label: "리뷰 단골",    desc: "리뷰 5개 작성",       theme: "orange", check: (d) => d.reviewCount >= 5  },
+    { id: "review_10",     emoji: "📝",  label: "리뷰 마니아",  desc: "리뷰 10개 작성",      theme: "gold",   check: (d) => d.reviewCount >= 10 },
+    { id: "verified_1",    emoji: "✔️",  label: "영수증 인증",  desc: "인증 리뷰 1개",       theme: "green",  check: (d) => d.verifiedCount >= 1 },
+    { id: "verified_5",    emoji: "🏅",  label: "인증 마스터",  desc: "인증 리뷰 5개",       theme: "green",  check: (d) => d.verifiedCount >= 5 },
+    { id: "pet_owner",     emoji: "🐶",  label: "펫 오너",      desc: "마이펫 등록",         theme: "pink",   check: (d) => d.petCount >= 1      },
+    { id: "health_care",   emoji: "📋",  label: "건강 관리사",  desc: "건강 기록 1개 이상",  theme: "pink",   check: (d) => d.healthCount >= 1   },
+    { id: "favorite",      emoji: "⭐",  label: "단골손님",     desc: "단골병원 등록",       theme: "yellow", check: (d) => d.favCount >= 1      },
+    { id: "first_post",    emoji: "💬",  label: "수다쟁이",     desc: "커뮤니티 첫 글",      theme: "blue",   check: (d) => d.postCount >= 1     },
+    { id: "comment_5",     emoji: "🤝",  label: "소통왕",       desc: "리뷰 댓글 5개",      theme: "blue",   check: (d) => d.commentCount >= 5  },
+  ];
+
+  function renderBadges(data) {
+    const grid = document.getElementById("user-badges-grid");
+    if (!grid) return;
+    grid.innerHTML = BADGE_DEFS.map((b) => {
+      const earned = b.check(data);
+      return `<span class="user-badge user-badge--${earned ? b.theme : "locked"}" title="${b.desc}">
+        <span class="badge-emoji">${b.emoji}</span>${b.label}
+      </span>`;
+    }).join("");
+  }
+
   async function loadProfile() {
     const auth = window.PetAuth;
     if (!auth) return;
@@ -798,13 +822,28 @@
     const name = auth.getDisplayName();
     const avatar = auth.getAvatarUrl();
 
-    // 리뷰 횟수 집계
     const db = window.supabaseClient;
     const userId = auth.currentUser?.id;
-    let reviewCount = 0;
+
+    // 뱃지 계산용 데이터 병렬 조회
+    let reviewCount = 0, verifiedCount = 0, petCount = 0, healthCount = 0, favCount = 0, postCount = 0, commentCount = 0;
     if (db && userId) {
-      const { count } = await db.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId);
-      reviewCount = count || 0;
+      const [rv, vf, pt, hc, fv, ps, cm] = await Promise.all([
+        db.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        db.from("reviews").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_verified", true),
+        db.from("pets").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        db.from("pet_health_records").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        db.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        db.from("review_comments").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      ]);
+      reviewCount   = rv.count  || 0;
+      verifiedCount = vf.count  || 0;
+      petCount      = pt.count  || 0;
+      healthCount   = hc.count  || 0;
+      favCount      = fv.count  || 0;
+      postCount     = ps.count  || 0;
+      commentCount  = cm.count  || 0;
     }
 
     const greetingEl = document.getElementById("mypage-greeting");
@@ -828,6 +867,8 @@
 
     const nicknameInput = document.getElementById("profile-nickname");
     if (nicknameInput) nicknameInput.value = auth.currentProfile?.nickname ?? "";
+
+    renderBadges({ reviewCount, verifiedCount, petCount, healthCount, favCount, postCount, commentCount });
   }
 
   function bindProfile() {
