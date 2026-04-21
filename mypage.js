@@ -780,8 +780,35 @@
     });
 
     // 심장사상충 (C4) — 다음 투약일 +30일
+    // 심장사상충 제품 드롭다운 → 기타 선택 시 직접입력 노출
+    document.getElementById("heartworm-product")?.addEventListener("change", (e) => {
+      const etcWrap = document.getElementById("heartworm-etc-wrap");
+      if (etcWrap) etcWrap.hidden = e.target.value !== "기타";
+      if (e.target.value !== "기타") {
+        const input = document.getElementById("heartworm-content");
+        if (input) input.value = "";
+      }
+    });
+
     document.getElementById("heartworm-add-btn")?.addEventListener("click", () => {
+      const product = document.getElementById("heartworm-product");
+      const contentInput = document.getElementById("heartworm-content");
+      const resolvedContent = product?.value === "기타"
+        ? (contentInput?.value.trim() || "기타")
+        : (product?.value || "");
+      if (contentInput) contentInput.value = resolvedContent;
       addHealthRecord("심장사상충", "heartworm-date", "heartworm-content", "heartworm-list", 30);
+      if (product) product.value = "";
+      const etcWrap = document.getElementById("heartworm-etc-wrap");
+      if (etcWrap) etcWrap.hidden = true;
+    });
+
+    // 예방접종 preset 버튼
+    document.getElementById("vaccine-preset-btns")?.addEventListener("click", (e) => {
+      const btn = e.target.closest(".vaccine-preset-btn");
+      if (!btn) return;
+      const input = document.getElementById("vaccine-content");
+      if (input) { input.value = btn.dataset.name; input.focus(); }
     });
 
     // 예방접종 (C5) — 다음 접종일 +365일

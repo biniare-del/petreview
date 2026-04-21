@@ -349,31 +349,57 @@
         <div id="health-note-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
       </div>
 
-      <!-- 심장사상충 투약 (C4) -->
+      <!-- 심장사상충 알림설정 (C4) -->
       <div style="margin-top:24px;border-top:1px solid #f0e8e2;padding-top:20px;">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px;color:#444;">🦟 심장사상충 투약</h3>
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <h3 style="font-size:15px;font-weight:700;margin:0 0 6px;color:#444;">🦟 심장사상충 알림설정</h3>
+        <p style="font-size:12px;color:#aaa;margin:0 0 12px;">투약일 기록 시 다음 투약일(+30일) 푸시 알림이 설정됩니다.</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
           <input type="date" id="heartworm-date"
             style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <input type="text" id="heartworm-content" placeholder="제품명 (선택, 예: 하트가드)" maxlength="100"
-            style="flex:2;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
+          <select id="heartworm-product"
+            style="flex:2;min-width:140px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;background:#fff;">
+            <option value="">제품 선택 (선택사항)</option>
+            <option value="하트가드">하트가드</option>
+            <option value="레볼루션">레볼루션</option>
+            <option value="브로드라인">브로드라인</option>
+            <option value="넥스가드 스펙트라">넥스가드 스펙트라</option>
+            <option value="심플리세라">심플리세라</option>
+            <option value="파나쿠어">파나쿠어</option>
+            <option value="기타">기타 (직접입력)</option>
+          </select>
           <button id="heartworm-add-btn" class="primary-btn" style="padding:8px 14px;white-space:nowrap;">추가</button>
         </div>
-        <p style="font-size:12px;color:#aaa;margin:-4px 0 10px;">투약일 기록 시 다음 투약일(+30일)이 자동 계산됩니다.</p>
+        <div id="heartworm-etc-wrap" hidden style="margin-bottom:10px;">
+          <input type="text" id="heartworm-content" placeholder="제품명을 입력해주세요" maxlength="100"
+            style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
+        </div>
         <div id="heartworm-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
       </div>
 
       <!-- 예방접종 (C5) -->
       <div style="margin-top:24px;border-top:1px solid #f0e8e2;padding-top:20px;">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px;color:#444;">💉 예방접종</h3>
+        <h3 style="font-size:15px;font-weight:700;margin:0 0 6px;color:#444;">💉 예방접종</h3>
+        <p style="font-size:12px;color:#aaa;margin:0 0 10px;">접종일 기록 시 다음 접종일(+1년) 푸시 알림이 설정됩니다.</p>
+
+        <!-- 기본 백신 빠른 추가 -->
+        <div style="margin-bottom:12px;">
+          <p style="font-size:12px;font-weight:600;color:#666;margin:0 0 6px;">자주 맞는 백신 빠른 추가</p>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="vaccine-preset-btns">
+            <button type="button" class="vaccine-preset-btn" data-name="DHPPL(종합백신)">DHPPL</button>
+            <button type="button" class="vaccine-preset-btn" data-name="광견병">광견병</button>
+            <button type="button" class="vaccine-preset-btn" data-name="켄넬코프">켄넬코프</button>
+            <button type="button" class="vaccine-preset-btn" data-name="코로나">코로나</button>
+            <button type="button" class="vaccine-preset-btn" data-name="인플루엔자">인플루엔자</button>
+          </div>
+        </div>
+
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
           <input type="date" id="vaccine-date"
             style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <input type="text" id="vaccine-content" placeholder="백신명 (예: DHPPL, 광견병)" maxlength="100"
+          <input type="text" id="vaccine-content" placeholder="백신명을 입력해주세요" maxlength="100"
             style="flex:2;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
           <button id="vaccine-add-btn" class="primary-btn" style="padding:8px 14px;white-space:nowrap;">추가</button>
         </div>
-        <p style="font-size:12px;color:#aaa;margin:-4px 0 10px;">접종일 기록 시 다음 접종일(+1년)이 자동 계산됩니다.</p>
         <div id="vaccine-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
       </div>
     </div>

@@ -1563,6 +1563,23 @@ body[data-theme="grooming"] .place-phone-link {
   background: #e8f8f3;
 }
 
+.vaccine-preset-btn {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid #d1d5db;
+  background: #f9f9f9;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.vaccine-preset-btn:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
 .pet-greeting-text span {
   font-size: 13px;
   color: #5a8c7a;
