@@ -2859,3 +2859,35 @@ body[data-theme="grooming"] .place-phone-link {
   transition: border-color 0.15s, color 0.15s;
 }
 .comment-delete-btn:hover { border-color: #e57373; color: #e57373; }
+
+/* ===== 지도 뷰 ===== */
+.search-map-container {
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 12px;
+  border: 1px solid #e8e8e8;
+  background: #f5f5f5;
+}
+.view-toggle-group {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.view-toggle-btn {
+  padding: 6px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.view-toggle-btn:hover { border-color: #16a34a; color: #16a34a; }
+.view-toggle-btn.is-active {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}

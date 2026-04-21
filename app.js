@@ -939,6 +939,90 @@ function bindSearch() {
   }
 }
 
+// ===== 지도 뷰 =====
+let _kakaoMapInstance = null;
+
+function renderSearchMap(places) {
+  const container = document.getElementById("search-map-container");
+  if (!container) return;
+
+  const validPlaces = (places || searchFacilities).filter((p) => p.lat && p.lng);
+  if (!validPlaces.length) {
+    container.innerHTML = '<p class="placeholder-text" style="padding:40px;text-align:center;">지도에 표시할 좌표 정보가 없습니다.</p>';
+    return;
+  }
+
+  function initMap() {
+    container.innerHTML = "";
+    const centerLat = validPlaces.reduce((s, p) => s + p.lat, 0) / validPlaces.length;
+    const centerLng = validPlaces.reduce((s, p) => s + p.lng, 0) / validPlaces.length;
+    const mapCenter = new kakao.maps.LatLng(centerLat, centerLng);
+    const map = new kakao.maps.Map(container, { center: mapCenter, level: 6 });
+    _kakaoMapInstance = map;
+
+    const bounds = new kakao.maps.LatLngBounds();
+    let openInfoWindow = null;
+
+    validPlaces.forEach((place) => {
+      const pos = new kakao.maps.LatLng(place.lat, place.lng);
+      bounds.extend(pos);
+
+      const marker = new kakao.maps.Marker({ map, position: pos, title: place.name });
+
+      const iwContent = `<div style="padding:10px 14px;min-width:160px;max-width:220px;">
+        <strong style="font-size:13px;display:block;margin-bottom:4px;">${escapeHtml(place.name)}</strong>
+        <span style="font-size:11px;color:#666;">${escapeHtml(place.address || place.region || "")}</span>
+        ${place.phone ? `<br><a href="tel:${escapeHtml(place.phone)}" style="font-size:11px;color:#16a34a;">📞 ${escapeHtml(place.phone)}</a>` : ""}
+      </div>`;
+      const infoWindow = new kakao.maps.InfoWindow({ content: iwContent, removable: true });
+
+      kakao.maps.event.addListener(marker, "click", () => {
+        if (openInfoWindow) openInfoWindow.close();
+        infoWindow.open(map, marker);
+        openInfoWindow = infoWindow;
+      });
+    });
+
+    map.setBounds(bounds);
+  }
+
+  if (window.kakao && window.kakao.maps && window.kakao.maps.Map) {
+    initMap();
+  } else if (window.kakao && window.kakao.maps) {
+    kakao.maps.load(initMap);
+  } else {
+    container.innerHTML = '<p class="placeholder-text" style="padding:40px;text-align:center;">카카오 지도 SDK를 불러오는 중...</p>';
+    const check = setInterval(() => {
+      if (window.kakao?.maps?.Map) { clearInterval(check); initMap(); }
+    }, 300);
+    setTimeout(() => clearInterval(check), 10000);
+  }
+}
+
+function bindViewToggle() {
+  const listBtn = document.getElementById("view-list-btn");
+  const mapBtn = document.getElementById("view-map-btn");
+  const resultsEl = document.getElementById("search-results");
+  const mapEl = document.getElementById("search-map-container");
+  if (!listBtn || !mapBtn || !resultsEl || !mapEl) return;
+
+  listBtn.addEventListener("click", () => {
+    listBtn.classList.add("is-active");
+    mapBtn.classList.remove("is-active");
+    resultsEl.hidden = false;
+    mapEl.hidden = true;
+  });
+
+  mapBtn.addEventListener("click", () => {
+    if (!hasSearched || !searchFacilities.length) return;
+    mapBtn.classList.add("is-active");
+    listBtn.classList.remove("is-active");
+    resultsEl.hidden = true;
+    mapEl.hidden = false;
+    renderSearchMap();
+  });
+}
+
 async function initGeolocation() {
   const geoStatus = document.getElementById("geo-status");
 
@@ -2730,6 +2814,7 @@ function init() {
   bindTopCategoryTabs();
   bindSearchResultsSelection();
   bindSearch();
+  bindViewToggle();
   bindSortToggle();
   bindTabBar();
   bindReceiptPreview();

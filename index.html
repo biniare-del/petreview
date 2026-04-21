@@ -169,11 +169,16 @@
       <div id="sort-toggle" class="sort-toggle" style="display:none;">
         <button class="sort-btn is-active" data-sort="fav">단골순</button>
         <button class="sort-btn" data-sort="name">가나다순</button>
+        <div class="view-toggle-group">
+          <button class="view-toggle-btn is-active" id="view-list-btn" title="목록 보기">📋 목록</button>
+          <button class="view-toggle-btn" id="view-map-btn" title="지도 보기">🗺️ 지도</button>
+        </div>
       </div>
       <div class="search-results" id="search-results">
-        <!-- JS로 검색 결과 카드가 렌더링될 영역 -->
         <p class="placeholder-text">검색 조건을 입력하고 "검색하기"를 눌러 주세요.</p>
       </div>
+      <!-- 지도 컨테이너 -->
+      <div id="search-map-container" class="search-map-container" hidden></div>
     </section>
     <!-- 2. 리뷰 작성 섹션 -->
     <section id="review-form-section" class="section review-form-section" aria-label="리뷰 작성">
@@ -604,6 +609,8 @@
       <a href="feedback.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">건의함</a>
     </div>
   </footer>
+  <!-- 카카오 지도 SDK (JavaScript 키 필요: Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키) -->
+  <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9e5930005d619cae98c2d710200b768f&autoload=false"></script>
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <!-- Supabase 클라이언트 설정 (supabase-client.js 에서 URL/Key 입력) -->

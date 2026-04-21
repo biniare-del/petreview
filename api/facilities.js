@@ -84,6 +84,8 @@ export default async function handler(req, res) {
         region: extractDistrict(doc.address_name || doc.road_address_name || ""),
         address: doc.road_address_name || doc.address_name || "",
         phone: doc.phone || "",
+        lat: parseFloat(doc.y) || null,
+        lng: parseFloat(doc.x) || null,
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "ko"));
 
