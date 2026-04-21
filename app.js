@@ -609,17 +609,18 @@ function renderRecentReviews() {
       <div class="card-pet-header">
         <div class="card-pet-avatar">
           ${review.petPhoto
-            ? `<img src="${escapeHtml(review.petPhoto)}" alt="${escapeHtml(review.petName || "반려동물")}" class="pet-avatar-img" />`
+            ? `<img src="${escapeHtml(review.petPhoto)}" alt="${escapeHtml(review.petName || "")}" class="pet-avatar-img" />`
             : `<div class="pet-icon pet-icon--${review.petSpecies === "고양이" ? "cat" : "dog"}"></div>`
           }
         </div>
         <div class="card-pet-info">
           <div class="card-pet-name">
-            ${review.petName ? escapeHtml(review.petName) : "반려동물"}
-            <span class="card-pet-species">${review.petSpecies ? escapeHtml(review.petSpecies) : ""}</span>
+            ${review.userNickname ? `<strong>${escapeHtml(review.userNickname)}</strong>` : ""}
+            ${review.petName ? `<span class="card-pet-name-sub">${escapeHtml(review.petName)}</span>` : ""}
+            ${review.petSpecies ? `<span class="card-pet-species">${escapeHtml(review.petSpecies)}</span>` : ""}
           </div>
           <div class="card-pet-owner">
-            ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
+            ${escapeHtml(review.visitDate)}
             ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
           </div>
         </div>

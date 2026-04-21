@@ -2322,10 +2322,20 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .card-pet-name {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 700;
   color: #1a1a1a;
   line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.card-pet-name-sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
 }
 
 .card-pet-species {
