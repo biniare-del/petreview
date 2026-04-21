@@ -23,99 +23,98 @@ git checkout claude/fix-greeting-login-ui-2Z225
 
 ---
 
-## ⚠️ Supabase SQL 실행 필요
+## ⚠️ Supabase SQL 실행 필요 (수동 실행)
 
-> Supabase → SQL Editor에서 직접 실행
+> Supabase → SQL Editor에서 직접 실행. 아직 안 했으면 꼭 실행할 것.
 
-### 1. `supabase/create_review_comments.sql` ← **댓글 안 보이는 버그 해결**
-```sql
--- review_comments 테이블 + SELECT 전체 허용 RLS 정책
--- (파일 내용 그대로 실행)
-```
+| 파일 | 내용 | 상태 |
+|------|------|------|
+| `supabase/create_review_comments.sql` | review_comments 테이블 + RLS | ✅ 실행 완료 |
+| `supabase/create_post_reports.sql` | 커뮤니티 글 신고 테이블 | ❓ 실행 필요 확인 |
+| `supabase/create_feedbacks.sql` | 건의함 테이블 | ✅ 실행 완료 (2026-04-21) |
+| `supabase/add_is_hidden.sql` | reviews.is_hidden 컬럼 | ❓ 실행 필요 확인 |
+| `supabase/add_kakao_place_id.sql` | reviews.kakao_place_id 컬럼 + 인덱스 | ❓ 실행 필요 확인 |
+| `supabase/add_review_photo_urls.sql` | reviews.review_photo_urls 컬럼 (text[]) | ❓ 실행 필요 확인 |
+| `supabase/create_banners.sql` | banners 테이블 | ❓ 실행 필요 확인 |
 
-### 2. `supabase/add_is_hidden.sql`
-```sql
-ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_hidden boolean DEFAULT false;
-```
-
-### 3. `supabase/add_kakao_place_id.sql` ← **신규 리뷰부터 카카오 장소 ID 저장**
-```sql
-ALTER TABLE reviews ADD COLUMN IF NOT EXISTS kakao_place_id text;
-CREATE INDEX IF NOT EXISTS reviews_kakao_place_id_idx ON reviews (kakao_place_id);
-```
-> 기존 리뷰는 kakao_place_id = NULL → place_name으로 fallback 조회됨 (자동 처리)
-
----
-
-## 1. 다음 우선순위 기능
-
-### [x] A2: 마이페이지 리뷰 횟수 뱃지 (profile-review-count-badge)
-### [x] A3: 리뷰 카드 N번째 리뷰 뱃지 (reviewSeq 계산 + review-seq-badge)
-### [x] 커뮤니티 신고 모달 (prompt → 라디오 모달)
-### [x] 관리자 커뮤니티 글 신고 관리 탭 추가
-> Supabase SQL 실행 필요: supabase/create_post_reports.sql
-
-### [x] kakao_place_id 정규화 (완료)
-- api/facilities.js에서 카카오 장소 ID 전달
-- 자동완성 선택 시 selectedKakaoPlaceId 저장
-- 리뷰 저장 시 kakao_place_id 컬럼에 기록
-- 병원 상세 모달/페이지에서 kakao_place_id로 우선 조회, fallback → place_name
-- hospital.html → "후기 남기기" → index.html prefill_kakao_id 전달
-- SQL: supabase/add_kakao_place_id.sql 실행 필요
-
-### [x] 영수증 없어도 됩니다 안내 (초록 박스, 폼 상단)
-### [x] 리뷰 사진 안내 문구 (병원 내부, 간판, 처방전 등)
-### [x] 즐겨찾기에 kakao_place_id 저장 (favorites 테이블 업데이트 필요)
-### [x] 관리자 인라인 버튼 (일반 리뷰 카드에 🔒숨기기/🗑️삭제 버튼)
-> Supabase favorites 테이블에 kakao_place_id 컬럼 추가 필요:
+> favorites 테이블에 kakao_place_id 컬럼 추가도 필요:
 > `ALTER TABLE favorites ADD COLUMN IF NOT EXISTS kakao_place_id text;`
 
-### [x] K1: 건의함 페이지 (feedback.html)
-- feedback.html 생성 (로그인 없이 제출 가능)
-- supabase/create_feedbacks.sql 실행 필요
-- admin.html에 건의함 탭 추가
-- 모든 페이지 푸터에 건의함 링크 추가
+---
 
-### [ ] 병원 즐겨찾기 → 신규 리뷰 푸시 알림
-- 단골 등록(favorites) 병원에 새 approved 리뷰 등록 시 알림
-- api/push-cron.js에 favorites + push_subscriptions 조인 로직 추가
+## 1. 구현 완료 목록
 
-### [ ] 리뷰 이미지 첨부 (반려동물 사진과 별개로 리뷰 사진)
-- 현재: `pet_photo_url` 1장만 가능
-- 목표: 병원/미용샵 내부 사진, 처방전 사진 등 별도 첨부 (review_photos 버킷)
+### 인증 / 계정
+- [x] 구글 OAuth 로그인 (Supabase PKCE)
+- [x] 네이버 로그인 (Vercel 서버리스 커스텀 OAuth)
+- [x] 인앱 브라우저 감지 → Chrome 유도 모달
+- [x] 비로그인 인사바 → 소셜 로그인 CTA (Google/네이버 버튼)
 
-### [ ] 검색 결과 지도 뷰
-- 카드 목록 외에 지도 핀으로 보기 (Naver Map 또는 Kakao Map JS SDK)
+### 메인 (index.html)
+- [x] 히어로 섹션, 이달의 추천, 최근 후기
+- [x] 최상단 카테고리 탭 (동물병원/미용샵 sticky)
+- [x] 마이펫 인사바 (로그인/미등록/등록 3가지 상태)
+- [x] 카카오 API 병원/미용샵 검색 (Vercel 프록시, 전국)
+- [x] 검색 결과 정렬 (단골순/가나다순)
+- [x] 검색 카드에 리뷰 수 + 평균 가격 배지
+- [x] 업체 자동완성 (카카오+Supabase 병렬, 리뷰 있는 병원 상단)
+- [x] 전국 지역 선택 (시/도 + 구/시/군)
+- [x] 병원 상세 모달 (진료비 통계, 별점, 인증 리뷰, 지도 링크)
+- [x] 병원/미용샵 상세 페이지 (hospital.html)
+- [x] 리뷰 작성 폼 (마이펫 선택, 다항목 별점, 영수증 업로드)
+- [x] **리뷰 사진 첨부 (최대 3장, review_photo_urls)** ← 코드 완료, SQL 실행 필요
+- [x] 리뷰 카드: 다항목 별점, 닉네임, 댓글 수 💬, N번째 리뷰 뱃지 (A3)
+- [x] 리뷰 필터 (업종/지역/동물 종류)
+- [x] 리뷰 정렬 (인증순/별점순/가격낮은순/최신순)
+- [x] 이미지 확대 뷰어 (lightbox)
+- [x] 리뷰 좋아요/신고/소프트삭제
+- [x] **병원 카드/상세 공유 버튼** (Web Share API, B1)
+- [x] kakao_place_id 정규화 (병원 조회 정확도 향상)
+- [x] 배너 광고 (banners 테이블)
+- [x] 하단 탭바 (≤480px)
+- [x] PWA (manifest.json, Service Worker, 홈화면 설치)
+- [x] 푸시 알림 (VAPID, 구독/해제, Vercel cron)
 
-### [ ] 포인트/이벤트 시스템
-- 리뷰 작성 시 포인트 적립 or 이벤트 배너만 (미결 결정)
+### 커뮤니티 (community.html)
+- [x] 태그 필터, 글 목록, 글 작성/수정/상세/댓글
+- [x] 글 좋아요 (post_likes)
+- [x] **글/댓글 신고 (라디오 모달 방식, F1)**
+- [x] 헤더 아바타 클릭 → 마이페이지
+
+### 마이페이지 (mypage.html)
+- [x] 내 리뷰 목록 (삭제 가능)
+- [x] **내 커뮤니티 글 목록 탭 (F2)**
+- [x] 단골병원 즐겨찾기
+- [x] 마이펫 등록/수정/삭제 (사진 포함)
+- [x] 건강 기록 (진료메모 C3, 심장사상충 C4, 예방접종 C5)
+- [x] 프로필 (닉네임 변경, **리뷰 횟수 뱃지 A2**)
+- [x] 푸시 알림 구독/해제
+
+### 관리자 (admin.html)
+- [x] 영수증 검수
+- [x] 리뷰 관리 (숨기기/삭제 인라인 버튼)
+- [x] 신고 관리 (리뷰/댓글/커뮤니티 글)
+- [x] 회원 관리
+- [x] 광고 관리 (배너 + 우수협력병원)
+- [x] **건의함 탭 (K1)**
+
+### 기타
+- [x] feedback.html (건의함, K1)
+- [x] contact.html, terms.html, privacy.html
+- [x] hospital.html (병원/미용샵 상세 페이지)
 
 ---
 
-## 2. 완료된 항목 (참고용)
+## 2. 미구현 / 미결 기능
 
-### 최근 완료
-- [x] 비로그인 인사바 → 소셜 로그인 CTA 표시 (Google/네이버 버튼 + 전체 로그인 옵션)
-- [x] 병원/미용샵 상세 페이지 (hospital.html + hospital.js)
-- [x] 검색 카드에 리뷰 수 + 평균 가격 배지
-- [x] 댓글 수 뱃지 (리뷰 카드에 💬 N)
-- [x] 리뷰 정렬 옵션 (인증순/별점순/가격낮은순/최신순)
-- [x] 동물 종류 필터 (강아지/고양이/전체)
-- [x] 이미지 확대 뷰어 lightbox
-- [x] 이달의 추천 섹션 (상위 5개 병원/미용샵)
-- [x] 최상단 카테고리 탭 (동물병원/미용샵 sticky)
-- [x] 시/도 변경 시 구 select 자동 초기화
-- [x] 마이펫 미등록 인사바 → 등록 유도
-- [x] 인사바 클릭 → 마이페이지 링크
-- [x] 커뮤니티 아바타 클릭 → 마이페이지
-- [x] 전국 확대 (17 시/도 + 구/시/군 datalist→select)
-- [x] PWA (manifest, SW, 홈화면 설치)
-- [x] 푸시 알림 (VAPID, 구독/해제, Vercel cron)
-- [x] 건강 기록 C3/C4/C5 (진료메모, 심장사상충, 예방접종)
-- [x] 인앱 브라우저 Google 로그인 차단 → Chrome 유도
-- [x] 리뷰 댓글 (review_comments) + SQL RLS
-- [x] community.html 글쓰기 모달 버그
-- [x] 리뷰 좋아요/신고/소프트삭제
-- [x] 마이펫 등록/수정/삭제 (사진 포함)
-- [x] 단골병원 즐겨찾기
-- [x] 관리자: 영수증 검수, 리뷰/신고/회원/광고 관리
+### 미구현 (코드 없음)
+- [ ] **병원 즐겨찾기 → 신규 리뷰 푸시 알림**
+  - favorites + push_subscriptions 조인 → api/push-cron.js 수정 필요
+- [ ] **검색 결과 지도 뷰**
+  - 카드 목록 외에 지도 핀으로 보기 (Kakao Map JS SDK)
+- [ ] **포인트/이벤트 시스템** (미결 결정)
+  - A) 포인트 적립 / B) 이벤트 배너만 / C) 유지
+
+### 미결 결정
+- 포인트/이벤트: 리뷰 작성 시 포인트 적립 or 배너만?
+- 병원 고정 URL (B2): SEO 필요 시점에 결정 (MAU 5만 기준)
