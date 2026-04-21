@@ -9,15 +9,14 @@
 ```bash
 git remote set-url origin https://<PAT_TOKEN>@github.com/biniare-del/petreview.git
 ```
-> PAT 토큰은 GitHub Settings → Developer settings → Personal access tokens에서 확인.
 
 ⚠️ **배포**: 작업 완료 후 main 머지 + 푸시해야 사이트 반영됨.
 ```bash
-git checkout main && git merge claude/fix-community-modal-close-6eTry --no-edit && git push origin main
-git checkout claude/fix-community-modal-close-6eTry
+git checkout main && git merge claude/fix-greeting-login-ui-2Z225 --no-edit && git push origin main
+git checkout claude/fix-greeting-login-ui-2Z225
 ```
 
-작업 브랜치: `claude/fix-community-modal-close-6eTry`
+작업 브랜치: `claude/fix-greeting-login-ui-2Z225`
 
 ⚠️ **배포할 때마다** `sw.js`의 `CACHE_NAME` 버전 올릴 것 (현재 `petreview-v2`)
 → 안 올리면 PWA 설치 사용자가 구버전 캐시 계속 사용함
@@ -88,6 +87,7 @@ CREATE INDEX IF NOT EXISTS reviews_kakao_place_id_idx ON reviews (kakao_place_id
 ## 2. 완료된 항목 (참고용)
 
 ### 최근 완료
+- [x] 비로그인 인사바 → 소셜 로그인 CTA 표시 (Google/네이버 버튼 + 전체 로그인 옵션)
 - [x] 병원/미용샵 상세 페이지 (hospital.html + hospital.js)
 - [x] 검색 카드에 리뷰 수 + 평균 가격 배지
 - [x] 댓글 수 뱃지 (리뷰 카드에 💬 N)
