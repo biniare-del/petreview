@@ -2291,6 +2291,7 @@ async function loadReviewComments(reviewId) {
   if (error) { listEl.innerHTML = '<p class="placeholder-text">댓글을 불러올 수 없습니다.</p>'; return; }
 
   let comments = data || [];
+  const currentUserId = window.PetAuth?.currentUser?.id || null;
 
   // 닉네임 조회
   if (comments.length) {
@@ -2303,16 +2304,63 @@ async function loadReviewComments(reviewId) {
     }
   }
 
+  // 댓글 좋아요 조회
+  let commentLikeCounts = {};
+  let userLikedComments = new Set();
+  if (comments.length) {
+    const cids = comments.map(c => c.id);
+    const { data: likes } = await db.from("comment_likes").select("comment_id, user_id").in("comment_id", cids);
+    (likes || []).forEach(l => {
+      commentLikeCounts[l.comment_id] = (commentLikeCounts[l.comment_id] || 0) + 1;
+      if (l.user_id === currentUserId) userLikedComments.add(l.comment_id);
+    });
+  }
+
   if (countEl) countEl.textContent = comments.length;
 
   listEl.innerHTML = comments.length === 0
     ? '<p class="placeholder-text">첫 댓글을 남겨보세요.</p>'
-    : comments.map(c => `
-      <div style="padding:10px 0;border-top:1px solid #f0f0f0;">
-        <span style="font-size:13px;font-weight:600;color:#444;">${escapeHtml(c.nickname || "익명")}</span>
-        <span style="font-size:11px;color:#bbb;margin-left:6px;">${(c.created_at || "").slice(0, 10)}</span>
-        <p style="margin:4px 0 0;font-size:14px;color:#333;line-height:1.5;">${escapeHtml(c.content)}</p>
-      </div>`).join("");
+    : comments.map(c => {
+        const likeCount = commentLikeCounts[c.id] || 0;
+        const isLiked = userLikedComments.has(c.id);
+        const isOwn = currentUserId && c.user_id === currentUserId;
+        return `
+          <div class="comment-item" data-comment-id="${escapeHtml(c.id)}">
+            <div class="comment-header">
+              <span class="comment-author">${escapeHtml(c.nickname || "익명")}</span>
+              <span class="comment-date">${(c.created_at || "").slice(0, 10)}</span>
+            </div>
+            <p class="comment-content">${escapeHtml(c.content)}</p>
+            <div class="comment-actions">
+              <button class="comment-like-btn${isLiked ? " is-liked" : ""}" data-comment-id="${escapeHtml(c.id)}">
+                ❤️ ${likeCount > 0 ? likeCount : "좋아요"}
+              </button>
+              ${isOwn ? `<button class="comment-delete-btn" data-comment-id="${escapeHtml(c.id)}">삭제</button>` : ""}
+            </div>
+          </div>`;
+      }).join("");
+
+  listEl.querySelectorAll(".comment-like-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!currentUserId) { if (typeof openLoginModal === "function") openLoginModal(); return; }
+      const cid = btn.dataset.commentId;
+      const liked = btn.classList.contains("is-liked");
+      if (liked) {
+        await db.from("comment_likes").delete().eq("comment_id", cid).eq("user_id", currentUserId);
+      } else {
+        await db.from("comment_likes").insert([{ comment_id: cid, user_id: currentUserId }]);
+      }
+      loadReviewComments(reviewId);
+    });
+  });
+
+  listEl.querySelectorAll(".comment-delete-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("댓글을 삭제하시겠습니까?")) return;
+      await db.from("review_comments").delete().eq("id", btn.dataset.commentId).eq("user_id", currentUserId);
+      loadReviewComments(reviewId);
+    });
+  });
 
   // 댓글 폼
   const isLoggedIn = window.PetAuth?.isLoggedIn();

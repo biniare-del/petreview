@@ -2723,3 +2723,64 @@ body[data-theme="grooming"] .place-phone-link {
   cursor: pointer;
   white-space: nowrap;
 }
+
+/* ===== 댓글 아이템 (좋아요 포함) ===== */
+.comment-item {
+  padding: 10px 0;
+  border-top: 1px solid #f0f0f0;
+}
+.comment-item:first-child { border-top: none; }
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.comment-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+.comment-date {
+  font-size: 11px;
+  color: #bbb;
+}
+.comment-content {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.5;
+  margin: 0 0 6px;
+}
+.comment-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.comment-like-btn {
+  padding: 3px 10px;
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #e8e8e8;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.comment-like-btn:hover { border-color: #f472b6; color: #ec4899; }
+.comment-like-btn.is-liked {
+  background: #fff0f7;
+  color: #ec4899;
+  border-color: #f472b6;
+}
+.comment-delete-btn {
+  padding: 3px 10px;
+  background: transparent;
+  color: #ccc;
+  border: 1px solid #e8e8e8;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.comment-delete-btn:hover { border-color: #e57373; color: #e57373; }

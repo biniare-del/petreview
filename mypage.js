@@ -41,6 +41,7 @@
         if (btn.dataset.tab === "favorites") loadFavorites();
         if (btn.dataset.tab === "pets") loadPets();
         if (btn.dataset.tab === "myposts") loadMyPosts();
+        if (btn.dataset.tab === "mycomments") loadMyComments();
       });
     });
 
@@ -185,6 +186,61 @@
         btn.closest(".mypage-card").remove();
         if (!container.querySelector(".mypage-card"))
           container.innerHTML = '<p class="placeholder-text">작성한 게시글이 없습니다.</p>';
+      });
+    });
+  }
+
+  // ===== 내 댓글 =====
+  async function loadMyComments() {
+    const container = document.getElementById("my-comments-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!db || !userId) { container.innerHTML = '<p class="placeholder-text">불러올 수 없습니다.</p>'; return; }
+
+    const { data, error } = await db
+      .from("review_comments")
+      .select("id, content, created_at, review_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error || !data?.length) {
+      container.innerHTML = '<p class="placeholder-text">작성한 댓글이 없습니다.</p>';
+      return;
+    }
+
+    // 리뷰 정보 조회
+    const reviewIds = [...new Set(data.map(c => c.review_id).filter(Boolean))];
+    let reviewMap = {};
+    if (reviewIds.length) {
+      const { data: rv } = await db.from("reviews").select("id, place_name, category").in("id", reviewIds);
+      (rv || []).forEach(r => { reviewMap[r.id] = r; });
+    }
+
+    container.innerHTML = data.map(c => {
+      const review = reviewMap[c.review_id];
+      const placeName = review?.place_name || "알 수 없는 업체";
+      const cat = CATEGORY_LABEL[review?.category] || "";
+      return `
+        <div class="mypage-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+            <span style="font-size:12px;color:#ff8a65;font-weight:600;">💬 ${escapeHtml(placeName)}${cat ? ` · ${cat}` : ""}</span>
+            <span style="font-size:11px;color:#bbb;">${(c.created_at || "").slice(0, 10)}</span>
+          </div>
+          <p style="margin:0 0 10px;font-size:14px;color:#333;line-height:1.5;">${escapeHtml(c.content)}</p>
+          <button class="btn-delete" data-comment-id="${escapeHtml(c.id)}" style="font-size:12px;">삭제</button>
+        </div>`;
+    }).join("");
+
+    container.querySelectorAll(".btn-delete[data-comment-id]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("댓글을 삭제하시겠습니까?")) return;
+        const { error: delErr } = await db.from("review_comments").delete().eq("id", btn.dataset.commentId).eq("user_id", userId);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        btn.closest(".mypage-card").remove();
+        if (!container.querySelector(".mypage-card"))
+          container.innerHTML = '<p class="placeholder-text">작성한 댓글이 없습니다.</p>';
       });
     });
   }
