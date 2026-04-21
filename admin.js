@@ -318,9 +318,10 @@
         };
         if (!updates.place_name) { alert("업체명을 입력해주세요."); return; }
         btn.disabled = true;
-        const { error: updErr } = await db.from("reviews").update(updates).eq("id", btn.dataset.id);
+        const { data: updData, error: updErr } = await db.from("reviews").update(updates).eq("id", btn.dataset.id).select("id");
         btn.disabled = false;
         if (updErr) { alert("저장 실패: " + updErr.message); return; }
+        if (!updData?.length) { alert("저장 권한이 없습니다. Supabase 관리자 RLS 정책을 확인해주세요.\n\nsupabase/admin_rls_bypass.sql 을 실행하면 해결됩니다."); return; }
         // 카드 표시 업데이트
         const titleEl = card.querySelector(".review-card-title");
         if (titleEl) titleEl.firstChild.textContent = updates.place_name + " ";
