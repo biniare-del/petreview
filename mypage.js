@@ -367,6 +367,19 @@
       });
     });
 
+    // URL ?pet=ID 파라미터로 특정 펫 건강기록 자동 오픈
+    const urlPetId = new URLSearchParams(window.location.search).get("pet");
+    if (urlPetId) {
+      const targetPet = (data || []).find(p => p.id === urlPetId);
+      if (targetPet) {
+        setTimeout(() => openHealthModal(targetPet), 200);
+        // URL 파라미터 제거 (뒤로가기 시 재실행 방지)
+        const url = new URL(window.location);
+        url.searchParams.delete("pet");
+        window.history.replaceState({}, "", url);
+      }
+    }
+
     document.getElementById("add-pet-btn")?.addEventListener("click", () => openPetModal(null));
   }
 

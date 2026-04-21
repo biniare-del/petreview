@@ -1626,6 +1626,67 @@ body[data-theme="grooming"] .place-phone-link {
   color: #0f6e56;
 }
 
+/* ===== 메인 펫 셀렉터 (건강기록 바로가기) ===== */
+.pet-selector-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.pet-selector-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #16a34a;
+  white-space: nowrap;
+}
+.pet-selector-avatars {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pet-selector-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-decoration: none;
+  color: inherit;
+}
+.pet-selector-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e2f5eb;
+  border: 2px solid #d1fae5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.pet-selector-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.pet-selector-item:hover .pet-selector-avatar {
+  border-color: #16a34a;
+  transform: scale(1.08);
+}
+.pet-selector-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  max-width: 44px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .greeting-quick-links {
   display: flex;
   gap: 6px;

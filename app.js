@@ -1691,33 +1691,56 @@ async function loadPetGreeting() {
   try {
     const { data: pets } = await db
       .from("pets")
-      .select("name, species, photo_url")
+      .select("id, name, species, photo_url")
       .eq("user_id", userId)
-      .order("created_at")
-      .limit(1);
+      .order("created_at");
 
     const nickRaw = window.PetAuth.getDisplayName?.() || "";
     const nick = nickRaw ? escapeHtml(nickRaw) : "보호자";
 
     const quickLinks = `<div class="greeting-quick-links">
-      <a href="mypage.html#health" class="greeting-quick-btn" onclick="event.stopPropagation()">💊 건강기록</a>
       <a href="mypage.html#favorites" class="greeting-quick-btn" onclick="event.stopPropagation()">⭐ 단골병원</a>
       <a href="mypage.html" class="greeting-quick-btn" onclick="event.stopPropagation()">🐾 마이페이지</a>
     </div>`;
 
     if (!pets?.length) {
       avatarEl.innerHTML = `<span>🐾</span>`;
-      textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>!<br><span style="color:#16a34a;font-weight:600;">반려동물을 등록해보세요 →</span>${quickLinks}`;
+      textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>!<br>
+        <span style="color:#16a34a;font-weight:600;">반려동물을 등록하면 건강기록을 관리할 수 있어요</span>
+        <a href="mypage.html#pets" style="display:inline-block;margin-top:4px;padding:4px 12px;background:#16a34a;color:#fff;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;" onclick="event.stopPropagation()">+ 마이펫 등록</a>
+        ${quickLinks}`;
       greetingEl.hidden = false;
       return;
     }
 
-    const pet = pets[0];
-    avatarEl.innerHTML = pet.photo_url
-      ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />`
-      : `<span>${pet.species === "고양이" ? "🐱" : "🐶"}</span>`;
+    // 첫 번째 펫 아바타
+    const firstPet = pets[0];
+    avatarEl.innerHTML = firstPet.photo_url
+      ? `<img src="${escapeHtml(firstPet.photo_url)}" alt="${escapeHtml(firstPet.name)}" />`
+      : `<span>${firstPet.species === "고양이" ? "🐱" : "🐶"}</span>`;
 
-    textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>! 🐾<br><span>${escapeHtml(pet.name)}와 함께 오셨군요</span>${quickLinks}`;
+    // 펫 셀렉터 (1마리면 바로 링크, 2마리 이상이면 아바타 나열)
+    const petSelectorHtml = `
+      <div class="pet-selector-strip" onclick="event.stopPropagation()">
+        <span class="pet-selector-label">💊 건강기록</span>
+        <div class="pet-selector-avatars">
+          ${pets.map(p => `
+            <a href="mypage.html?pet=${escapeHtml(p.id)}#pets" class="pet-selector-item" title="${escapeHtml(p.name)}의 건강기록">
+              <div class="pet-selector-avatar">
+                ${p.photo_url
+                  ? `<img src="${escapeHtml(p.photo_url)}" alt="${escapeHtml(p.name)}" />`
+                  : `<span>${p.species === "고양이" ? "🐱" : "🐶"}</span>`}
+              </div>
+              <span class="pet-selector-name">${escapeHtml(p.name)}</span>
+            </a>`).join("")}
+        </div>
+      </div>`;
+
+    const greetingText = pets.length === 1
+      ? `안녕하세요 <strong>${nick}님</strong>! 🐾<br><span>${escapeHtml(firstPet.name)}와 함께 오셨군요</span>`
+      : `안녕하세요 <strong>${nick}님</strong>! 🐾<br><span>반려동물 ${pets.length}마리를 키우고 계시는군요</span>`;
+
+    textEl.innerHTML = greetingText + petSelectorHtml + quickLinks;
     greetingEl.hidden = false;
   } catch { /* ignore */ }
 }
