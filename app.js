@@ -430,11 +430,11 @@ function renderReviewList() {
           </div>
           <div class="card-pet-info">
             <div class="card-pet-name">
-              ${review.petName ? escapeHtml(review.petName) : ""}
+              ${review.petName ? `<strong>${escapeHtml(review.petName)}</strong>` : ""}
               ${review.petSpecies ? `<span class="card-pet-species">${escapeHtml(review.petSpecies)}</span>` : ""}
             </div>
             <div class="card-pet-owner">
-              ${review.userNickname ? `<strong>${escapeHtml(review.userNickname)}</strong> · ` : ""}${escapeHtml(review.visitDate)}
+              ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
               ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
               ${review.reviewSeq ? `<span class="review-seq-badge">${review.reviewSeq}번째 리뷰</span>` : ""}
             </div>
@@ -606,6 +606,13 @@ function renderRecentReviews() {
       </div>` : "";
     return `
     <article class="card${review.isVerified ? " card--verified" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
+      <div class="card-place-info">
+        <div>
+          <span class="card-place-name">${escapeHtml(review.placeName)}</span>
+          <span class="card-place-region">${escapeHtml(review.city || "서울")} ${escapeHtml(review.region)}</span>
+        </div>
+        <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
+      </div>
       <div class="card-pet-header">
         <div class="card-pet-avatar">
           ${review.petPhoto
@@ -615,20 +622,14 @@ function renderRecentReviews() {
         </div>
         <div class="card-pet-info">
           <div class="card-pet-name">
-            ${review.userNickname ? `<strong>${escapeHtml(review.userNickname)}</strong>` : ""}
-            ${review.petName ? `<span class="card-pet-name-sub">${escapeHtml(review.petName)}</span>` : ""}
+            ${review.petName ? `<strong>${escapeHtml(review.petName)}</strong>` : ""}
             ${review.petSpecies ? `<span class="card-pet-species">${escapeHtml(review.petSpecies)}</span>` : ""}
           </div>
           <div class="card-pet-owner">
-            ${escapeHtml(review.visitDate)}
+            ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
             ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
           </div>
         </div>
-        <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
-      </div>
-      <div class="card-place-info">
-        <span class="card-place-name">${escapeHtml(review.placeName)}</span>
-        <span class="card-place-region">서울 ${escapeHtml(review.region)}</span>
       </div>
       ${scoresHtml}
       <div class="card-price-row">
