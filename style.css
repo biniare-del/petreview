@@ -1203,6 +1203,32 @@ body[data-theme="grooming"] .place-phone-link {
   color: #fff;
 }
 
+.card-place-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.place-share-btn {
+  padding: 4px 10px;
+  background: transparent;
+  color: #888;
+  border: 1px solid #e0e0e0;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.place-share-btn:hover {
+  color: #16a34a;
+  border-color: #16a34a;
+}
+
 /* ===== 히어로 CTA 버튼 ===== */
 .hero-cta-btn {
   font-size: 16px;

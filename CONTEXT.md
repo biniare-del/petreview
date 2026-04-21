@@ -136,3 +136,39 @@
 |-----------|--------|
 | 포인트/이벤트 시스템 | A) 포인트 적립 / B) 단순 배너 / C) 미구현 유지 |
 | 병원 즐겨찾기 신규 리뷰 알림 | 단골 등록한 병원에 새 리뷰 오면 푸시 알림 연동 |
+
+---
+
+## 인프라 / 서버 이전 전략
+
+### 현재 스택 (2026-04 기준)
+| 역할 | 서비스 | 비용 |
+|------|--------|------|
+| 정적 호스팅 | GitHub Pages | 무료 |
+| DB / Auth / Storage | Supabase Free tier | 무료 |
+| 서버리스 프록시 | Vercel Free tier | 무료 |
+
+### 트래픽 단계별 전환 계획
+
+**MAU 1만 이하 → 현재 스택 유지**
+- 비용 0원. 지금 건드릴 필요 없음
+
+**MAU 1~5만 → Supabase Pro 업그레이드만**
+- Supabase Pro $25/월. GitHub Pages·Vercel은 그대로
+- DB 용량·연결 수 제한 해소
+
+**MAU 5만~ → Next.js + Vercel 풀마이그레이션**
+- 현재 정적 HTML → Next.js SSR/SSG로 전환
+- SEO 대폭 개선 (동적 OG 태그, 병원별 페이지 구글 인덱싱)
+- Supabase는 그대로 유지 (DB 교체 불필요)
+- Vercel Pro로 업그레이드 ($20/월)
+- 예상 총비용: $45~70/월
+
+**MAU 수십만+ → 자체 서버 검토**
+- AWS / GCP / Digital Ocean VPS
+- PostgreSQL 직접 운영 or Supabase Enterprise
+- 이 단계는 투자자/수익 생긴 후 논의
+
+### 결론
+> 지금 스택 바꿀 이유 없음. Supabase Pro 업그레이드($25/월)가 첫 번째 결정 포인트.
+> Next.js 마이그레이션은 SEO가 본격 필요해질 때 (MAU 5만 or 병원 고정 URL 만들 때) 진행.

@@ -234,7 +234,10 @@ function renderSearchPage(page) {
         <p>${CATEGORY_LABEL[place.category]} · ${escapeHtml(place.region)}</p>
         ${place.address ? `<p class="helper-text">주소: ${escapeHtml(place.address)}</p>` : ""}
         ${place.phone ? `<p><a class="place-phone-link" href="tel:${escapeHtml(place.phone)}">📞 ${escapeHtml(place.phone)}</a></p>` : ""}
-        ${reviewBadge}
+        <div class="card-place-actions">
+          ${reviewBadge}
+          <button class="place-share-btn" data-share-name="${escapeHtml(place.name)}" data-share-category="${escapeHtml(place.category)}" data-share-city="${escapeHtml(els.searchCity?.value || "서울")}" data-share-region="${escapeHtml(place.region)}" data-share-address="${escapeHtml(place.address || "")}" data-share-phone="${escapeHtml(place.phone || "")}">📤 공유</button>
+        </div>
       </article>`;
     })
     .join("");
@@ -1404,10 +1407,58 @@ function bindCtaButton() {
   document.getElementById("cta-review-btn")?.addEventListener("click", openReviewForm);
 }
 
+// ===== Web Share API 공통 함수 =====
+// btn: 클립보드 복사 시 피드백 표시할 버튼 엘리먼트 (선택)
+// 반환값: true → navigator.share 사용됨, false → 클립보드 복사됨
+async function sharePlaceInfo(place, btn) {
+  const cityStr = place.city || "서울";
+  const catLabel = CATEGORY_LABEL[place.category] || place.category;
+  const mapQ = encodeURIComponent(`${cityStr} ${place.region} ${place.name}`);
+  const mapUrl = `https://map.naver.com/v5/search/${mapQ}`;
+
+  const lines = [
+    `📍 ${place.name}`,
+    `${catLabel} · ${cityStr} ${place.region}`,
+    place.address ? `주소: ${place.address}` : "",
+    place.phone ? `전화: ${place.phone}` : "",
+    `🗺️ ${mapUrl}`,
+    `\n펫리뷰에서 실제 후기를 확인하세요 → https://biniare-del.github.io/petreview/`,
+  ].filter(Boolean).join("\n");
+
+  if (navigator.share) {
+    try { await navigator.share({ title: `펫리뷰 - ${place.name}`, text: lines }); } catch { /* 취소 */ }
+    return true;
+  }
+  try {
+    await navigator.clipboard.writeText(lines);
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = "✅ 복사됨!";
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }
+  } catch { alert("공유 기능을 지원하지 않는 브라우저입니다."); }
+  return false;
+}
+
 function bindSearchResultsSelection() {
   els.searchResults.addEventListener("click", async (event) => {
     // 전화 링크 클릭 시 폼으로 이동하지 않음
     if (event.target.closest(".place-phone-link")) return;
+
+    // 공유 버튼 클릭 처리
+    const shareBtn = event.target.closest(".place-share-btn");
+    if (shareBtn) {
+      event.stopPropagation();
+      await sharePlaceInfo({
+        name: shareBtn.dataset.shareName,
+        category: shareBtn.dataset.shareCategory,
+        city: shareBtn.dataset.shareCity,
+        region: shareBtn.dataset.shareRegion,
+        address: shareBtn.dataset.shareAddress,
+        phone: shareBtn.dataset.sharePhone,
+      }, shareBtn);
+      return;
+    }
 
     // 단골 버튼 클릭 처리
     const favBtn = event.target.closest(".favorite-btn");
@@ -2238,31 +2289,7 @@ async function openPlaceDetail(place) {
   // 공유 버튼 (Web Share API)
   const shareBtn = document.getElementById("detail-share-btn");
   if (shareBtn) {
-    shareBtn.onclick = async () => {
-      const lines = [
-        `📍 ${place.name}`,
-        `${CATEGORY_LABEL[place.category] || place.category} · ${cityStr} ${place.region}`,
-        place.address ? `주소: ${place.address}` : "",
-        place.phone ? `전화: ${place.phone}` : "",
-        `🗺️ ${mapUrl}`,
-        `\n펫리뷰에서 실제 후기를 확인하세요 → https://biniare-del.github.io/petreview/`,
-      ].filter(Boolean).join("\n");
-
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: `펫리뷰 - ${place.name}`, text: lines });
-        } catch { /* 사용자가 취소한 경우 */ }
-      } else {
-        // 공유 API 미지원 환경 → 클립보드 복사
-        try {
-          await navigator.clipboard.writeText(lines);
-          shareBtn.textContent = "✅ 복사됨!";
-          setTimeout(() => { shareBtn.textContent = "📤 공유하기"; }, 2000);
-        } catch {
-          alert("공유 기능을 지원하지 않는 브라우저입니다.");
-        }
-      }
-    };
+    shareBtn.onclick = () => sharePlaceInfo(place, shareBtn);
   }
 
   document.getElementById("detail-reviews-list").innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
