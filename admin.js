@@ -177,7 +177,8 @@
             data-place-name="${escapeHtml(r.place_name)}" data-category="${escapeHtml(r.category ?? "hospital")}"
             data-city="${escapeHtml(r.city ?? "서울")}" data-region="${escapeHtml(r.region ?? "")}"
             data-visit-date="${escapeHtml(r.visit_date ?? "")}" data-service-detail="${escapeHtml(r.service_detail ?? "")}"
-            data-total-price="${escapeHtml(String(r.total_price ?? ""))}" data-short-review="${escapeHtml(r.short_review ?? "")}">수정</button>
+            data-total-price="${escapeHtml(String(r.total_price ?? ""))}" data-short-review="${escapeHtml(r.short_review ?? "")}"
+            data-pet-species="${escapeHtml(r.pet_species ?? "")}">수정</button>
           <button class="btn-delete review-delete-btn" data-id="${escapeHtml(r.id)}">삭제</button>
         </div>
         <!-- 인라인 수정 폼 (숨김) -->
@@ -187,6 +188,14 @@
             <select class="ef-category" style="${adminInputStyle}">
               <option value="hospital">동물병원</option>
               <option value="grooming">펫미용실</option>
+            </select>
+            <select class="ef-pet-species" style="${adminInputStyle}">
+              <option value="">반려동물 종류</option>
+              <option value="강아지">🐶 강아지</option>
+              <option value="고양이">🐱 고양이</option>
+              <option value="토끼">🐇 토끼</option>
+              <option value="햄스터">🐹 햄스터</option>
+              <option value="기타">기타</option>
             </select>
             <input class="ef-city" type="text" placeholder="시/도 (예: 서울)" style="${adminInputStyle}" />
             <input class="ef-region" type="text" placeholder="구/군" style="${adminInputStyle}" />
@@ -279,6 +288,7 @@
         if (isOpen) { form.style.display = "none"; return; }
         form.querySelector(".ef-place-name").value = btn.dataset.placeName || "";
         form.querySelector(".ef-category").value = btn.dataset.category || "hospital";
+        form.querySelector(".ef-pet-species").value = btn.dataset.petSpecies || "";
         form.querySelector(".ef-city").value = btn.dataset.city || "서울";
         form.querySelector(".ef-region").value = btn.dataset.region || "";
         form.querySelector(".ef-visit-date").value = btn.dataset.visitDate || "";
@@ -298,6 +308,7 @@
         const updates = {
           place_name: form.querySelector(".ef-place-name").value.trim(),
           category: form.querySelector(".ef-category").value,
+          pet_species: form.querySelector(".ef-pet-species").value || null,
           city: form.querySelector(".ef-city").value.trim(),
           region: form.querySelector(".ef-region").value.trim(),
           visit_date: form.querySelector(".ef-visit-date").value || null,

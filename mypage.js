@@ -425,9 +425,6 @@
 
   function bindPetModal() {
     document.getElementById("pet-modal-close")?.addEventListener("click", closePetModal);
-    document.getElementById("pet-modal")?.addEventListener("click", (e) => {
-      if (e.target === e.currentTarget) closePetModal();
-    });
 
     document.getElementById("pet-form")?.addEventListener("submit", async (e) => {
       e.preventDefault();

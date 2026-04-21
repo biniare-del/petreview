@@ -1598,16 +1598,20 @@ body[data-theme="grooming"] .place-phone-link {
 }
 
 .pet-greeting-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
   overflow: hidden;
+  border: 3px solid #d1fae5;
+  box-shadow: 0 4px 14px rgba(22,163,74,0.18);
+  flex-shrink: 0;
   flex-shrink: 0;
   background: #c8ede3;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 32px;
+  background: linear-gradient(135deg, #e2f5eb, #d1fae5);
 }
 
 .pet-greeting-avatar img {
