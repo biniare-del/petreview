@@ -25,6 +25,7 @@
         if (btn.dataset.tab === "reports") { loadReports(); loadCommentReports(); loadPostReports(); }
         if (btn.dataset.tab === "users") loadUsers();
         if (btn.dataset.tab === "ads") loadAdsTab();
+        if (btn.dataset.tab === "feedbacks") loadFeedbacks();
       });
     });
   }
@@ -470,6 +471,43 @@
         await loadUsers();
       });
     });
+  }
+
+  // ===== 건의함 =====
+  async function loadFeedbacks() {
+    const container = document.getElementById("feedbacks-list");
+    if (!container) return;
+    container.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+
+    const db = window.supabaseClient;
+    if (!db) return;
+
+    const { data, error } = await db
+      .from("feedbacks")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) { container.innerHTML = `<p class="placeholder-text">오류: ${escapeHtml(error.message)}</p>`; return; }
+    if (!data?.length) { container.innerHTML = '<p class="placeholder-text">접수된 건의가 없습니다.</p>'; return; }
+
+    const CATEGORY_EMOJI = { "기능제안": "💡", "버그신고": "🐛", "병원등록요청": "🏥", "기타": "💬" };
+
+    container.innerHTML = data.map((f) => {
+      const emoji = CATEGORY_EMOJI[f.category] || "💬";
+      const date = new Date(f.created_at).toLocaleDateString("ko-KR");
+      return `
+        <div class="admin-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+            <div>
+              <span style="font-size:12px;font-weight:700;background:#f0f0f0;padding:2px 10px;border-radius:999px;color:#555;">${emoji} ${escapeHtml(f.category)}</span>
+              <h3 style="margin:8px 0 4px;">${escapeHtml(f.title)}</h3>
+            </div>
+            <span style="font-size:12px;color:#aaa;white-space:nowrap;">${date}</span>
+          </div>
+          <p style="margin:0;white-space:pre-wrap;line-height:1.6;">${escapeHtml(f.content)}</p>
+          ${f.user_id ? `<p style="margin:8px 0 0;font-size:12px;color:#aaa;">user_id: ${escapeHtml(f.user_id)}</p>` : '<p style="margin:8px 0 0;font-size:12px;color:#aaa;">비로그인 제출</p>'}
+        </div>`;
+    }).join("");
   }
 
   // ===== 광고 관리 =====

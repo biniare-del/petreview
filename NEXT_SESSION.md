@@ -68,6 +68,12 @@ CREATE INDEX IF NOT EXISTS reviews_kakao_place_id_idx ON reviews (kakao_place_id
 > Supabase favorites 테이블에 kakao_place_id 컬럼 추가 필요:
 > `ALTER TABLE favorites ADD COLUMN IF NOT EXISTS kakao_place_id text;`
 
+### [x] K1: 건의함 페이지 (feedback.html)
+- feedback.html 생성 (로그인 없이 제출 가능)
+- supabase/create_feedbacks.sql 실행 필요
+- admin.html에 건의함 탭 추가
+- 모든 페이지 푸터에 건의함 링크 추가
+
 ### [ ] 병원 즐겨찾기 → 신규 리뷰 푸시 알림
 - 단골 등록(favorites) 병원에 새 approved 리뷰 등록 시 알림
 - api/push-cron.js에 favorites + push_subscriptions 조인 로직 추가
