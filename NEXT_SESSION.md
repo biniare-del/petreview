@@ -49,6 +49,8 @@ CREATE INDEX IF NOT EXISTS reviews_kakao_place_id_idx ON reviews (kakao_place_id
 
 ## 1. 다음 우선순위 기능
 
+### [x] A2: 마이페이지 리뷰 횟수 뱃지 (profile-review-count-badge)
+### [x] A3: 리뷰 카드 N번째 리뷰 뱃지 (reviewSeq 계산 + review-seq-badge)
 ### [x] 커뮤니티 신고 모달 (prompt → 라디오 모달)
 ### [x] 관리자 커뮤니티 글 신고 관리 탭 추가
 > Supabase SQL 실행 필요: supabase/create_post_reports.sql
