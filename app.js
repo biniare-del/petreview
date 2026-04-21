@@ -1,6 +1,6 @@
 const CATEGORY_LABEL = {
   hospital: "동물병원",
-  grooming: "미용샵",
+  grooming: "펫미용실",
 };
 
 const SERVICE_TAGS = {
@@ -807,6 +807,19 @@ function bindTopCategoryTabs() {
       document.body.dataset.theme = cat === "grooming" ? "grooming" : "hospital";
       renderServiceTags(cat);
       if (hasSearched) void renderSearchResults();
+      // 검색창 placeholder + 섹션 타이틀 동기화
+      const nameInput = document.getElementById("search-name-input");
+      const titleEl = document.getElementById("search-section-title");
+      const subEl = document.getElementById("search-section-sub");
+      if (cat === "grooming") {
+        if (nameInput) nameInput.placeholder = "미용실 이름을 입력하세요 (예: 강남 아이러브펫)";
+        if (titleEl) titleEl.textContent = "펫미용실 검색";
+        if (subEl) subEl.textContent = "미용실 이름으로 바로 찾거나, 지역으로 둘러보세요.";
+      } else {
+        if (nameInput) nameInput.placeholder = "병원 이름을 입력하세요 (예: 압구정웰동물병원)";
+        if (titleEl) titleEl.textContent = "동물병원 검색";
+        if (subEl) subEl.textContent = "병원 이름으로 바로 찾거나, 지역으로 둘러보세요.";
+      }
       // 검색 섹션으로 스크롤
       document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -827,9 +840,90 @@ function updateSearchBtn() {
 }
 
 function bindSearch() {
-  els.searchButton.addEventListener("click", () => {
-    void renderSearchResults();
+  // 지역 검색 버튼
+  els.searchButton?.addEventListener("click", () => void renderSearchResults());
+
+  // 지역으로 찾기 토글
+  const regionToggleBtn = document.getElementById("region-toggle-btn");
+  const regionPanel = document.getElementById("region-search-panel");
+  regionToggleBtn?.addEventListener("click", () => {
+    const isOpen = !regionPanel.hidden;
+    regionPanel.hidden = isOpen;
+    regionToggleBtn.textContent = isOpen ? "🗺️ 지역으로 찾기" : "🗺️ 지역 검색 닫기";
   });
+
+  // 이름 검색
+  const nameInput = document.getElementById("search-name-input");
+  const nameBtn = document.getElementById("search-name-btn");
+  const autocompleteList = document.getElementById("search-autocomplete-list");
+
+  async function doNameSearch() {
+    const q = nameInput?.value.trim();
+    if (!q) return;
+    autocompleteList && (autocompleteList.hidden = true);
+    const results = document.getElementById("search-results");
+    if (results) results.innerHTML = '<p class="placeholder-text">검색 중...</p>';
+    document.getElementById("sort-toggle").style.display = "none";
+
+    try {
+      const cat = selectedSearchCategory;
+      const keyword = `${cat === "grooming" ? "펫미용 " : "동물병원 "}${q}`;
+      const res = await fetch(`https://petreview.vercel.app/api/facilities?category=${cat}&city=전국&region=&keyword=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      const places = data.places || [];
+
+      if (!places.length) {
+        if (results) results.innerHTML = `<p class="placeholder-text">"${q}" 검색 결과가 없습니다. 다른 이름으로 찾아보세요.</p>`;
+        return;
+      }
+      searchFacilities = places;
+      hasSearched = true;
+      document.getElementById("sort-toggle").style.display = "";
+      renderSearchResults();
+    } catch {
+      if (results) results.innerHTML = '<p class="placeholder-text">검색 중 오류가 발생했습니다.</p>';
+    }
+  }
+
+  nameBtn?.addEventListener("click", doNameSearch);
+  nameInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") doNameSearch(); });
+
+  // 이름 검색 자동완성
+  let acTimer;
+  nameInput?.addEventListener("input", () => {
+    clearTimeout(acTimer);
+    const q = nameInput.value.trim();
+    if (q.length < 2) { autocompleteList && (autocompleteList.hidden = true); return; }
+    acTimer = setTimeout(() => void runNameAutocomplete(q), 300);
+  });
+  nameInput?.addEventListener("blur", () => setTimeout(() => { if (autocompleteList) autocompleteList.hidden = true; }, 200));
+  nameInput?.addEventListener("focus", () => {
+    if (nameInput.value.trim().length >= 2) runNameAutocomplete(nameInput.value.trim());
+  });
+
+  async function runNameAutocomplete(q) {
+    try {
+      const cat = selectedSearchCategory;
+      const res = await fetch(`https://petreview.vercel.app/api/facilities?category=${cat}&city=전국&region=&keyword=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      const places = (data.places || []).slice(0, 6);
+      if (!places.length || !autocompleteList) return;
+      autocompleteList.innerHTML = places.map((p) =>
+        `<li data-name="${escapeHtml(p.name)}" data-addr="${escapeHtml(p.address || "")}" style="display:flex;flex-direction:column;padding:10px 14px;cursor:pointer;">
+          <span style="font-weight:600;font-size:14px;">${escapeHtml(p.name)}</span>
+          <span style="font-size:12px;color:#aaa;">${escapeHtml(p.address || p.region || "")}</span>
+        </li>`
+      ).join("");
+      autocompleteList.hidden = false;
+      autocompleteList.querySelectorAll("li").forEach((li) => {
+        li.addEventListener("mousedown", () => {
+          nameInput.value = li.dataset.name;
+          autocompleteList.hidden = true;
+          doNameSearch();
+        });
+      });
+    } catch { /* ignore */ }
+  }
 }
 
 async function initGeolocation() {
@@ -1742,7 +1836,7 @@ function selectFormCategory(category) {
   // 선택 업종 뱃지 렌더링
   const badge = document.getElementById("form-selected-category");
   if (badge) {
-    const label = category === "grooming" ? "✂️ 미용샵" : "🏥 동물병원";
+    const label = category === "grooming" ? "✂️ 펫미용실" : "🏥 동물병원";
     badge.innerHTML = `
       <span class="form-category-badge ${category}">${label}</span>
       <button type="button" class="form-category-change-btn" id="form-category-change-btn">

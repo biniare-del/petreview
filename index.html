@@ -61,8 +61,8 @@
     <!-- 미용샵 이벤트 섹션 (미용샵 탭 선택 시 JS로 표시) -->
     <section id="grooming-events-section" class="section grooming-events-section" hidden>
       <header class="section-header">
-        <h2>✂️ 미용샵 이벤트</h2>
-        <p>현재 진행 중인 미용샵 특가·이벤트</p>
+        <h2>✂️ 펫미용실 이벤트</h2>
+        <p>현재 진행 중인 펫미용실 특가·이벤트</p>
       </header>
       <div id="grooming-events-list" class="grooming-events-list">
         <p class="placeholder-text">이벤트를 불러오는 중...</p>
@@ -94,18 +94,41 @@
 
     <!-- 최상단 카테고리 탭 -->
     <div class="top-category-tabs" id="top-category-tabs">
-      <button class="top-cat-btn is-active" data-category="hospital">🏥 동물병원</button>
-      <button class="top-cat-btn" data-category="grooming">✂️ 미용샵</button>
+      <button class="top-cat-btn is-active" data-category="hospital">
+        <span class="top-cat-icon">🏥</span>
+        <span class="top-cat-label">동물병원</span>
+        <span class="top-cat-sub">진료비 · 의료 리뷰</span>
+      </button>
+      <button class="top-cat-btn" data-category="grooming">
+        <span class="top-cat-icon">✂️</span>
+        <span class="top-cat-label">펫미용실</span>
+        <span class="top-cat-sub">미용 · 스타일링 리뷰</span>
+      </button>
     </div>
 
-    <!-- 1. 주변 동물병원/미용샵 검색 섹션 -->
-    <section id="search-section" class="section search-section" aria-label="주변 업체 검색">
+    <!-- 1. 검색 섹션 -->
+    <section id="search-section" class="section search-section" aria-label="업체 검색">
       <header class="section-header">
-        <h2>주변 동물병원·미용샵 검색</h2>
-        <p>지역과 업종을 선택해서 주변의 실제 후기들을 확인해 보세요.</p>
+        <h2 id="search-section-title">동물병원 검색</h2>
+        <p id="search-section-sub">병원 이름으로 바로 찾거나, 지역으로 둘러보세요.</p>
       </header>
       <div class="search-controls">
-        <div class="form-group">
+        <!-- 이름 검색 (기본) -->
+        <div class="form-group search-name-group">
+          <div class="search-name-wrap" id="search-name-wrap">
+            <input type="text" id="search-name-input" class="search-name-input"
+              placeholder="병원 이름을 입력하세요 (예: 압구정웰동물병원)"
+              autocomplete="off" maxlength="50" />
+            <button type="button" class="primary-btn search-name-btn" id="search-name-btn">검색</button>
+          </div>
+          <div id="search-autocomplete-list" class="autocomplete-dropdown" hidden></div>
+        </div>
+
+        <!-- 지역으로 찾기 토글 -->
+        <button type="button" class="region-toggle-btn" id="region-toggle-btn">
+          🗺️ 지역으로 찾기
+        </button>
+        <div id="region-search-panel" class="region-search-panel" hidden>
           <div class="region-picker">
             <select id="search-city" name="search-city">
               <option value="서울" selected>서울</option>
@@ -131,21 +154,14 @@
             </select>
           </div>
           <p id="geo-status" class="geo-status"></p>
-        </div>
-        <div class="form-group">
-          <span class="form-label">업종</span>
-          <div class="category-toggle">
-            <button type="button" class="toggle-btn is-active" data-category="hospital">
-              동물병원
-            </button>
-            <button type="button" class="toggle-btn" data-category="grooming">
-              미용샵
-            </button>
+          <div class="category-toggle" style="margin-top:8px;">
+            <button type="button" class="toggle-btn is-active" data-category="hospital">동물병원</button>
+            <button type="button" class="toggle-btn" data-category="grooming">펫미용실</button>
           </div>
+          <button type="button" class="primary-btn" id="search-button" style="margin-top:10px;width:100%;">
+            지역 검색하기
+          </button>
         </div>
-        <button type="button" class="primary-btn" id="search-button">
-          검색하기
-        </button>
       </div>
       <div id="sort-toggle" class="sort-toggle" style="display:none;">
         <button class="sort-btn is-active" data-sort="fav">단골순</button>
@@ -174,7 +190,7 @@
           </button>
           <button type="button" class="category-card" data-category="grooming">
             <span class="category-card-icon">✂️</span>
-            <strong class="category-card-name">미용샵</strong>
+            <strong class="category-card-name">펫미용실</strong>
             <span class="category-card-desc">목욕 · 미용 · 가위컷</span>
           </button>
         </div>
@@ -385,13 +401,13 @@
       <div class="category-tab-bar">
         <button class="category-tab-btn is-active" data-cat="all">전체</button>
         <button class="category-tab-btn" data-cat="hospital">🏥 동물병원</button>
-        <button class="category-tab-btn" data-cat="grooming">✂️ 미용샵</button>
+        <button class="category-tab-btn" data-cat="grooming">✂️ 펫미용실</button>
       </div>
       <!-- 숨김 select: app.js filterCategory 호환용 -->
       <select id="filter-category" name="filter-category" hidden aria-hidden="true">
         <option value="all">전체</option>
         <option value="hospital">동물병원</option>
-        <option value="grooming">미용샵</option>
+        <option value="grooming">펫미용실</option>
       </select>
       <div class="review-filters">
         <div class="form-group">

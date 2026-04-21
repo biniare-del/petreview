@@ -373,13 +373,59 @@ textarea {
 .search-controls {
   margin-top: 14px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .search-controls .form-group {
-  min-width: 180px;
+  width: 100%;
+}
+
+.search-name-group { width: 100%; }
+.search-name-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.search-name-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 2px solid #e0d8d2;
+  border-radius: 12px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.search-name-input:focus { border-color: #1d4ed8; }
+body[data-theme="grooming"] .search-name-input:focus { border-color: #ec4899; }
+.search-name-btn { white-space: nowrap; padding: 12px 20px; }
+
+.region-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
+  background: #f9fafb;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  width: fit-content;
+  transition: all 0.15s;
+}
+.region-toggle-btn:hover { border-color: #6b7280; background: #f3f4f6; }
+
+.region-search-panel {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .search-results {
@@ -987,7 +1033,47 @@ body[data-theme="grooming"] .tag-btn.is-selected {
   background: linear-gradient(135deg, #f472b6, #a855f7);
 }
 
-/* 미용샵(grooming) 테마 */
+/* ===== 동물병원(hospital) 테마 ===== */
+body[data-theme="hospital"] {
+  background-color: #f0f7ff;
+}
+body[data-theme="hospital"] .primary-btn,
+body[data-theme="hospital"] .pagination-btn:not(:disabled) {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3);
+}
+body[data-theme="hospital"] .hero-cta-btn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+body[data-theme="hospital"] .tag-btn.is-selected {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+body[data-theme="hospital"] .logo-icon {
+  background: linear-gradient(135deg, #93c5fd, #3b82f6);
+}
+body[data-theme="hospital"] .site-nav a {
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.4);
+  background-color: rgba(59, 130, 246, 0.06);
+}
+body[data-theme="hospital"] input:focus,
+body[data-theme="hospital"] select:focus,
+body[data-theme="hospital"] textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+body[data-theme="hospital"] .card {
+  border-color: #bfdbfe;
+}
+body[data-theme="hospital"] .toggle-btn.is-active {
+  background-color: #3b82f6;
+}
+body[data-theme="hospital"] .pet-greeting-bar {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-color: #bfdbfe;
+}
+
+/* ===== 펫미용실(grooming) 테마 ===== */
 body[data-theme="grooming"] {
   background-color: #fdf4ff;
 }
@@ -2093,30 +2179,53 @@ body[data-theme="grooming"] .place-phone-link {
 /* ===== 최상단 카테고리 탭 ===== */
 .top-category-tabs {
   display: flex;
-  background: #fff;
-  border-bottom: 2px solid #e8f5e9;
+  gap: 0;
   position: sticky;
   top: 60px;
   z-index: 90;
+  background: #fff;
+  border-bottom: 3px solid #e5e7eb;
 }
 
 .top-cat-btn {
   flex: 1;
-  padding: 14px 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: #999;
-  background: none;
+  padding: 16px 0 14px;
   border: none;
-  border-bottom: 3px solid transparent;
+  background: none;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-  margin-bottom: -2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: all 0.2s ease;
+  color: #bbb;
+}
+.top-cat-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.top-cat-label {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.top-cat-sub {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.7;
 }
 
-.top-cat-btn.is-active {
-  color: #16a34a;
-  border-bottom-color: #16a34a;
+/* 동물병원 탭 활성 */
+.top-cat-btn[data-category="hospital"].is-active {
+  color: #1d4ed8;
+  border-bottom-color: #1d4ed8;
+}
+/* 펫미용실 탭 활성 */
+.top-cat-btn[data-category="grooming"].is-active {
+  color: #c026d3;
+  border-bottom-color: #ec4899;
 }
 
 /* ===== 문의하기 페이지 ===== */
