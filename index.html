@@ -49,13 +49,13 @@
       <button class="hero-cta-btn" type="button" id="cta-review-btn">후기 남기기</button>
     </section>
 
-    <!-- 마이펫 인사 바 (로그인 + 펫 등록 시 JS로 표시) -->
-    <a href="mypage.html" style="text-decoration:none;color:inherit;">
+    <!-- 마이펫 인사 바 (JS로 로그인 상태에 따라 표시) -->
+    <div id="pet-greeting-wrapper">
       <div id="pet-greeting" class="pet-greeting-bar" hidden style="cursor:pointer;">
         <div class="pet-greeting-avatar" id="pet-greeting-avatar"></div>
         <div class="pet-greeting-text" id="pet-greeting-text"></div>
       </div>
-    </a>
+    </div>
 
     <!-- 배너 슬롯 (is_active 배너가 있을 때만 JS로 표시) -->
     <div id="banner-slot" class="banner-slot" hidden></div>

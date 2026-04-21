@@ -1469,11 +1469,59 @@ function bindSearchResultsSelection() {
 
 // ===== 배너 로드 =====
 async function loadPetGreeting() {
+  const greetingEl = document.getElementById("pet-greeting");
+  const avatarEl = document.getElementById("pet-greeting-avatar");
+  const textEl = document.getElementById("pet-greeting-text");
+  if (!greetingEl || !avatarEl || !textEl) return;
+
   const db = window.supabaseClient;
   const userId = window.PetAuth?.currentUser?.id;
-  const greetingEl = document.getElementById("pet-greeting");
-  if (!db || !userId || !greetingEl) return;
 
+  // 비로그인: 로그인 CTA 표시
+  if (!userId) {
+    avatarEl.innerHTML = `<span>🐾</span>`;
+    textEl.innerHTML = `<strong>펫리뷰에 오신 걸 환영해요!</strong><br>
+      <span>소셜 로그인으로 리뷰 작성·마이펫 관리를 시작해보세요.</span><br>
+      <span style="display:inline-flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+        <button type="button" class="greeting-login-btn" id="greeting-google-btn"
+          style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1.5px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;">
+          <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+        <button type="button" class="greeting-login-btn" id="greeting-naver-btn"
+          style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:none;border-radius:20px;background:#03C75A;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
+          <span style="font-weight:900;font-family:sans-serif;font-size:13px;line-height:1;">N</span>
+          네이버
+        </button>
+        <button type="button" class="greeting-login-btn" id="greeting-all-btn"
+          style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1.5px solid #16a34a;border-radius:20px;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:600;cursor:pointer;">
+          전체 로그인 옵션 →
+        </button>
+      </span>`;
+    greetingEl.hidden = false;
+    greetingEl.onclick = (e) => {
+      if (!e.target.closest(".greeting-login-btn")) openLoginModal();
+    };
+
+    document.getElementById("greeting-google-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.PetAuth?.signInWithGoogle();
+    });
+    document.getElementById("greeting-naver-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.PetAuth?.signInWithNaver();
+    });
+    document.getElementById("greeting-all-btn")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openLoginModal();
+    });
+    return;
+  }
+
+  // 로그인: 마이페이지로 이동
+  greetingEl.onclick = () => { window.location.href = "mypage.html"; };
+
+  if (!db) return;
   try {
     const { data: pets } = await db
       .from("pets")
@@ -1481,15 +1529,11 @@ async function loadPetGreeting() {
       .eq("user_id", userId)
       .order("created_at")
       .limit(1);
-    const avatarEl = document.getElementById("pet-greeting-avatar");
-    const textEl = document.getElementById("pet-greeting-text");
-    if (!avatarEl || !textEl) return;
 
     const nickRaw = window.PetAuth.getDisplayName?.() || "";
     const nick = nickRaw ? escapeHtml(nickRaw) : "보호자";
 
     if (!pets?.length) {
-      // 펫 미등록: 등록 유도
       avatarEl.innerHTML = `<span>🐾</span>`;
       textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>!<br><span style="color:#16a34a;font-weight:600;">반려동물을 등록해보세요 →</span>`;
       greetingEl.hidden = false;
@@ -2432,17 +2476,20 @@ function init() {
     updateHeaderAuth();
     if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
       closeLoginModal();
-      if (window.PetAuth?.isLoggedIn()) {
-        restoreFormDraft();
-        loadPetGreeting();
-      }
+      if (window.PetAuth?.isLoggedIn()) restoreFormDraft();
+      loadPetGreeting();
+    } else if (event === "SIGNED_OUT") {
+      loadPetGreeting();
     }
   })
   .then(() => {
     updateHeaderAuth();
-    if (window.PetAuth?.isLoggedIn()) loadPetGreeting();
+    loadPetGreeting();
   })
-  .catch(() => updateHeaderAuth());
+  .catch(() => {
+    updateHeaderAuth();
+    loadPetGreeting();
+  });
 
   bindLoginModal();
   document.getElementById("login-btn")?.addEventListener("click", openLoginModal);
