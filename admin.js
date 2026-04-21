@@ -121,6 +121,8 @@
   }
 
   // ===== 전체 리뷰 관리 =====
+  const adminInputStyle = "padding:7px 10px;border:1px solid #e0d7d2;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fffdfb;";
+
   async function loadAllReviews() {
     const container = document.getElementById("all-reviews-list");
     if (!container) return;
@@ -159,16 +161,44 @@
       return `
       <div class="admin-card" data-review-id="${escapeHtml(r.id)}" data-is-hidden="${r.is_hidden ? "1" : "0"}"${cardStyle}>
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <h3>${escapeHtml(r.place_name)} <small style="color:#aaa;">(${CATEGORY_LABEL[r.category] ?? r.category})</small>${hiddenBadge}</h3>
+          <h3 class="review-card-title">${escapeHtml(r.place_name)} <small style="color:#aaa;">(${CATEGORY_LABEL[r.category] ?? r.category})</small>${hiddenBadge}</h3>
           ${badgeHtml}
         </div>
-        <p>지역: 서울특별시 ${escapeHtml(r.region ?? "")} · 방문일: ${escapeHtml(r.visit_date ?? "")}</p>
-        <p>후기: ${escapeHtml(r.short_review ?? "")}</p>
+        <p class="review-card-info">지역: ${escapeHtml(r.city ?? "서울")} ${escapeHtml(r.region ?? "")} · 방문일: ${escapeHtml(r.visit_date ?? "")}</p>
+        <p class="review-card-service">항목: ${escapeHtml(r.service_detail ?? "")}</p>
+        <p class="review-card-price">결제: ₩ ${Number(r.total_price ?? 0).toLocaleString("ko-KR")}</p>
+        <p class="review-card-review">후기: ${escapeHtml(r.short_review ?? "")}</p>
         <p class="helper-text">등록일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
         <div class="card-actions">
           <button class="btn-approve review-approve-btn" data-id="${escapeHtml(r.id)}">인증승인</button>
           <button class="btn-pending review-pending-btn" data-id="${escapeHtml(r.id)}">보류</button>
           <button class="${hideToggleClass}" data-id="${escapeHtml(r.id)}">${hideToggleLabel}</button>
+          <button class="btn-edit review-edit-btn" data-id="${escapeHtml(r.id)}"
+            data-place-name="${escapeHtml(r.place_name)}" data-category="${escapeHtml(r.category ?? "hospital")}"
+            data-city="${escapeHtml(r.city ?? "서울")}" data-region="${escapeHtml(r.region ?? "")}"
+            data-visit-date="${escapeHtml(r.visit_date ?? "")}" data-service-detail="${escapeHtml(r.service_detail ?? "")}"
+            data-total-price="${escapeHtml(String(r.total_price ?? ""))}" data-short-review="${escapeHtml(r.short_review ?? "")}">수정</button>
+          <button class="btn-delete review-delete-btn" data-id="${escapeHtml(r.id)}">삭제</button>
+        </div>
+        <!-- 인라인 수정 폼 (숨김) -->
+        <div class="review-edit-form" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #f0e8e2;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input class="ef-place-name" type="text" placeholder="업체명" style="${adminInputStyle}" />
+            <select class="ef-category" style="${adminInputStyle}">
+              <option value="hospital">동물병원</option>
+              <option value="grooming">펫미용실</option>
+            </select>
+            <input class="ef-city" type="text" placeholder="시/도 (예: 서울)" style="${adminInputStyle}" />
+            <input class="ef-region" type="text" placeholder="구/군" style="${adminInputStyle}" />
+            <input class="ef-visit-date" type="date" style="${adminInputStyle}" />
+            <input class="ef-total-price" type="number" placeholder="결제금액" style="${adminInputStyle}" />
+          </div>
+          <input class="ef-service-detail" type="text" placeholder="진료/미용 항목" style="${adminInputStyle};width:100%;margin-bottom:8px;" />
+          <textarea class="ef-short-review" rows="2" placeholder="한줄 후기" style="${adminInputStyle};width:100%;resize:vertical;margin-bottom:8px;"></textarea>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-approve review-edit-save-btn" data-id="${escapeHtml(r.id)}" style="padding:6px 16px;font-size:13px;">저장</button>
+            <button class="review-edit-cancel-btn" style="padding:6px 14px;font-size:13px;background:transparent;border:1px solid #ccc;border-radius:999px;cursor:pointer;">취소</button>
+          </div>
         </div>
       </div>`;
     }).join("");
@@ -238,6 +268,83 @@
     }
     bindHideToggle(".review-hide-btn", true);
     bindHideToggle(".review-unhide-btn", false);
+
+    // 수정 버튼: 인라인 폼 열기
+    container.querySelectorAll(".review-edit-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
+        const form = card?.querySelector(".review-edit-form");
+        if (!form) return;
+        const isOpen = form.style.display !== "none";
+        if (isOpen) { form.style.display = "none"; return; }
+        form.querySelector(".ef-place-name").value = btn.dataset.placeName || "";
+        form.querySelector(".ef-category").value = btn.dataset.category || "hospital";
+        form.querySelector(".ef-city").value = btn.dataset.city || "서울";
+        form.querySelector(".ef-region").value = btn.dataset.region || "";
+        form.querySelector(".ef-visit-date").value = btn.dataset.visitDate || "";
+        form.querySelector(".ef-service-detail").value = btn.dataset.serviceDetail || "";
+        form.querySelector(".ef-total-price").value = btn.dataset.totalPrice || "";
+        form.querySelector(".ef-short-review").value = btn.dataset.shortReview || "";
+        form.style.display = "block";
+      });
+    });
+
+    // 저장 버튼
+    container.querySelectorAll(".review-edit-save-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
+        const form = card?.querySelector(".review-edit-form");
+        if (!form) return;
+        const updates = {
+          place_name: form.querySelector(".ef-place-name").value.trim(),
+          category: form.querySelector(".ef-category").value,
+          city: form.querySelector(".ef-city").value.trim(),
+          region: form.querySelector(".ef-region").value.trim(),
+          visit_date: form.querySelector(".ef-visit-date").value || null,
+          service_detail: form.querySelector(".ef-service-detail").value.trim(),
+          total_price: Number(form.querySelector(".ef-total-price").value) || 0,
+          short_review: form.querySelector(".ef-short-review").value.trim(),
+        };
+        if (!updates.place_name) { alert("업체명을 입력해주세요."); return; }
+        btn.disabled = true;
+        const { error: updErr } = await db.from("reviews").update(updates).eq("id", btn.dataset.id);
+        btn.disabled = false;
+        if (updErr) { alert("저장 실패: " + updErr.message); return; }
+        // 카드 표시 업데이트
+        const titleEl = card.querySelector(".review-card-title");
+        if (titleEl) titleEl.firstChild.textContent = updates.place_name + " ";
+        const infoEl = card.querySelector(".review-card-info");
+        if (infoEl) infoEl.textContent = `지역: ${updates.city} ${updates.region} · 방문일: ${updates.visit_date || ""}`;
+        const svcEl = card.querySelector(".review-card-service");
+        if (svcEl) svcEl.textContent = `항목: ${updates.service_detail}`;
+        const priceEl = card.querySelector(".review-card-price");
+        if (priceEl) priceEl.textContent = `결제: ₩ ${updates.total_price.toLocaleString("ko-KR")}`;
+        const rvEl = card.querySelector(".review-card-review");
+        if (rvEl) rvEl.textContent = `후기: ${updates.short_review}`;
+        form.style.display = "none";
+      });
+    });
+
+    // 취소 버튼
+    container.querySelectorAll(".review-edit-cancel-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        btn.closest(".review-edit-form").style.display = "none";
+      });
+    });
+
+    // 삭제 버튼
+    container.querySelectorAll(".review-delete-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("이 리뷰를 영구 삭제하시겠습니까? 복구할 수 없습니다.")) return;
+        const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.id);
+        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
+        card?.remove();
+        if (!container.querySelector(".admin-card"))
+          container.innerHTML = '<p class="placeholder-text">리뷰가 없습니다.</p>';
+        loadStats();
+      });
+    });
   }
 
   // ===== 신고 관리 =====
