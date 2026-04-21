@@ -857,11 +857,13 @@ function bindSearch() {
   // 지역으로 찾기 토글
   const regionToggleBtn = document.getElementById("region-toggle-btn");
   const regionPanel = document.getElementById("region-search-panel");
-  regionToggleBtn?.addEventListener("click", () => {
-    const isOpen = !regionPanel.hidden;
-    regionPanel.hidden = isOpen;
-    regionToggleBtn.textContent = isOpen ? "🗺️ 지역으로 찾기" : "🗺️ 지역 검색 닫기";
-  });
+  function toggleRegionPanel(forceClose) {
+    const closing = forceClose ?? !regionPanel.hidden;
+    regionPanel.hidden = closing;
+    regionToggleBtn.textContent = closing ? "🗺️ 지역으로 찾기" : "✕ 지역검색 닫기";
+  }
+  regionToggleBtn?.addEventListener("click", () => toggleRegionPanel());
+  document.getElementById("region-panel-close")?.addEventListener("click", () => toggleRegionPanel(true));
 
   // 이름 검색
   const nameInput = document.getElementById("search-name-input");
@@ -881,7 +883,7 @@ function bindSearch() {
       const keyword = `${cat === "grooming" ? "펫미용 " : "동물병원 "}${q}`;
       const res = await fetch(`https://petreview.vercel.app/api/facilities?category=${cat}&city=전국&region=&keyword=${encodeURIComponent(q)}`);
       const data = await res.json();
-      const places = data.places || [];
+      const places = data.results || [];
 
       if (!places.length) {
         if (results) results.innerHTML = `<p class="placeholder-text">"${q}" 검색 결과가 없습니다. 다른 이름으로 찾아보세요.</p>`;
@@ -917,7 +919,7 @@ function bindSearch() {
       const cat = selectedSearchCategory;
       const res = await fetch(`https://petreview.vercel.app/api/facilities?category=${cat}&city=전국&region=&keyword=${encodeURIComponent(q)}`);
       const data = await res.json();
-      const places = (data.places || []).slice(0, 6);
+      const places = (data.results || []).slice(0, 6);
       if (!places.length || !autocompleteList) return;
       autocompleteList.innerHTML = places.map((p) =>
         `<li data-name="${escapeHtml(p.name)}" data-addr="${escapeHtml(p.address || "")}" style="display:flex;flex-direction:column;padding:10px 14px;cursor:pointer;">

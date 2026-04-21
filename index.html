@@ -117,7 +117,7 @@
         <div class="form-group search-name-group">
           <div class="search-name-wrap" id="search-name-wrap">
             <input type="text" id="search-name-input" class="search-name-input"
-              placeholder="병원 이름을 입력하세요 (예: 압구정웰동물병원)"
+              placeholder="병원 이름을 입력하세요 (예: 행복동물병원)"
               autocomplete="off" maxlength="50" />
             <button type="button" class="primary-btn search-name-btn" id="search-name-btn">검색</button>
           </div>
@@ -129,6 +129,9 @@
           🗺️ 지역으로 찾기
         </button>
         <div id="region-search-panel" class="region-search-panel" hidden>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+            <button type="button" id="region-panel-close" style="background:none;border:none;font-size:18px;cursor:pointer;color:#aaa;line-height:1;padding:2px 6px;">✕</button>
+          </div>
           <div class="region-picker">
             <select id="search-city" name="search-city">
               <option value="서울" selected>서울</option>
