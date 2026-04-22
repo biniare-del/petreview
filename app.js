@@ -2752,31 +2752,52 @@ async function openPlaceDetail(place) {
   const modal = document.getElementById("place-detail-modal");
   if (!modal) return;
 
-  // 기본 정보 렌더링
-  document.getElementById("detail-place-name").textContent = place.name;
   const cityStr = place.city || "서울";
+
+  // 헤더
+  document.getElementById("detail-place-name").textContent = place.name;
   document.getElementById("detail-place-meta").textContent =
-    `${CATEGORY_LABEL[place.category] || place.category} · ${cityStr} ${place.region}`;
-
-  const addrEl = document.getElementById("detail-place-address");
-  addrEl.textContent = place.address || "";
-  addrEl.style.display = place.address ? "" : "none";
-
-  const phoneEl = document.getElementById("detail-place-phone");
-  if (place.phone) {
-    phoneEl.href = `tel:${place.phone}`;
-    phoneEl.textContent = `📞 ${place.phone}`;
-    phoneEl.style.display = "";
-  } else {
-    phoneEl.style.display = "none";
+    `${cityStr} ${place.region || ""}`.trim();
+  const badge = document.getElementById("detail-category-badge");
+  if (badge) {
+    badge.textContent = CATEGORY_LABEL[place.category] || place.category;
+    badge.className = `detail-category-badge cat-${place.category}`;
   }
 
-  const mapBtn = document.getElementById("detail-map-btn");
-  const q = encodeURIComponent(`${cityStr} ${place.region} ${place.name}`);
-  const mapUrl = `https://map.naver.com/v5/search/${q}`;
-  if (mapBtn) mapBtn.href = mapUrl;
+  // 주소
+  const addrEl = document.getElementById("detail-place-address");
+  const addrRow = document.getElementById("detail-address-row");
+  if (addrEl) addrEl.textContent = place.address || `${cityStr} ${place.region || ""}`;
+  if (addrRow) addrRow.style.display = "";
 
-  // 상세 페이지 링크
+  // 전화
+  const phoneEl = document.getElementById("detail-place-phone");
+  const phoneRow = document.getElementById("detail-phone-row");
+  const callBtn = document.getElementById("detail-call-btn");
+  if (place.phone) {
+    if (phoneEl) { phoneEl.href = `tel:${place.phone}`; phoneEl.textContent = place.phone; }
+    if (phoneRow) phoneRow.style.display = "";
+    if (callBtn) { callBtn.href = `tel:${place.phone}`; callBtn.style.display = ""; }
+  } else {
+    if (phoneRow) phoneRow.style.display = "none";
+    if (callBtn) callBtn.style.display = "none";
+  }
+
+  // 지도 (네이버지도 검색)
+  const mapBtn = document.getElementById("detail-map-btn");
+  const mapQ = encodeURIComponent(`${cityStr} ${place.region || ""} ${place.name}`);
+  if (mapBtn) mapBtn.href = `https://map.naver.com/v5/search/${mapQ}`;
+
+  // 길찾기 (카카오지도 — lat/lng 있으면 정확한 좌표, 없으면 이름 검색)
+  const navBtn = document.getElementById("detail-nav-btn");
+  if (navBtn) {
+    const navUrl = (place.lat && place.lng)
+      ? `https://map.kakao.com/link/to/${encodeURIComponent(place.name)},${place.lat},${place.lng}`
+      : `https://map.kakao.com/link/search/${encodeURIComponent(place.name)}`;
+    navBtn.href = navUrl;
+  }
+
+  // 리뷰 쓰기 (상세 페이지로 이동)
   const detailPageBtn = document.getElementById("detail-page-btn");
   if (detailPageBtn) {
     const hParams = new URLSearchParams({
@@ -2791,7 +2812,7 @@ async function openPlaceDetail(place) {
     detailPageBtn.href = `hospital.html?${hParams}`;
   }
 
-  // 공유 버튼 (Web Share API)
+  // 공유 버튼
   const shareBtn = document.getElementById("detail-share-btn");
   if (shareBtn) {
     shareBtn.onclick = () => sharePlaceInfo(place, shareBtn);

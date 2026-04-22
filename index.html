@@ -441,21 +441,59 @@
   <div class="modal-overlay" id="place-detail-modal" hidden>
     <div class="modal place-detail-modal">
       <button class="modal-close" id="place-detail-close" aria-label="닫기">✕</button>
-      <h2 class="modal-title" id="detail-place-name" style="font-size:18px;"></h2>
-      <p id="detail-place-meta" style="margin:4px 0 2px;font-size:14px;color:#888;"></p>
-      <p id="detail-place-address" style="margin:2px 0;font-size:13px;color:#666;"></p>
-      <a id="detail-place-phone" href="#" style="font-size:13px;color:#ff7043;font-weight:600;display:none;"></a>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-        <a id="detail-map-btn" href="#" target="_blank" rel="noopener noreferrer" class="map-link-btn">🗺️ 카카오지도에서 보기</a>
-        <button id="detail-share-btn" class="map-link-btn" style="background:#f0ebe6;color:#555;border:none;cursor:pointer;">📤 공유하기</button>
-        <a id="detail-page-btn" href="#" class="map-link-btn" style="background:#f0fdf4;color:#16a34a;">📄 상세 페이지</a>
+
+      <!-- 헤더 -->
+      <div class="detail-header">
+        <span class="detail-category-badge" id="detail-category-badge"></span>
+        <h2 class="detail-place-name" id="detail-place-name"></h2>
+        <p class="detail-place-meta" id="detail-place-meta"></p>
       </div>
-      <div id="detail-price-table" style="margin-top:16px;"></div>
-      <div id="detail-score-section" style="margin-top:16px;"></div>
-      <div style="margin-top:16px;">
-        <h4 style="font-size:14px;font-weight:700;color:#555;margin:0 0 10px;">인증된 리뷰</h4>
+
+      <!-- 주소 / 전화 -->
+      <div class="detail-info-block">
+        <div class="detail-info-row" id="detail-address-row">
+          <span class="detail-info-icon">📍</span>
+          <span id="detail-place-address" class="detail-info-text"></span>
+        </div>
+        <div class="detail-info-row" id="detail-phone-row" style="display:none">
+          <span class="detail-info-icon">📞</span>
+          <a id="detail-place-phone" href="#" class="detail-phone-link"></a>
+        </div>
+      </div>
+
+      <!-- 액션 버튼 4개 -->
+      <div class="detail-actions">
+        <a id="detail-call-btn" href="#" class="detail-act-btn detail-act-call" style="display:none">
+          <span class="detail-act-icon">📞</span><span>전화</span>
+        </a>
+        <a id="detail-map-btn" href="#" target="_blank" rel="noopener noreferrer" class="detail-act-btn detail-act-map">
+          <span class="detail-act-icon">🗺️</span><span>지도</span>
+        </a>
+        <a id="detail-nav-btn" href="#" target="_blank" rel="noopener noreferrer" class="detail-act-btn detail-act-nav">
+          <span class="detail-act-icon">🧭</span><span>길찾기</span>
+        </a>
+        <button id="detail-share-btn" class="detail-act-btn detail-act-share">
+          <span class="detail-act-icon">📤</span><span>공유</span>
+        </button>
+      </div>
+
+      <!-- 리뷰 쓰기 버튼 -->
+      <a id="detail-page-btn" href="#" class="detail-review-write-btn">✏️ 이 병원 리뷰 쓰기</a>
+
+      <!-- 진료비 통계 -->
+      <div id="detail-price-table" class="detail-section"></div>
+
+      <!-- 별점 평균 -->
+      <div id="detail-score-section" class="detail-section"></div>
+
+      <!-- 인증된 리뷰 -->
+      <div class="detail-section">
+        <h4 class="detail-section-title">인증된 리뷰</h4>
         <div id="detail-reviews-list"><p class="placeholder-text">불러오는 중...</p></div>
       </div>
+
+      <!-- 상담예약 (추후 서비스) -->
+      <div class="detail-coming-soon">📅 상담예약 서비스 준비 중</div>
     </div>
   </div>
 

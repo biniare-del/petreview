@@ -3436,3 +3436,123 @@ body[data-theme="grooming"] .place-phone-link {
   transition: background 0.15s;
 }
 .pet-care-register-btn:hover { background: #15803d; }
+
+/* ===== 병원 상세 모달 ===== */
+.place-detail-modal {
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 22px 20px 28px;
+}
+
+.detail-header { margin-bottom: 14px; }
+
+.detail-category-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+.detail-category-badge.cat-hospital { background: #e0f2fe; color: #0369a1; }
+.detail-category-badge.cat-grooming { background: #fce7f3; color: #be185d; }
+
+.detail-place-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+.detail-place-meta { font-size: 13px; color: #888; margin: 0; }
+
+.detail-info-block {
+  background: #fafaf9;
+  border: 1px solid #f0ece8;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.detail-info-row { display: flex; align-items: center; gap: 8px; }
+.detail-info-icon { font-size: 15px; flex-shrink: 0; }
+.detail-info-text { font-size: 13px; color: #444; line-height: 1.4; }
+.detail-phone-link {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ea580c;
+  text-decoration: none;
+}
+.detail-phone-link:hover { text-decoration: underline; }
+
+/* 액션 버튼 4개 */
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.detail-act-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  font-family: inherit;
+  transition: transform 0.1s, box-shadow 0.1s;
+  line-height: 1;
+}
+.detail-act-btn:active { transform: scale(0.95); }
+.detail-act-icon { font-size: 20px; }
+
+.detail-act-call { background: linear-gradient(145deg, #fff1f2, #fecdd3); color: #be123c; }
+.detail-act-call:hover { box-shadow: 0 3px 10px rgba(190,18,60,0.18); }
+.detail-act-map  { background: linear-gradient(145deg, #f0fdf4, #bbf7d0); color: #166534; }
+.detail-act-map:hover  { box-shadow: 0 3px 10px rgba(22,163,74,0.18); }
+.detail-act-nav  { background: linear-gradient(145deg, #eff6ff, #bfdbfe); color: #1e40af; }
+.detail-act-nav:hover  { box-shadow: 0 3px 10px rgba(37,99,235,0.18); }
+.detail-act-share { background: linear-gradient(145deg, #fafaf9, #f0ece8); color: #555; }
+.detail-act-share:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+
+/* 리뷰 쓰기 버튼 */
+.detail-review-write-btn {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  background: #ff7043;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-bottom: 18px;
+  transition: background 0.15s;
+}
+.detail-review-write-btn:hover { background: #f4511e; }
+
+.detail-section { margin-top: 16px; }
+.detail-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+  margin: 0 0 10px;
+}
+
+.detail-coming-soon {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #bbb;
+  padding: 10px;
+  border: 1px dashed #e8e2dc;
+  border-radius: 10px;
+}
