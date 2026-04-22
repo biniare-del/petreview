@@ -415,6 +415,21 @@ body[data-theme="grooming"] .search-name-input:focus { border-color: #ec4899; }
 }
 .region-toggle-btn:hover { border-color: #6b7280; background: #f3f4f6; }
 
+.region-inline-btn {
+  margin-left: auto;
+  padding: 5px 12px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.region-inline-btn:hover { border-color: #16a34a; color: #16a34a; }
+
 .region-search-panel {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -726,8 +741,9 @@ body[data-theme="grooming"] .search-name-input:focus { border-color: #ec4899; }
 /* 검색 결과 페이지네이션 */
 .sort-toggle {
   display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 8px 0 4px;
+  padding: 10px 0 6px;
 }
 
 .pet-select-btn {

@@ -272,6 +272,69 @@ function renderSearchPage(page) {
   });
 }
 
+// 검색 결과를 받아 즐겨찾기/정렬/렌더링까지 처리하는 공통 함수
+async function _applySearchResults(places) {
+  if (!places?.length) {
+    els.searchResults.innerHTML =
+      '<p class="placeholder-text">조건에 맞는 업체가 없어요. 다른 이름이나 지역으로 검색해 보세요.</p>';
+    if (els.sortToggle) els.sortToggle.style.display = "none";
+    return;
+  }
+  searchFacilities = places;
+  const db = window.supabaseClient;
+
+  // 우수협력병원/이벤트 고정 노출 카드
+  featuredPlaces = [];
+  if (db) {
+    try {
+      const { data: fp } = await db.from("featured_places")
+        .select("*").eq("category", selectedSearchCategory).eq("is_active", true).order("sort_order");
+      featuredPlaces = fp || [];
+    } catch { /* ignore */ }
+  }
+
+  // 즐겨찾기 수 집계
+  favCounts = {};
+  if (db) {
+    try {
+      const { data: favData } = await db.from("favorites").select("place_name")
+        .in("place_name", searchFacilities.map((p) => p.name));
+      (favData || []).forEach((f) => { favCounts[f.place_name] = (favCounts[f.place_name] || 0) + 1; });
+    } catch { /* ignore */ }
+  }
+
+  // 로그인 유저 즐겨찾기 목록
+  userFavs = new Set();
+  if (db && window.PetAuth?.isLoggedIn()) {
+    try {
+      const { data: ufData } = await db.from("favorites").select("place_name")
+        .eq("user_id", window.PetAuth.currentUser.id);
+      (ufData || []).forEach((f) => userFavs.add(f.place_name));
+    } catch { /* ignore */ }
+  }
+
+  // 정렬
+  if (searchSortMode === "fav") {
+    searchFacilities.sort((a, b) => {
+      const diff = (favCounts[b.name] || 0) - (favCounts[a.name] || 0);
+      return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
+    });
+  } else {
+    searchFacilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  }
+
+  if (els.sortToggle) {
+    els.sortToggle.style.display = "flex";
+    els.sortToggle.querySelectorAll(".sort-btn").forEach(btn => {
+      btn.classList.toggle("is-active", btn.dataset.sort === searchSortMode);
+    });
+  }
+
+  hasSearched = true;
+  renderSearchPage(1);
+}
+
+// 지역 기반 검색 (지역 필터 버튼에서 호출)
 async function renderSearchResults() {
   els.searchResults.innerHTML =
     '<p class="placeholder-text">업체 데이터를 불러오는 중...</p>';
@@ -284,87 +347,16 @@ async function renderSearchResults() {
     if (!window.PetReviewDataProvider?.searchPlaces) {
       throw new Error("PetReviewDataProvider.searchPlaces를 찾을 수 없습니다.");
     }
-    searchFacilities = await window.PetReviewDataProvider.searchPlaces({
+    const places = await window.PetReviewDataProvider.searchPlaces({
       category: selectedSearchCategory,
       regionKeyword,
     });
+    await _applySearchResults(places);
   } catch (err) {
     console.error(err);
     els.searchResults.innerHTML =
-      '<p class="placeholder-text">데이터를 불러오지 못했어요. (콘솔을 확인해 주세요)</p>';
-    return;
+      '<p class="placeholder-text">데이터를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>';
   }
-
-  if (!searchFacilities || searchFacilities.length === 0) {
-    els.searchResults.innerHTML =
-      '<p class="placeholder-text">조건에 맞는 업체가 없어요. 다른 지역/업종으로 검색해 보세요.</p>';
-    return;
-  }
-
-  const db = window.supabaseClient;
-
-  // 우수협력병원/이벤트 고정 노출 카드 (Supabase)
-  featuredPlaces = [];
-  if (db) {
-    try {
-      let q = db.from("featured_places")
-        .select("*")
-        .eq("category", selectedSearchCategory)
-        .eq("is_active", true)
-        .order("sort_order");
-      if (regionKeyword) q = q.eq("region", regionKeyword);
-      const { data: fp } = await q;
-      featuredPlaces = fp || [];
-    } catch { /* ignore */ }
-  }
-
-  // 즐겨찾기 수 집계
-  favCounts = {};
-  if (db) {
-    try {
-      const placeNames = searchFacilities.map((p) => p.name);
-      const { data: favData } = await db
-        .from("favorites")
-        .select("place_name")
-        .in("place_name", placeNames);
-      (favData || []).forEach((f) => {
-        favCounts[f.place_name] = (favCounts[f.place_name] || 0) + 1;
-      });
-    } catch { /* ignore */ }
-  }
-
-  // 로그인 유저의 즐겨찾기 목록
-  userFavs = new Set();
-  if (db && window.PetAuth?.isLoggedIn()) {
-    try {
-      const { data: ufData } = await db
-        .from("favorites")
-        .select("place_name")
-        .eq("user_id", window.PetAuth.currentUser.id);
-      (ufData || []).forEach((f) => userFavs.add(f.place_name));
-    } catch { /* ignore */ }
-  }
-
-  // 정렬 적용
-  if (searchSortMode === 'fav') {
-    searchFacilities.sort((a, b) => {
-      const diff = (favCounts[b.name] || 0) - (favCounts[a.name] || 0);
-      return diff !== 0 ? diff : a.name.localeCompare(b.name, "ko");
-    });
-  } else {
-    searchFacilities.sort((a, b) => a.name.localeCompare(b.name, "ko"));
-  }
-
-  // 정렬 토글 표시 및 활성 상태 갱신
-  if (els.sortToggle) {
-    els.sortToggle.style.display = 'flex';
-    els.sortToggle.querySelectorAll('.sort-btn').forEach(btn => {
-      btn.classList.toggle('is-active', btn.dataset.sort === searchSortMode);
-    });
-  }
-
-  hasSearched = true;
-  renderSearchPage(1);
 }
 
 function renderImagePreview(file, previewEl) {
@@ -854,16 +846,16 @@ function bindSearch() {
   // 지역 검색 버튼
   els.searchButton?.addEventListener("click", () => void renderSearchResults());
 
-  // 지역으로 찾기 토글
+  // 지역 필터 토글 (sort-toggle 안에 위치)
   const regionToggleBtn = document.getElementById("region-toggle-btn");
   const regionPanel = document.getElementById("region-search-panel");
   function toggleRegionPanel(forceClose) {
+    if (!regionPanel) return;
     const closing = forceClose ?? !regionPanel.hidden;
     regionPanel.hidden = closing;
-    regionToggleBtn.textContent = closing ? "🗺️ 지역으로 찾기" : "✕ 지역검색 닫기";
+    if (regionToggleBtn) regionToggleBtn.textContent = closing ? "🗺️ 지역 필터" : "✕ 닫기";
   }
   regionToggleBtn?.addEventListener("click", () => toggleRegionPanel());
-  document.getElementById("region-panel-close")?.addEventListener("click", () => toggleRegionPanel(true));
 
   // 이름 검색
   const nameInput = document.getElementById("search-name-input");
@@ -873,70 +865,122 @@ function bindSearch() {
   async function doNameSearch() {
     const q = nameInput?.value.trim();
     if (!q) return;
-    autocompleteList && (autocompleteList.hidden = true);
-    const results = document.getElementById("search-results");
-    if (results) results.innerHTML = '<p class="placeholder-text">검색 중...</p>';
-    document.getElementById("sort-toggle").style.display = "none";
+    if (autocompleteList) autocompleteList.hidden = true;
+    els.searchResults.innerHTML = '<p class="placeholder-text">검색 중...</p>';
+    if (els.sortToggle) els.sortToggle.style.display = "none";
 
     try {
       const cat = selectedSearchCategory;
-      const keyword = `${cat === "grooming" ? "펫미용 " : "동물병원 "}${q}`;
-      const res = await fetch(`https://petreview.vercel.app/api/facilities?category=${cat}&city=전국&region=&keyword=${encodeURIComponent(q)}`);
+      const res = await fetch(
+        `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(cat)}&city=전국&region=&keyword=${encodeURIComponent(q)}`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json();
       const places = data.results || [];
-
       if (!places.length) {
-        if (results) results.innerHTML = `<p class="placeholder-text">"${q}" 검색 결과가 없습니다. 다른 이름으로 찾아보세요.</p>`;
+        els.searchResults.innerHTML = `<p class="placeholder-text">"${escapeHtml(q)}" 검색 결과가 없어요. 다른 이름으로 찾아보세요.</p>`;
         return;
       }
-      searchFacilities = places;
-      hasSearched = true;
-      document.getElementById("sort-toggle").style.display = "";
-      renderSearchResults();
+      await _applySearchResults(places);
     } catch {
-      if (results) results.innerHTML = '<p class="placeholder-text">검색 중 오류가 발생했습니다.</p>';
+      els.searchResults.innerHTML = '<p class="placeholder-text">검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>';
     }
   }
 
   nameBtn?.addEventListener("click", doNameSearch);
   nameInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") doNameSearch(); });
 
-  // 이름 검색 자동완성
+  // 이름 검색 자동완성 (Kakao API + Supabase 병합)
   let acTimer;
+  let acCurrentQuery = "";
+
+  async function runNameAutocomplete(q) {
+    if (!autocompleteList) return;
+    acCurrentQuery = q;
+    const cat = selectedSearchCategory;
+    const db = window.supabaseClient;
+
+    // Supabase 결과 즉시 표시 (빠름)
+    let supabaseItems = [];
+    if (db) {
+      try {
+        const { data } = await db.from("reviews").select("place_name, region, category")
+          .eq("category", cat).ilike("place_name", `%${q}%`).limit(5);
+        const seen = new Set();
+        supabaseItems = (data || []).reduce((acc, r) => {
+          if (!seen.has(r.place_name)) {
+            seen.add(r.place_name);
+            acc.push({ name: r.place_name, region: r.region, address: "", hasReview: true });
+          }
+          return acc;
+        }, []);
+      } catch { /* ignore */ }
+    }
+    if (q !== acCurrentQuery) return;
+    if (supabaseItems.length) showAcResults(supabaseItems, q);
+
+    // Kakao API 결과 추가 (약간 늦을 수 있음)
+    try {
+      const res = await fetch(
+        `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(cat)}&city=전국&region=&keyword=${encodeURIComponent(q)}`,
+        { signal: AbortSignal.timeout(4000) }
+      );
+      if (!res.ok) throw new Error("api error");
+      const data = await res.json();
+      const kakaoItems = (data.results || []).slice(0, 6);
+      if (q !== acCurrentQuery) return;
+      if (!kakaoItems.length && !supabaseItems.length) {
+        autocompleteList.innerHTML = `<li style="padding:10px 14px;color:#aaa;font-size:13px;">검색 결과가 없어요</li>`;
+        autocompleteList.hidden = false;
+        return;
+      }
+      if (!kakaoItems.length) return;
+      // Supabase 결과에 hasReview 플래그 추가하며 병합
+      const reviewedNames = new Set(supabaseItems.map((p) => p.name));
+      const merged = kakaoItems.map((p) => ({ ...p, hasReview: reviewedNames.has(p.name) }));
+      const supabaseOnly = supabaseItems.filter((p) => !merged.some((m) => m.name === p.name));
+      const combined = [...merged, ...supabaseOnly];
+      combined.sort((a, b) => (b.hasReview ? 1 : 0) - (a.hasReview ? 1 : 0));
+      showAcResults(combined, q);
+    } catch { /* ignore, show supabase results only */ }
+  }
+
+  function showAcResults(places, keyword) {
+    if (!autocompleteList || !places.length) return;
+    autocompleteList.innerHTML = places.slice(0, 7).map((p) => {
+      const idx = p.name.toLowerCase().indexOf(keyword.toLowerCase());
+      const nameParts = idx === -1
+        ? escapeHtml(p.name)
+        : escapeHtml(p.name.slice(0, idx)) + `<mark class="autocomplete-highlight">${escapeHtml(p.name.slice(idx, idx + keyword.length))}</mark>` + escapeHtml(p.name.slice(idx + keyword.length));
+      const meta = p.address || p.region || "";
+      const badge = p.hasReview ? `<span class="autocomplete-review-badge">리뷰 있음</span>` : "";
+      return `<li data-name="${escapeHtml(p.name)}" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;">
+        <div style="font-weight:600;font-size:14px;">${nameParts}${badge}</div>
+        ${meta ? `<div style="font-size:12px;color:#aaa;margin-top:2px;">${escapeHtml(meta)}</div>` : ""}
+      </li>`;
+    }).join("");
+    autocompleteList.hidden = false;
+    autocompleteList.querySelectorAll("li").forEach((li) => {
+      li.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        nameInput.value = li.dataset.name;
+        autocompleteList.hidden = true;
+        doNameSearch();
+      });
+    });
+  }
+
   nameInput?.addEventListener("input", () => {
     clearTimeout(acTimer);
     const q = nameInput.value.trim();
     if (q.length < 2) { autocompleteList && (autocompleteList.hidden = true); return; }
-    acTimer = setTimeout(() => void runNameAutocomplete(q), 300);
+    acTimer = setTimeout(() => void runNameAutocomplete(q), 200);
   });
   nameInput?.addEventListener("blur", () => setTimeout(() => { if (autocompleteList) autocompleteList.hidden = true; }, 200));
   nameInput?.addEventListener("focus", () => {
-    if (nameInput.value.trim().length >= 2) runNameAutocomplete(nameInput.value.trim());
+    if (nameInput.value.trim().length >= 2) void runNameAutocomplete(nameInput.value.trim());
   });
-
-  async function runNameAutocomplete(q) {
-    try {
-      const cat = selectedSearchCategory;
-      const res = await fetch(`https://petreview.vercel.app/api/facilities?category=${cat}&city=전국&region=&keyword=${encodeURIComponent(q)}`);
-      const data = await res.json();
-      const places = (data.results || []).slice(0, 6);
-      if (!places.length || !autocompleteList) return;
-      autocompleteList.innerHTML = places.map((p) =>
-        `<li data-name="${escapeHtml(p.name)}" data-addr="${escapeHtml(p.address || "")}" style="display:flex;flex-direction:column;padding:10px 14px;cursor:pointer;">
-          <span style="font-weight:600;font-size:14px;">${escapeHtml(p.name)}</span>
-          <span style="font-size:12px;color:#aaa;">${escapeHtml(p.address || p.region || "")}</span>
-        </li>`
-      ).join("");
-      autocompleteList.hidden = false;
-      autocompleteList.querySelectorAll("li").forEach((li) => {
-        li.addEventListener("mousedown", () => {
-          nameInput.value = li.dataset.name;
-          autocompleteList.hidden = true;
-          doNameSearch();
-        });
-      });
-    } catch { /* ignore */ }
-  }
 }
 
 // ===== 지도 뷰 =====
@@ -1005,41 +1049,28 @@ function renderSearchMap(places) {
     map.setBounds(bounds);
   }
 
-  if (window.kakao && window.kakao.maps && window.kakao.maps.Map) {
+  if (window.kakao?.maps?.Map) {
     initMap();
-  } else if (window.kakao && window.kakao.maps) {
+  } else if (window.kakao?.maps) {
     kakao.maps.load(initMap);
   } else {
-    container.innerHTML = '<p class="placeholder-text" style="padding:40px;text-align:center;">카카오 지도 SDK를 불러오는 중...</p>';
+    container.innerHTML = '<p class="placeholder-text" style="padding:40px;text-align:center;">지도를 불러오는 중...</p>';
     const check = setInterval(() => {
-      if (window.kakao?.maps?.Map) { clearInterval(check); initMap(); }
+      if (window.kakao?.maps?.Map) {
+        clearInterval(check);
+        initMap();
+      } else if (window.kakao?.maps) {
+        // autoload=false SDK — 명시적 load() 호출 필요
+        clearInterval(check);
+        kakao.maps.load(initMap);
+      }
     }, 300);
-    setTimeout(() => clearInterval(check), 10000);
+    setTimeout(() => { clearInterval(check); }, 10000);
   }
 }
 
 function bindViewToggle() {
-  const listBtn = document.getElementById("view-list-btn");
-  const mapBtn = document.getElementById("view-map-btn");
-  const resultsEl = document.getElementById("search-results");
-  const mapEl = document.getElementById("search-map-container");
-  if (!listBtn || !mapBtn || !resultsEl || !mapEl) return;
-
-  listBtn.addEventListener("click", () => {
-    listBtn.classList.add("is-active");
-    mapBtn.classList.remove("is-active");
-    resultsEl.hidden = false;
-    mapEl.hidden = true;
-  });
-
-  mapBtn.addEventListener("click", () => {
-    if (!hasSearched || !searchFacilities.length) return;
-    mapBtn.classList.add("is-active");
-    listBtn.classList.remove("is-active");
-    resultsEl.hidden = true;
-    mapEl.hidden = false;
-    renderSearchMap();
-  });
+  // 목록/지도 토글 제거됨 — 항상 목록 표시
 }
 
 async function initGeolocation() {
