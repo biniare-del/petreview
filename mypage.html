@@ -306,94 +306,101 @@
 
   <!-- 건강기록 모달 -->
   <div class="modal-overlay" id="health-modal" hidden>
-    <div class="modal pet-modal" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal health-modal">
       <button class="modal-close" id="health-modal-close">✕</button>
-      <h2 class="modal-title" style="font-size:18px;" id="health-modal-title">건강기록</h2>
 
-      <!-- 체중 기록 -->
-      <div style="margin-top:20px;">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px;color:#444;">⚖️ 체중 기록</h3>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-          <input type="number" id="weight-input" placeholder="kg (예: 3.5)" min="0" max="200" step="0.1"
-            style="flex:1;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <input type="date" id="weight-date-input"
-            style="flex:1;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <button id="weight-add-btn" class="primary-btn" style="padding:8px 14px;white-space:nowrap;">추가</button>
+      <!-- 펫 헤더 -->
+      <div class="health-pet-header">
+        <div class="health-pet-avatar" id="health-pet-avatar"></div>
+        <div>
+          <h2 class="health-pet-name" id="health-modal-title"></h2>
+          <p class="health-pet-meta" id="health-pet-meta"></p>
+        </div>
+      </div>
+
+      <!-- 탭 네비게이션 -->
+      <div class="health-tabs">
+        <button class="health-tab is-active" data-htab="weight">⚖️ 체중</button>
+        <button class="health-tab" data-htab="visit">🏥 진료이력</button>
+        <button class="health-tab" data-htab="medication">💊 처방·투약</button>
+        <button class="health-tab" data-htab="vaccine">💉 예방접종</button>
+      </div>
+
+      <!-- 체중 탭 -->
+      <div class="health-tab-panel is-active" id="htab-weight">
+        <div class="health-latest-box" id="health-latest-weight" hidden></div>
+        <div class="health-input-group">
+          <input type="number" id="weight-input" placeholder="체중 (kg)" min="0" max="200" step="0.1" class="health-input" />
+          <input type="date" id="weight-date-input" class="health-input" />
+          <button id="weight-add-btn" class="health-add-btn">기록</button>
         </div>
         <div id="weight-log-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
       </div>
 
-      <!-- 진료 이력 -->
-      <div style="margin-top:24px;border-top:1px solid #f0e8e2;padding-top:20px;">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px;color:#444;">🏥 진료 이력</h3>
+      <!-- 진료이력 탭 -->
+      <div class="health-tab-panel" id="htab-visit">
+        <p class="health-hint">리뷰 작성 시 반려동물을 선택하면 이력이 자동으로 쌓여요.</p>
         <div id="pet-visit-list"><p class="placeholder-text" style="padding:12px 0;">불러오는 중...</p></div>
       </div>
 
-      <!-- 진료/처방 메모 (C3) -->
-      <div style="margin-top:24px;border-top:1px solid #f0e8e2;padding-top:20px;">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px;color:#444;">💊 진료/처방 메모</h3>
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-          <input type="date" id="health-note-date"
-            style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <input type="text" id="health-note-content" placeholder="예: 피부염 연고 처방, 항생제 5일치" maxlength="200"
-            style="flex:3;min-width:160px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <button id="health-note-add-btn" class="primary-btn" style="padding:8px 14px;white-space:nowrap;">추가</button>
-        </div>
-        <div id="health-note-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
-      </div>
-
-      <!-- 심장사상충 알림설정 (C4) -->
-      <div style="margin-top:24px;border-top:1px solid #f0e8e2;padding-top:20px;">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 6px;color:#444;">🦟 심장사상충 알림설정</h3>
-        <p style="font-size:12px;color:#aaa;margin:0 0 12px;">투약일 기록 시 다음 투약일(+30일) 푸시 알림이 설정됩니다.</p>
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
-          <input type="date" id="heartworm-date"
-            style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <select id="heartworm-product"
-            style="flex:2;min-width:140px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;background:#fff;">
-            <option value="">제품 선택 (선택사항)</option>
-            <option value="하트가드">하트가드</option>
-            <option value="레볼루션">레볼루션</option>
-            <option value="브로드라인">브로드라인</option>
-            <option value="넥스가드 스펙트라">넥스가드 스펙트라</option>
-            <option value="심플리세라">심플리세라</option>
-            <option value="파나쿠어">파나쿠어</option>
-            <option value="기타">기타 (직접입력)</option>
-          </select>
-          <button id="heartworm-add-btn" class="primary-btn" style="padding:8px 14px;white-space:nowrap;">추가</button>
-        </div>
-        <div id="heartworm-etc-wrap" hidden style="margin-bottom:10px;">
-          <input type="text" id="heartworm-content" placeholder="제품명을 입력해주세요" maxlength="100"
-            style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-        </div>
-        <div id="heartworm-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
-      </div>
-
-      <!-- 예방접종 (C5) -->
-      <div style="margin-top:24px;border-top:1px solid #f0e8e2;padding-top:20px;">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 6px;color:#444;">💉 예방접종</h3>
-        <p style="font-size:12px;color:#aaa;margin:0 0 10px;">접종일 기록 시 다음 접종일(+1년) 푸시 알림이 설정됩니다.</p>
-
-        <!-- 기본 백신 빠른 추가 -->
-        <div style="margin-bottom:12px;">
-          <p style="font-size:12px;font-weight:600;color:#666;margin:0 0 6px;">자주 맞는 백신 빠른 추가</p>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="vaccine-preset-btns">
-            <button type="button" class="vaccine-preset-btn" data-name="DHPPL(종합백신)">DHPPL</button>
-            <button type="button" class="vaccine-preset-btn" data-name="광견병">광견병</button>
-            <button type="button" class="vaccine-preset-btn" data-name="켄넬코프">켄넬코프</button>
-            <button type="button" class="vaccine-preset-btn" data-name="코로나">코로나</button>
-            <button type="button" class="vaccine-preset-btn" data-name="인플루엔자">인플루엔자</button>
+      <!-- 처방·투약 탭 -->
+      <div class="health-tab-panel" id="htab-medication">
+        <div class="health-section">
+          <h4 class="health-section-title">📋 진료·처방 메모</h4>
+          <div class="health-input-group">
+            <input type="date" id="health-note-date" class="health-input" style="flex:0 0 130px;" />
+            <input type="text" id="health-note-content" placeholder="예: 피부염 연고, 항생제 5일치" maxlength="200" class="health-input" />
+            <button id="health-note-add-btn" class="health-add-btn">추가</button>
           </div>
+          <div id="health-note-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
         </div>
 
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-          <input type="date" id="vaccine-date"
-            style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <input type="text" id="vaccine-content" placeholder="백신명을 입력해주세요" maxlength="100"
-            style="flex:2;min-width:120px;padding:8px 10px;border:1px solid #e0d7d2;border-radius:10px;font-size:14px;outline:none;" />
-          <button id="vaccine-add-btn" class="primary-btn" style="padding:8px 14px;white-space:nowrap;">추가</button>
+        <div class="health-section" style="margin-top:24px;padding-top:20px;border-top:1px solid #f0e8e2;">
+          <h4 class="health-section-title">🦟 심장사상충</h4>
+          <p class="health-hint">투약일 기록 시 다음 투약일(+30일) 알림이 설정됩니다.</p>
+          <div class="health-input-group">
+            <input type="date" id="heartworm-date" class="health-input" style="flex:0 0 130px;" />
+            <select id="heartworm-product" class="health-input">
+              <option value="">제품 선택 (선택사항)</option>
+              <option value="하트가드">하트가드</option>
+              <option value="레볼루션">레볼루션</option>
+              <option value="브로드라인">브로드라인</option>
+              <option value="넥스가드 스펙트라">넥스가드 스펙트라</option>
+              <option value="심플리세라">심플리세라</option>
+              <option value="파나쿠어">파나쿠어</option>
+              <option value="기타">기타 (직접입력)</option>
+            </select>
+            <button id="heartworm-add-btn" class="health-add-btn">추가</button>
+          </div>
+          <div id="heartworm-etc-wrap" hidden style="margin-bottom:10px;">
+            <input type="text" id="heartworm-content" placeholder="제품명을 입력해주세요" maxlength="100" class="health-input" style="width:100%;box-sizing:border-box;" />
+          </div>
+          <div id="heartworm-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
         </div>
-        <div id="vaccine-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
+      </div>
+
+      <!-- 예방접종 탭 -->
+      <div class="health-tab-panel" id="htab-vaccine">
+        <div class="health-section">
+          <h4 class="health-section-title">💉 예방접종</h4>
+          <p class="health-hint">접종일 기록 시 다음 접종일(+1년) 알림이 설정됩니다.</p>
+          <div class="health-preset-wrap">
+            <span class="health-preset-label">빠른 추가</span>
+            <div id="vaccine-preset-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+              <button type="button" class="vaccine-preset-btn" data-name="DHPPL(종합백신)">DHPPL</button>
+              <button type="button" class="vaccine-preset-btn" data-name="광견병">광견병</button>
+              <button type="button" class="vaccine-preset-btn" data-name="켄넬코프">켄넬코프</button>
+              <button type="button" class="vaccine-preset-btn" data-name="코로나">코로나</button>
+              <button type="button" class="vaccine-preset-btn" data-name="인플루엔자">인플루엔자</button>
+            </div>
+          </div>
+          <div class="health-input-group" style="margin-top:10px;">
+            <input type="date" id="vaccine-date" class="health-input" style="flex:0 0 130px;" />
+            <input type="text" id="vaccine-content" placeholder="백신명" maxlength="100" class="health-input" />
+            <button id="vaccine-add-btn" class="health-add-btn">추가</button>
+          </div>
+          <div id="vaccine-list"><p class="placeholder-text" style="padding:12px 0;">기록이 없습니다.</p></div>
+        </div>
       </div>
     </div>
   </div>

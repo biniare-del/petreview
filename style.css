@@ -2926,3 +2926,170 @@ body[data-theme="grooming"] .place-phone-link {
   color: #fff;
   border-color: #16a34a;
 }
+
+/* ===== 건강기록 모달 ===== */
+.health-modal {
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+}
+.health-pet-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0e8e2;
+}
+.health-pet-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #ffe1d5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.health-pet-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.health-pet-name {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2a2520;
+}
+.health-pet-meta {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.7;
+}
+.health-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #f0e8e2;
+}
+.health-tab {
+  flex: 1;
+  padding: 9px 4px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  text-align: center;
+}
+.health-tab:hover { color: #ff8a65; }
+.health-tab.is-active { color: #ff7043; border-bottom-color: #ff7043; }
+.health-tab-panel { display: none; }
+.health-tab-panel.is-active { display: block; }
+.health-input-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.health-input {
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid #e0d7d2;
+  border-radius: 10px;
+  background: #fffdfb;
+  outline: none;
+  flex: 1;
+  min-width: 80px;
+  box-sizing: border-box;
+}
+.health-input:focus { border-color: #ff8a65; }
+.health-add-btn {
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #ff8a65, #ff7043);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.health-add-btn:disabled { opacity: 0.6; }
+.health-latest-box {
+  background: #fff8f5;
+  border: 1px solid #ffe1d5;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #555;
+}
+.health-hint {
+  font-size: 12px;
+  color: #aaa;
+  margin: 0 0 10px;
+}
+.health-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2a2520;
+  margin: 0 0 8px;
+}
+.health-preset-wrap { margin-bottom: 8px; }
+.health-preset-label { font-size: 11px; color: #aaa; font-weight: 600; }
+.vaccine-preset-btn {
+  padding: 4px 10px;
+  border: 1.5px solid #d1fae5;
+  border-radius: 999px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.vaccine-preset-btn:hover { background: #d1fae5; border-color: #22c55e; }
+.birthday-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff0f7;
+  color: #ec4899;
+  margin-top: 4px;
+}
+.birthday-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 9999;
+  box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4);
+  max-width: 320px;
+  text-align: center;
+  animation: slideUpToast 0.3s ease;
+}
+@keyframes slideUpToast {
+  from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}

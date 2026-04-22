@@ -21,6 +21,27 @@
     return `${Math.floor(totalMonths / 12)}세`;
   }
 
+  function calcBirthdayDday(birthDate) {
+    if (!birthDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const birth = new Date(birthDate);
+    const next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+    if (next < today) next.setFullYear(today.getFullYear() + 1);
+    const diff = Math.ceil((next - today) / 86400000);
+    if (diff === 0) return "🎂 오늘 생일!";
+    if (diff <= 30) return `🎂 D-${diff}`;
+    return null;
+  }
+
+  function showBirthdayToast(petName) {
+    const toast = document.createElement("div");
+    toast.className = "birthday-toast";
+    toast.textContent = `🎂 ${petName}의 생일이에요! 오늘 특별한 하루 보내세요 🎉`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+  }
+
   function speciesEmoji(species) {
     if (species === "강아지") return "🐕";
     if (species === "고양이") return "🐈";
@@ -308,8 +329,11 @@
     apptPets = (data || []).map((p) => ({ id: p.id, name: p.name }));
     loadUpcomingAppointments();
 
+    const birthdayToday = [];
+
     const cards = (data || []).map((pet) => {
       const age = calcAge(pet.birth_date);
+      const birthdayDday = calcBirthdayDday(pet.birth_date);
       const infoLines = [
         pet.species && pet.breed ? `${escapeHtml(pet.species)} · ${escapeHtml(pet.breed)}` : escapeHtml(pet.species ?? ""),
         [pet.gender ? escapeHtml(pet.gender) : "", pet.is_neutered != null ? (pet.is_neutered ? "중성화 완료" : "중성화 미완료") : ""].filter(Boolean).join(" · "),
@@ -318,12 +342,15 @@
         pet.notes ? escapeHtml(pet.notes) : "",
       ].filter(Boolean);
 
+      if (birthdayDday === "🎂 오늘 생일!") birthdayToday.push(pet.name);
+
       return `
       <div class="pet-card" data-pet-id="${escapeHtml(pet.id)}">
         <div class="pet-avatar">
           ${pet.photo_url ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />` : speciesEmoji(pet.species)}
         </div>
         <h4>${escapeHtml(pet.name)}</h4>
+        ${birthdayDday ? `<span class="birthday-badge">${birthdayDday}</span>` : ""}
         ${infoLines.map((l) => `<p>${l}</p>`).join("")}
         ${pet.registration_no ? `<p style="font-size:11px;color:#bbb;">등록번호: ${escapeHtml(pet.registration_no)}</p>` : ""}
         <div class="card-actions" style="justify-content:center;margin-top:10px;flex-direction:column;gap:6px;">
@@ -382,6 +409,11 @@
     }
 
     document.getElementById("add-pet-btn")?.addEventListener("click", () => openPetModal(null));
+
+    // 생일 토스트 (오늘 생일인 펫만)
+    birthdayToday.forEach((name, i) => {
+      setTimeout(() => showBirthdayToast(name), i * 1500);
+    });
   }
 
   // ===== 펫 모달 =====
@@ -633,27 +665,48 @@
 
   function openHealthModal(pet) {
     currentHealthPet = pet;
-    document.getElementById("health-modal-title").textContent = `${pet.name}의 건강기록`;
-    document.getElementById("health-modal").hidden = false;
-    // 날짜 기본값 = 오늘, 미래 날짜 선택 불가
-    const dateInput = document.getElementById("weight-date-input");
-    if (dateInput) {
-      const today = new Date().toISOString().split("T")[0];
-      dateInput.value = today;
-      dateInput.max = today;
+
+    // 펫 헤더
+    const avatarEl = document.getElementById("health-pet-avatar");
+    if (avatarEl) {
+      avatarEl.innerHTML = pet.photo_url
+        ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />`
+        : speciesEmoji(pet.species);
     }
+    document.getElementById("health-modal-title").textContent = pet.name;
+    const metaEl = document.getElementById("health-pet-meta");
+    if (metaEl) {
+      const parts = [];
+      if (pet.species) parts.push(pet.species);
+      if (pet.breed) parts.push(pet.breed);
+      const age = calcAge(pet.birth_date);
+      if (age) parts.push(age);
+      const dday = calcBirthdayDday(pet.birth_date);
+      if (dday) parts.push(dday);
+      if (pet.is_neutered != null) parts.push(pet.is_neutered ? "중성화 완료" : "중성화 미완료");
+      metaEl.textContent = parts.join(" · ");
+    }
+
+    // 첫 번째 탭(체중)으로 초기화
+    document.querySelectorAll(".health-tab").forEach((t, i) => t.classList.toggle("is-active", i === 0));
+    document.querySelectorAll(".health-tab-panel").forEach((p, i) => p.classList.toggle("is-active", i === 0));
+
+    document.getElementById("health-modal").hidden = false;
+
+    // 날짜 기본값 = 오늘, 미래 날짜 선택 불가
+    const today = new Date().toISOString().split("T")[0];
+    const weightDateInput = document.getElementById("weight-date-input");
+    if (weightDateInput) { weightDateInput.value = today; weightDateInput.max = today; }
+    ["health-note-date", "heartworm-date", "vaccine-date"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = today; el.max = today; }
+    });
+
     loadWeightLogs(pet.id);
     loadPetVisitHistory(pet.name);
     loadHealthRecords(pet.id, "진료메모", "health-note-list");
     loadHealthRecords(pet.id, "심장사상충", "heartworm-list");
     loadHealthRecords(pet.id, "예방접종", "vaccine-list");
-
-    // 날짜 기본값 = 오늘
-    const today = new Date().toISOString().split("T")[0];
-    ["health-note-date", "heartworm-date", "vaccine-date"].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.value = today; el.max = today; }
-    });
   }
 
   function closeHealthModal() {
@@ -671,9 +724,16 @@
       .order("recorded_at", { ascending: false })
       .limit(20);
 
+    const latestBox = document.getElementById("health-latest-weight");
     if (error || !data?.length) {
+      if (latestBox) latestBox.hidden = true;
       container.innerHTML = '<p class="placeholder-text" style="padding:12px 0;">체중 기록이 없습니다.</p>';
       return;
+    }
+
+    if (latestBox) {
+      latestBox.hidden = false;
+      latestBox.innerHTML = `최근 체중: <strong style="color:#ff7043;font-size:16px;">${data[0].weight} kg</strong> <span style="font-size:11px;color:#aaa;">(${data[0].recorded_at})</span>`;
     }
 
     container.innerHTML = `
@@ -812,7 +872,20 @@
     loadHealthRecords(currentHealthPet.id, recordType, listId);
   }
 
+  function bindHealthTabs() {
+    document.querySelectorAll(".health-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".health-tab").forEach(t => t.classList.remove("is-active"));
+        document.querySelectorAll(".health-tab-panel").forEach(p => p.classList.remove("is-active"));
+        tab.classList.add("is-active");
+        const panel = document.getElementById("htab-" + tab.dataset.htab);
+        if (panel) panel.classList.add("is-active");
+      });
+    });
+  }
+
   function bindHealthModal() {
+    bindHealthTabs();
     document.getElementById("health-modal-close")?.addEventListener("click", closeHealthModal);
     document.getElementById("health-modal")?.addEventListener("click", (e) => {
       if (e.target === e.currentTarget) closeHealthModal();
