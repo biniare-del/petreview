@@ -1152,6 +1152,13 @@ function bindTabBar() {
     tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === tabName));
   }
 
+  function scrollToEl(el) {
+    if (!el) return;
+    const headerH = document.querySelector(".site-header")?.offsetHeight || 50;
+    const top = el.getBoundingClientRect().top + window.scrollY - headerH - 8;
+    window.scrollTo({ top, behavior: "smooth" });
+  }
+
   document.querySelector('.tab-item[data-tab="home"]')?.addEventListener("click", () => {
     setActive("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1159,14 +1166,14 @@ function bindTabBar() {
 
   document.querySelector('.tab-item[data-tab="search"]')?.addEventListener("click", () => {
     setActive("search");
-    document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToEl(document.getElementById("search-section"));
   });
 
   document.querySelector('.tab-item[data-tab="write"]')?.addEventListener("click", () => {
     setActive("write");
     const userId = window.PetAuth?.currentUser?.id;
     if (!userId) { openLoginModal(); return; }
-    document.getElementById("review-form-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToEl(document.getElementById("review-form-section"));
   });
 
   document.querySelector('.tab-item[data-tab="community"]')?.addEventListener("click", () => {
