@@ -92,25 +92,12 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="logo-area">
-      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
-        <div class="logo-icon">🐾</div>
-        <div class="logo-text">
-          <h1>펫리뷰</h1>
-          <p>영수증으로 인증하는 진짜 동물병원·미용샵 리뷰</p>
-        </div>
-      </a>
-    </div>
-    <nav class="site-nav">
-      <a href="index.html">홈으로</a>
-    </nav>
+    <a href="index.html" class="logo-area" style="text-decoration:none;color:inherit;">
+      <div class="logo-icon">🐾</div>
+      <div class="logo-text"><h1>펫리뷰</h1></div>
+    </a>
     <div class="header-auth" id="header-auth">
       <button class="auth-login-btn" id="login-btn">로그인</button>
-    </div>
-    <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
-    <div class="header-mobile-nav" id="header-mobile-nav">
-      <a href="index.html" class="mobile-nav-link">홈으로</a>
-      <div id="mobile-auth-content"></div>
     </div>
   </header>
 
@@ -124,16 +111,16 @@
       <p style="margin:0;font-size:14px;color:#888;" id="mypage-greeting"></p>
 
       <div class="mypage-tabs">
-        <button class="mypage-tab is-active" data-tab="reviews">내 리뷰</button>
+        <button class="mypage-tab is-active" data-tab="pets">🐾 마이펫</button>
+        <button class="mypage-tab" data-tab="reviews">내 리뷰</button>
         <button class="mypage-tab" data-tab="favorites">단골병원</button>
-        <button class="mypage-tab" data-tab="pets">마이펫</button>
         <button class="mypage-tab" data-tab="myposts">내 글</button>
         <button class="mypage-tab" data-tab="mycomments">내 댓글</button>
         <button class="mypage-tab" data-tab="profile">프로필</button>
       </div>
 
       <!-- 내 리뷰 -->
-      <div class="mypage-panel is-active" id="panel-reviews">
+      <div class="mypage-panel" id="panel-reviews">
         <div id="my-reviews-list"><p class="placeholder-text">불러오는 중...</p></div>
       </div>
 
@@ -143,7 +130,7 @@
       </div>
 
       <!-- 마이펫 -->
-      <div class="mypage-panel" id="panel-pets">
+      <div class="mypage-panel is-active" id="panel-pets">
         <!-- 다가오는 예약 -->
         <div id="upcoming-appts-section" style="margin-bottom:20px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">

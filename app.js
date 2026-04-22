@@ -1154,12 +1154,19 @@ function bindTabBar() {
 
   document.querySelector('.tab-item[data-tab="home"]')?.addEventListener("click", () => {
     setActive("home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  document.querySelector('.tab-item[data-tab="search"]')?.addEventListener("click", () => {
+    setActive("search");
     document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  document.querySelector('.tab-item[data-tab="reviews"]')?.addEventListener("click", () => {
-    setActive("reviews");
-    document.getElementById("review-list-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.querySelector('.tab-item[data-tab="write"]')?.addEventListener("click", () => {
+    setActive("write");
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!userId) { openLoginModal(); return; }
+    document.getElementById("review-form-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   document.querySelector('.tab-item[data-tab="community"]')?.addEventListener("click", () => {
@@ -1170,19 +1177,19 @@ function bindTabBar() {
     window.location.href = "mypage.html";
   });
 
-  // 스크롤 위치에 따라 홈/후기 자동 전환
-  const reviewSection = document.getElementById("review-list-section");
-  if (reviewSection) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          setActive(entry.isIntersecting ? "reviews" : "home");
-        });
-      },
-      { threshold: 0.15 }
-    );
-    observer.observe(reviewSection);
-  }
+  // 스크롤 위치에 따라 탭 자동 전환
+  const sections = [
+    { el: document.getElementById("review-list-section"), tab: "reviews" },
+    { el: document.getElementById("review-form-section"), tab: "write" },
+    { el: document.getElementById("search-section"), tab: "search" },
+  ];
+  sections.forEach(({ el, tab }) => {
+    if (!el) return;
+    new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) setActive(tab); },
+      { threshold: 0.3 }
+    ).observe(el);
+  });
 }
 
 function bindStarSelects() {
@@ -1812,17 +1819,20 @@ async function loadPetGreeting() {
     const nickRaw = window.PetAuth.getDisplayName?.() || "";
     const nick = nickRaw ? escapeHtml(nickRaw) : "보호자";
 
-    const quickLinks = `<div class="greeting-quick-links">
-      <a href="mypage.html#favorites" class="greeting-quick-btn" onclick="event.stopPropagation()">⭐ 단골병원</a>
-      <a href="mypage.html" class="greeting-quick-btn" onclick="event.stopPropagation()">🐾 마이페이지</a>
+    const quickLinks = `<div class="care-hub-actions" onclick="event.stopPropagation()">
+      <button class="care-hub-btn" onclick="document.querySelector('.tab-item[data-tab=search]')?.click()">🏥 병원찾기</button>
+      <button class="care-hub-btn" onclick="window.location.href='mypage.html?tab=pets'">💊 건강기록</button>
+      <button class="care-hub-btn" onclick="document.querySelector('.tab-item[data-tab=write]')?.click()">✏️ 후기쓰기</button>
     </div>`;
 
     if (!pets?.length) {
       avatarEl.innerHTML = `<span>🐾</span>`;
       textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>!<br>
-        <span style="color:#16a34a;font-weight:600;">반려동물을 등록하면 건강기록을 관리할 수 있어요</span>
-        <a href="mypage.html#pets" style="display:inline-block;margin-top:4px;padding:4px 12px;background:#16a34a;color:#fff;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none;" onclick="event.stopPropagation()">+ 마이펫 등록</a>
-        ${quickLinks}`;
+        <span>반려동물을 등록하면 건강기록을 관리할 수 있어요</span>
+        <div class="care-hub-actions" style="margin-top:10px;" onclick="event.stopPropagation()">
+          <a href="mypage.html?tab=pets" class="care-hub-btn" style="text-decoration:none;">🐾 마이펫 등록</a>
+          <button class="care-hub-btn" onclick="document.querySelector('.tab-item[data-tab=search]')?.click()">🏥 병원찾기</button>
+        </div>`;
       greetingEl.hidden = false;
       return;
     }

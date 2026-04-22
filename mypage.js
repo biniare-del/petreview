@@ -45,10 +45,11 @@
       });
     });
 
-    // URL 해시로 탭 직접 이동 (예: mypage.html#pets)
-    const hash = window.location.hash.replace("#", "");
-    if (hash) {
-      const targetBtn = document.querySelector(`.mypage-tab[data-tab="${hash}"]`);
+    // URL 쿼리(?tab=pets) 또는 해시(#pets)로 탭 직접 이동
+    const urlTab = new URLSearchParams(window.location.search).get("tab")
+      || window.location.hash.replace("#", "");
+    if (urlTab) {
+      const targetBtn = document.querySelector(`.mypage-tab[data-tab="${urlTab}"]`);
       if (targetBtn) targetBtn.click();
     }
   }
@@ -1091,7 +1092,7 @@
     bindApptModal();
     bindProfile();
     bindPushNotification();
-    await loadMyReviews();
+    await loadPets();
   }
 
   // ===== 푸시 알림 =====

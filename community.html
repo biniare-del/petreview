@@ -362,25 +362,12 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="logo-area">
-      <a href="index.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;">
-        <div class="logo-icon">🐾</div>
-        <div class="logo-text">
-          <h1>펫리뷰</h1>
-          <p>영수증으로 인증하는 진짜 동물병원·미용샵 리뷰</p>
-        </div>
-      </a>
-    </div>
-    <nav class="site-nav">
-      <a href="index.html">홈으로</a>
-    </nav>
+    <a href="index.html" class="logo-area" style="text-decoration:none;color:inherit;">
+      <div class="logo-icon">🐾</div>
+      <div class="logo-text"><h1>펫리뷰</h1></div>
+    </a>
     <div class="header-auth" id="header-auth">
       <button class="auth-login-btn" onclick="window.PetAuth?.signInWithGoogle()">로그인</button>
-    </div>
-    <button class="header-hamburger-btn" id="header-hamburger-btn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
-    <div class="header-mobile-nav" id="header-mobile-nav">
-      <a href="index.html" class="mobile-nav-link">홈으로</a>
-      <div id="mobile-auth-content"></div>
     </div>
   </header>
 
