@@ -13,7 +13,7 @@ git remote set-url origin https://<PAT_TOKEN>@github.com/biniare-del/petreview.g
 ⚠️ **배포**: 작업 완료 후 main 머지 + 푸시해야 사이트 반영됨.
 ```bash
 git checkout main && git merge claude/finish-map-pin-feature-otjfU --no-edit
-git push https://<PAT_TOKEN>@github.com/biniare-del/petreview.git main
+git push origin main
 git checkout claude/finish-map-pin-feature-otjfU
 ```
 
@@ -47,21 +47,39 @@ git checkout claude/finish-map-pin-feature-otjfU
 - [x] 인앱 브라우저 감지 → Chrome 유도 모달
 - [x] 비로그인 인사바 → 소셜 로그인 CTA
 
-### 메인 UX (index.html)
+### 메인 UX (index.html / app.js)
 - [x] 히어로 슬로건만 (CTA 버튼 제거)
-- [x] 케어허브 퀵액션 3개 (병원찾기 / 건강기록 / 후기쓰기)
 - [x] 하단 탭바 5개 (홈/병원찾기/후기쓰기중앙강조/커뮤니티/마이)
-- [x] 탭바 스크롤 offset 헤더+카테고리탭 보정
 - [x] 헤더 1줄 단순화 (nav·햄버거 제거)
 - [x] 이달의 추천, 최근 후기, 검색, 리뷰 작성, 리뷰 목록
-- [x] 검색 결과 지도 뷰 (마커 + 정보창 + 리뷰수/평균가격 + 상세보기)
-- [x] 카카오 API 이름 우선 검색 + 지역 토글
-- [x] 검색 결과 정렬 (단골순/가나다순)
-- [x] 검색 카드에 리뷰 수 + 평균 가격 배지
 - [x] 리뷰 필터 (업종/지역/동물/정렬)
 - [x] 이미지 확대 뷰어 (lightbox)
 - [x] 리뷰 좋아요/신고/댓글/댓글좋아요
 - [x] 배너 광고, PWA, 푸시 알림, 공유버튼, 즐겨찾기
+
+### 병원찾기 검색 (app.js)
+- [x] 통합 검색 바 `[전국▼][입력][검색]` — 지역 선택 + 이름 검색 한 곳에
+- [x] 이름 검색 결과 이름 일치 우선 정렬 (`_lastNameQuery`)
+- [x] 지역 검색 (카테고리 탭 변경 시 자동 재검색)
+- [x] 검색 결과 정렬 (단골순/가나다순)
+- [x] 검색 카드에 리뷰 수 + 평균 가격 배지
+- [x] 지도 핀 토글 (🗺️ 지도 버튼 — 정렬 바 우측)
+- [x] 자동완성: Supabase 즉시 표시 → Kakao API 결과 병합
+
+### api/facilities.js (Vercel 서버리스)
+- [x] 키워드 검색 size 45 (Kakao 최대값, 결과 누락 방지)
+- [x] 서버 사이드 정렬 제거 (클라이언트 이름 일치 우선 정렬 방해 제거)
+
+### 홈화면 마이펫 케어 카드 (app.js + style.css)
+- [x] 펫 아바타 72px (그림자 + 녹색 링), 이름·종·품종·나이
+- [x] 생일 D-day 배지 (30일 이내, 당일은 핑크 강조)
+- [x] 건강 통계 3행: ⚖️ 최근 체중 / 🦟 심장사상충 D-day / 💉 예방접종 D-day
+  - 기록 있으면 컬러 배지 (초과=빨강, 임박=주황/노랑, 정상=초록)
+  - 기록 없으면 점선 `+ 기록하기` 버튼
+- [x] 퀵액션 3개: 🏥 병원찾기(그린) · 📋 건강기록(오렌지) · ✏️ 후기쓰기(블루)
+- [x] 멀티펫 탭: 2마리 이상 시 상단 가로 스크롤 탭
+- [x] 비로그인: Google/네이버/전체옵션 CTA 카드 (그라데이션)
+- [x] 펫 미등록: 등록 유도 카드
 
 ### 마이페이지 (mypage.html)
 - [x] 마이펫 탭 첫 번째 + 기본 활성
@@ -87,13 +105,12 @@ git checkout claude/finish-map-pin-feature-otjfU
 ## 2. 할 일 (우선순위 순)
 
 ### 🔴 다음 작업
-- [ ] **자동완성 개선** — 검색창 입력 내용과 병원명 일치 우선 정렬
-- [ ] **검색 UX 전반 개선** (병원찾기 탭 누르면 바로 검색 가능한 구조)
+- [ ] **뽐내기 코너** — 사진 업로드 전용 피드 (별도 페이지)
+- [ ] **병원 상세페이지 개선** — 전화연결, 지도, 상담예약 버튼
 
 ### 🟠 단기
-- [ ] **뽐내기 코너** — 사진 업로드 전용 피드 (별도 페이지)
 - [ ] **영수증 OCR** — 영수증 사진 → 금액/항목 자동 추출
-- [ ] **병원 상세페이지 개선** — 전화연결, 지도, 상담예약 버튼
+- [ ] **자동완성 개선** — 검색창 입력 내용과 병원명 일치 우선 정렬 (추가 튜닝)
 
 ### 🟡 중기
 - [ ] **예방접종/처방 푸시 알림** 크론잡 연동
@@ -132,9 +149,9 @@ git checkout claude/finish-map-pin-feature-otjfU
 | review_reports | 리뷰 신고 |
 | comment_likes | 댓글 좋아요 |
 | profiles | 사용자 프로필 (nickname, is_admin) |
-| pets | 마이펫 (birth_date 컬럼 있음) |
-| pet_health_records | 건강 기록 (진료메모/심장사상충/예방접종) |
-| pet_weight_logs | 체중 기록 |
+| pets | 마이펫 (birth_date, breed 컬럼 있음) |
+| pet_health_records | 건강 기록 (record_type: 심장사상충/예방접종, next_due_date) |
+| pet_weight_logs | 체중 기록 (weight, recorded_at) |
 | favorites | 단골병원 |
 | banners | 광고 배너 |
 | featured_places | 우수협력병원/이벤트 |
