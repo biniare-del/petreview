@@ -946,11 +946,20 @@ function renderSearchMap(places) {
   const container = document.getElementById("search-map-container");
   if (!container) return;
 
-  const validPlaces = (places || searchFacilities).filter((p) => p.lat && p.lng);
+  const cityStr = els.searchCity?.value || "서울";
+  const rawPlaces = (places || searchFacilities).filter((p) => p.lat && p.lng);
+  const validPlaces = rawPlaces.map((p) => ({ ...p, city: p.city || cityStr }));
+
   if (!validPlaces.length) {
     container.innerHTML = '<p class="placeholder-text" style="padding:40px;text-align:center;">지도에 표시할 좌표 정보가 없습니다.</p>';
     return;
   }
+
+  // 정보창 상세보기 버튼용 전역 참조
+  window._mapPlaces = validPlaces;
+  window._openMapDetail = (idx) => {
+    if (window._mapPlaces[idx]) openPlaceDetail(window._mapPlaces[idx]);
+  };
 
   function initMap() {
     container.innerHTML = "";
@@ -963,16 +972,26 @@ function renderSearchMap(places) {
     const bounds = new kakao.maps.LatLngBounds();
     let openInfoWindow = null;
 
-    validPlaces.forEach((place) => {
+    validPlaces.forEach((place, idx) => {
       const pos = new kakao.maps.LatLng(place.lat, place.lng);
       bounds.extend(pos);
 
       const marker = new kakao.maps.Marker({ map, position: pos, title: place.name });
 
-      const iwContent = `<div style="padding:10px 14px;min-width:160px;max-width:220px;">
+      // 리뷰 통계
+      const placeReviews = reviews.filter((r) => r.placeName === place.name && r.isVerified);
+      let reviewBadgeHtml = "";
+      if (placeReviews.length) {
+        const avgPrice = Math.round(placeReviews.reduce((s, r) => s + (r.totalPrice || 0), 0) / placeReviews.length);
+        reviewBadgeHtml = `<div style="margin-top:5px;font-size:11px;color:#16a34a;font-weight:600;">리뷰 ${placeReviews.length}건 · 평균 ₩${avgPrice.toLocaleString("ko-KR")}</div>`;
+      }
+
+      const iwContent = `<div style="padding:10px 14px;min-width:170px;max-width:230px;">
         <strong style="font-size:13px;display:block;margin-bottom:4px;">${escapeHtml(place.name)}</strong>
         <span style="font-size:11px;color:#666;">${escapeHtml(place.address || place.region || "")}</span>
-        ${place.phone ? `<br><a href="tel:${escapeHtml(place.phone)}" style="font-size:11px;color:#16a34a;">📞 ${escapeHtml(place.phone)}</a>` : ""}
+        ${place.phone ? `<div style="margin-top:3px;"><a href="tel:${escapeHtml(place.phone)}" style="font-size:11px;color:#16a34a;">📞 ${escapeHtml(place.phone)}</a></div>` : ""}
+        ${reviewBadgeHtml}
+        <button onclick="window._openMapDetail(${idx})" style="margin-top:8px;padding:5px 0;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;">상세보기</button>
       </div>`;
       const infoWindow = new kakao.maps.InfoWindow({ content: iwContent, removable: true });
 

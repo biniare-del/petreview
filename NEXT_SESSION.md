@@ -12,11 +12,11 @@ git remote set-url origin https://<PAT_TOKEN>@github.com/biniare-del/petreview.g
 
 ⚠️ **배포**: 작업 완료 후 main 머지 + 푸시해야 사이트 반영됨.
 ```bash
-git checkout main && git merge claude/fix-greeting-login-ui-2Z225 --no-edit && git push origin main
-git checkout claude/fix-greeting-login-ui-2Z225
+git checkout main && git merge claude/finish-map-pin-feature-otjfU --no-edit && git push origin main
+git checkout claude/finish-map-pin-feature-otjfU
 ```
 
-작업 브랜치: `claude/fix-greeting-login-ui-2Z225`
+작업 브랜치: `claude/finish-map-pin-feature-otjfU`
 
 ⚠️ **배포할 때마다** `sw.js`의 `CACHE_NAME` 버전 올릴 것 (현재 `petreview-v2`)
 → 안 올리면 PWA 설치 사용자가 구버전 캐시 계속 사용함
@@ -59,7 +59,7 @@ git checkout claude/fix-greeting-login-ui-2Z225
 - [x] 카카오 API 이름 우선 검색 + 지역 토글 (지역검색 숨김/표시)
 - [x] 이름 검색 자동완성 (debounce 300ms, 6개)
 - [x] 검색 결과 정렬 (단골순/가나다순)
-- [x] **검색 결과 지도 뷰** (목록/지도 토글, 카카오 지도 마커 + 정보창)
+- [x] **검색 결과 지도 뷰** (목록/지도 토글, 카카오 지도 마커 + 정보창 + 리뷰 수/평균가격 배지 + 상세보기 버튼)
 - [x] 검색 카드에 리뷰 수 + 평균 가격 배지
 - [x] 병원 상세 모달 (진료비 통계, 별점, 인증 리뷰, 지도 링크)
 - [x] 리뷰 작성 폼 (마이펫 선택·인라인 추가, 별점 필수 검증, 영수증·반려동물·리뷰사진)
