@@ -40,15 +40,13 @@ export default async function handler(req, res) {
     ? `${region} ${categoryKeyword}`
     : `${categoryKeyword}`;
 
-  // keyword 직접 검색: size 45 × 1페이지 = 45건 (누락 최소화)
-  // 지역 목록 조회: size 15 × 3페이지 = 45건
-  const maxPages = keyword ? 1 : 3;
-  const pageSize = keyword ? "45" : "15";
+  // Kakao size 최대 15 — 3페이지 × 15건 = 최대 45건 (is_end 시 조기 종료)
+  const maxPages = 3;
 
   const allDocuments = [];
   try {
     for (let page = 1; page <= maxPages; page++) {
-      const params = new URLSearchParams({ query, size: pageSize, page: String(page) });
+      const params = new URLSearchParams({ query, size: "15", page: String(page) });
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
