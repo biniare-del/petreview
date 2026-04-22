@@ -1155,7 +1155,8 @@ function bindTabBar() {
   function scrollToEl(el) {
     if (!el) return;
     const headerH = document.querySelector(".site-header")?.offsetHeight || 50;
-    const top = el.getBoundingClientRect().top + window.scrollY - headerH - 8;
+    const catTabH = document.querySelector(".top-category-tabs")?.offsetHeight || 0;
+    const top = el.getBoundingClientRect().top + window.scrollY - headerH - catTabH - 8;
     window.scrollTo({ top, behavior: "smooth" });
   }
 
