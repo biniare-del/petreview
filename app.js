@@ -272,6 +272,47 @@ function renderSearchPage(page) {
   });
 }
 
+// 이름 검색 (모듈 레벨 — 카테고리 변경 등 외부에서도 호출 가능)
+async function doNameSearch() {
+  const nameInput = document.getElementById("search-name-input");
+  const autocompleteList = document.getElementById("search-autocomplete-list");
+  const q = nameInput?.value.trim();
+  if (!q) return;
+  if (autocompleteList) autocompleteList.hidden = true;
+  els.searchResults.innerHTML = '<p class="placeholder-text">검색 중...</p>';
+  if (els.sortToggle) els.sortToggle.style.display = "none";
+
+  const cat = selectedSearchCategory;
+  const cityVal = document.getElementById("search-city")?.value || "";
+
+  try {
+    const res = await fetch(
+      `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(cat)}&city=${encodeURIComponent(cityVal || "전국")}&keyword=${encodeURIComponent(q)}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+    let places = data.results || [];
+
+    if (!places.length) {
+      els.searchResults.innerHTML = `<p class="placeholder-text">"${escapeHtml(q)}" 검색 결과가 없어요. 다른 이름으로 찾아보세요.</p>`;
+      return;
+    }
+
+    // 이름 일치 우선 정렬 (주소 일치보다 이름 일치가 먼저)
+    const qLower = q.toLowerCase();
+    places.sort((a, b) => {
+      const aName = a.name.toLowerCase().includes(qLower) ? 0 : 1;
+      const bName = b.name.toLowerCase().includes(qLower) ? 0 : 1;
+      return aName - bName;
+    });
+
+    await _applySearchResults(places);
+  } catch {
+    els.searchResults.innerHTML = '<p class="placeholder-text">검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>';
+  }
+}
+
 // 검색 결과를 받아 즐겨찾기/정렬/렌더링까지 처리하는 공통 함수
 async function _applySearchResults(places) {
   if (!places?.length) {
@@ -339,9 +380,8 @@ async function renderSearchResults() {
   els.searchResults.innerHTML =
     '<p class="placeholder-text">업체 데이터를 불러오는 중...</p>';
 
-  const cityVal = els.searchCity?.value || "서울";
-  const regionVal = els.searchRegion?.value?.trim() || "";
-  const regionKeyword = regionVal ? `${cityVal} ${regionVal}` : cityVal;
+  const cityVal = els.searchCity?.value || "";
+  const regionKeyword = cityVal || "서울"; // 전국 선택 시 서울 기본 (지역 검색은 도시 필수)
 
   try {
     if (!window.PetReviewDataProvider?.searchPlaces) {
@@ -789,7 +829,10 @@ function bindCategoryToggle() {
       btn.classList.add("is-active");
       document.body.dataset.theme = selectedSearchCategory === "grooming" ? "grooming" : "hospital";
       renderServiceTags(selectedSearchCategory);
-      if (hasSearched) void renderSearchResults();
+      if (hasSearched) {
+        const q = document.getElementById("search-name-input")?.value.trim();
+        q ? void doNameSearch() : void renderSearchResults();
+      }
     });
   });
 }
@@ -809,7 +852,10 @@ function bindTopCategoryTabs() {
       selectedSearchCategory = cat;
       document.body.dataset.theme = cat === "grooming" ? "grooming" : "hospital";
       renderServiceTags(cat);
-      if (hasSearched) void renderSearchResults();
+      if (hasSearched) {
+        const q = document.getElementById("search-name-input")?.value.trim();
+        q ? void doNameSearch() : void renderSearchResults();
+      }
       // 검색창 placeholder + 섹션 타이틀 동기화
       const nameInput = document.getElementById("search-name-input");
       const titleEl = document.getElementById("search-section-title");
@@ -843,50 +889,9 @@ function updateSearchBtn() {
 }
 
 function bindSearch() {
-  // 지역 검색 버튼
-  els.searchButton?.addEventListener("click", () => void renderSearchResults());
-
-  // 지역 필터 토글 (sort-toggle 안에 위치)
-  const regionToggleBtn = document.getElementById("region-toggle-btn");
-  const regionPanel = document.getElementById("region-search-panel");
-  function toggleRegionPanel(forceClose) {
-    if (!regionPanel) return;
-    const closing = forceClose ?? !regionPanel.hidden;
-    regionPanel.hidden = closing;
-    if (regionToggleBtn) regionToggleBtn.textContent = closing ? "🗺️ 지역 필터" : "✕ 닫기";
-  }
-  regionToggleBtn?.addEventListener("click", () => toggleRegionPanel());
-
-  // 이름 검색
   const nameInput = document.getElementById("search-name-input");
   const nameBtn = document.getElementById("search-name-btn");
   const autocompleteList = document.getElementById("search-autocomplete-list");
-
-  async function doNameSearch() {
-    const q = nameInput?.value.trim();
-    if (!q) return;
-    if (autocompleteList) autocompleteList.hidden = true;
-    els.searchResults.innerHTML = '<p class="placeholder-text">검색 중...</p>';
-    if (els.sortToggle) els.sortToggle.style.display = "none";
-
-    try {
-      const cat = selectedSearchCategory;
-      const res = await fetch(
-        `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(cat)}&city=전국&region=&keyword=${encodeURIComponent(q)}`,
-        { signal: AbortSignal.timeout(8000) }
-      );
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const data = await res.json();
-      const places = data.results || [];
-      if (!places.length) {
-        els.searchResults.innerHTML = `<p class="placeholder-text">"${escapeHtml(q)}" 검색 결과가 없어요. 다른 이름으로 찾아보세요.</p>`;
-        return;
-      }
-      await _applySearchResults(places);
-    } catch {
-      els.searchResults.innerHTML = '<p class="placeholder-text">검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>';
-    }
-  }
 
   nameBtn?.addEventListener("click", doNameSearch);
   nameInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") doNameSearch(); });
@@ -921,9 +926,10 @@ function bindSearch() {
     if (supabaseItems.length) showAcResults(supabaseItems, q);
 
     // Kakao API 결과 추가 (약간 늦을 수 있음)
+    const cityVal = document.getElementById("search-city")?.value || "";
     try {
       const res = await fetch(
-        `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(cat)}&city=전국&region=&keyword=${encodeURIComponent(q)}`,
+        `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(cat)}&city=${encodeURIComponent(cityVal || "전국")}&keyword=${encodeURIComponent(q)}`,
         { signal: AbortSignal.timeout(4000) }
       );
       if (!res.ok) throw new Error("api error");
@@ -1070,7 +1076,27 @@ function renderSearchMap(places) {
 }
 
 function bindViewToggle() {
-  // 목록/지도 토글 제거됨 — 항상 목록 표시
+  const mapBtn = document.getElementById("view-map-btn");
+  const resultsEl = document.getElementById("search-results");
+  const mapEl = document.getElementById("search-map-container");
+  if (!mapBtn) return;
+
+  mapBtn.addEventListener("click", () => {
+    if (!hasSearched || !searchFacilities.length) return;
+    const showingMap = mapEl && !mapEl.hidden;
+    if (showingMap) {
+      if (mapEl) mapEl.hidden = true;
+      if (resultsEl) resultsEl.hidden = false;
+      mapBtn.textContent = "🗺️ 지도";
+      mapBtn.classList.remove("is-active");
+    } else {
+      if (mapEl) mapEl.hidden = false;
+      if (resultsEl) resultsEl.hidden = true;
+      mapBtn.textContent = "📋 목록";
+      mapBtn.classList.add("is-active");
+      renderSearchMap();
+    }
+  });
 }
 
 async function initGeolocation() {
