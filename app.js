@@ -1824,118 +1824,237 @@ function bindSearchResultsSelection() {
   });
 }
 
-// ===== 배너 로드 =====
+// ===== 마이펫 케어 카드 (홈화면) =====
+
+function _petAge(birthDate) {
+  if (!birthDate) return null;
+  const birth = new Date(birthDate);
+  const now = new Date();
+  const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+  if (months < 1) return "1개월 미만";
+  if (months < 12) return `${months}개월`;
+  return `${Math.floor(months / 12)}세`;
+}
+
+function _petBirthdayDday(birthDate) {
+  if (!birthDate) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const birth = new Date(birthDate);
+  const next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+  if (next < today) next.setFullYear(today.getFullYear() + 1);
+  const diff = Math.ceil((next - today) / 86400000);
+  if (diff === 0) return { text: "🎂 오늘 생일!", cls: "today" };
+  if (diff <= 30) return { text: `🎂 D-${diff}`, cls: "soon" };
+  return null;
+}
+
+function _petSpeciesEmoji(species) {
+  if (species === "강아지") return "🐕";
+  if (species === "고양이") return "🐈";
+  if (species === "토끼") return "🐇";
+  if (species === "햄스터") return "🐹";
+  return "🐾";
+}
+
+function _healthDday(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((target - today) / 86400000);
+  if (diff < 0)  return { text: `D+${Math.abs(diff)} 초과`, cls: "overdue" };
+  if (diff === 0) return { text: "D-day", cls: "today" };
+  if (diff <= 7)  return { text: `D-${diff}`, cls: "soon" };
+  if (diff <= 30) return { text: `D-${diff}`, cls: "warning" };
+  return { text: `D-${diff}`, cls: "ok" };
+}
+
+async function _fetchPetStats(petId, db) {
+  const [wRes, hwRes, vacRes] = await Promise.all([
+    db.from("pet_weight_logs").select("weight, recorded_at")
+      .eq("pet_id", petId).order("recorded_at", { ascending: false }).limit(1),
+    db.from("pet_health_records").select("next_due_date, record_date")
+      .eq("pet_id", petId).eq("record_type", "심장사상충")
+      .order("record_date", { ascending: false }).limit(1),
+    db.from("pet_health_records").select("next_due_date, record_date, content")
+      .eq("pet_id", petId).eq("record_type", "예방접종")
+      .order("record_date", { ascending: false }).limit(1),
+  ]);
+  return {
+    weight:    wRes.data?.[0]   ?? null,
+    heartworm: hwRes.data?.[0]  ?? null,
+    vaccine:   vacRes.data?.[0] ?? null,
+  };
+}
+
+async function _renderPetCareCard(wrapper, pets, activeIdx, db) {
+  const pet = pets[activeIdx];
+
+  const stats = await _fetchPetStats(pet.id, db);
+
+  const tabsHtml = pets.length > 1 ? `
+    <div class="pet-care-tabs">
+      ${pets.map((p, i) => `
+        <button class="pet-care-tab${i === activeIdx ? " is-active" : ""}" data-pet-idx="${i}">
+          ${p.photo_url
+            ? `<img src="${escapeHtml(p.photo_url)}" alt="${escapeHtml(p.name)}" class="pet-tab-avatar">`
+            : `<span class="pet-tab-emoji">${_petSpeciesEmoji(p.species)}</span>`}
+          <span>${escapeHtml(p.name)}</span>
+        </button>`).join("")}
+    </div>` : "";
+
+  const avatarHtml = pet.photo_url
+    ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}" />`
+    : `<span>${_petSpeciesEmoji(pet.species)}</span>`;
+
+  const age = _petAge(pet.birth_date);
+  const bday = _petBirthdayDday(pet.birth_date);
+  const metaParts = [
+    pet.species ? escapeHtml(pet.species) : null,
+    pet.breed   ? escapeHtml(pet.breed)   : null,
+    age         ? age                      : null,
+  ].filter(Boolean);
+
+  const bdayHtml = bday
+    ? `<span class="care-birthday-tag ${bday.cls}">${bday.text}</span>`
+    : "";
+
+  const mypetUrl = `mypage.html?pet=${encodeURIComponent(pet.id)}#pets`;
+
+  // weight stat
+  const weightHtml = stats.weight
+    ? `<span class="care-stat-value ok">${stats.weight.weight} kg</span>`
+    : `<a href="${mypetUrl}" class="care-stat-add">+ 기록하기</a>`;
+
+  // heartworm stat
+  const hwDday = stats.heartworm?.next_due_date ? _healthDday(stats.heartworm.next_due_date) : null;
+  const hwHtml = hwDday
+    ? `<span class="care-stat-badge ${hwDday.cls}">${hwDday.text}</span><span class="care-stat-date">${stats.heartworm.next_due_date}</span>`
+    : `<a href="${mypetUrl}" class="care-stat-add">+ 기록하기</a>`;
+
+  // vaccine stat
+  const vacDday = stats.vaccine?.next_due_date ? _healthDday(stats.vaccine.next_due_date) : null;
+  const vacHtml = vacDday
+    ? `<span class="care-stat-badge ${vacDday.cls}">${vacDday.text}</span><span class="care-stat-date">${stats.vaccine.next_due_date}</span>`
+    : `<a href="${mypetUrl}" class="care-stat-add">+ 기록하기</a>`;
+
+  wrapper.innerHTML = `
+    <div class="pet-care-section">
+      ${tabsHtml}
+      <div class="pet-care-card">
+        <div class="pet-care-profile">
+          <div class="care-avatar">${avatarHtml}</div>
+          <div class="care-pet-info">
+            <p class="care-pet-name">${escapeHtml(pet.name)}</p>
+            ${metaParts.length ? `<p class="care-pet-meta">${metaParts.join(" · ")}</p>` : ""}
+            ${bdayHtml}
+          </div>
+          <a href="mypage.html?tab=pets" class="care-edit-link" title="마이펫 관리">⚙️</a>
+        </div>
+
+        <div class="pet-care-stats">
+          <div class="care-stat-row">
+            <span class="care-stat-icon">⚖️</span>
+            <span class="care-stat-label">최근 체중</span>
+            <div class="care-stat-right">${weightHtml}</div>
+          </div>
+          <div class="care-stat-row">
+            <span class="care-stat-icon">🦟</span>
+            <span class="care-stat-label">심장사상충</span>
+            <div class="care-stat-right">${hwHtml}</div>
+          </div>
+          <div class="care-stat-row">
+            <span class="care-stat-icon">💉</span>
+            <span class="care-stat-label">예방접종</span>
+            <div class="care-stat-right">${vacHtml}</div>
+          </div>
+        </div>
+
+        <div class="pet-care-actions">
+          <button class="care-action-btn hospital" data-care-action="search">
+            <span class="care-action-icon">🏥</span>
+            <span>병원찾기</span>
+          </button>
+          <a href="${mypetUrl}" class="care-action-btn health">
+            <span class="care-action-icon">📋</span>
+            <span>건강기록</span>
+          </a>
+          <button class="care-action-btn review" data-care-action="write">
+            <span class="care-action-icon">✏️</span>
+            <span>후기쓰기</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  wrapper.querySelector('[data-care-action="search"]')?.addEventListener("click", () => {
+    document.querySelector('.tab-item[data-tab="search"]')?.click();
+  });
+  wrapper.querySelector('[data-care-action="write"]')?.addEventListener("click", () => {
+    document.querySelector('.tab-item[data-tab="write"]')?.click();
+  });
+
+  if (pets.length > 1) {
+    wrapper.querySelectorAll(".pet-care-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        _renderPetCareCard(wrapper, pets, parseInt(btn.dataset.petIdx, 10), db);
+      });
+    });
+  }
+}
+
 async function loadPetGreeting() {
-  const greetingEl = document.getElementById("pet-greeting");
-  const avatarEl = document.getElementById("pet-greeting-avatar");
-  const textEl = document.getElementById("pet-greeting-text");
-  if (!greetingEl || !avatarEl || !textEl) return;
+  const wrapper = document.getElementById("pet-greeting-wrapper");
+  if (!wrapper) return;
 
   const db = window.supabaseClient;
   const userId = window.PetAuth?.currentUser?.id;
 
-  // 비로그인: 로그인 CTA 표시
   if (!userId) {
-    avatarEl.innerHTML = `<span>🐾</span>`;
-    textEl.innerHTML = `<strong>펫리뷰에 오신 걸 환영해요!</strong><br>
-      <span>소셜 로그인으로 리뷰 작성·마이펫 관리를 시작해보세요.</span><br>
-      <span style="display:inline-flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
-        <button type="button" class="greeting-login-btn" id="greeting-google-btn"
-          style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1.5px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;">
-          <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Google
-        </button>
-        <button type="button" class="greeting-login-btn" id="greeting-naver-btn"
-          style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:none;border-radius:20px;background:#03C75A;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">
-          <span style="font-weight:900;font-family:sans-serif;font-size:13px;line-height:1;">N</span>
-          네이버
-        </button>
-        <button type="button" class="greeting-login-btn" id="greeting-all-btn"
-          style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1.5px solid #16a34a;border-radius:20px;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:600;cursor:pointer;">
-          전체 로그인 옵션 →
-        </button>
-      </span>`;
-    greetingEl.hidden = false;
-    greetingEl.onclick = (e) => {
-      if (!e.target.closest(".greeting-login-btn")) openLoginModal();
-    };
-
-    document.getElementById("greeting-google-btn")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      window.PetAuth?.signInWithGoogle();
-    });
-    document.getElementById("greeting-naver-btn")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      window.PetAuth?.signInWithNaver();
-    });
-    document.getElementById("greeting-all-btn")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      openLoginModal();
-    });
+    wrapper.innerHTML = `
+      <div class="pet-care-cta-card">
+        <div class="pet-care-cta-paws">🐾</div>
+        <p class="pet-care-cta-title">우리 아이 건강을 한눈에</p>
+        <p class="pet-care-cta-sub">체중·예방접종·진료 기록을 무료로 관리해요</p>
+        <div class="pet-care-cta-logins">
+          <button id="care-cta-google" class="pet-care-login-btn google">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Google 로그인
+          </button>
+          <button id="care-cta-naver" class="pet-care-login-btn naver">
+            <span style="font-weight:900;font-size:15px;line-height:1;">N</span>
+            네이버 로그인
+          </button>
+          <button id="care-cta-all" class="pet-care-login-btn all-opts">전체 로그인 옵션 →</button>
+        </div>
+      </div>`;
+    wrapper.querySelector("#care-cta-google")?.addEventListener("click", () => window.PetAuth?.signInWithGoogle());
+    wrapper.querySelector("#care-cta-naver")?.addEventListener("click", () => window.PetAuth?.signInWithNaver());
+    wrapper.querySelector("#care-cta-all")?.addEventListener("click", () => openLoginModal());
     return;
   }
-
-  // 로그인: 마이페이지로 이동
-  greetingEl.onclick = () => { window.location.href = "mypage.html"; };
 
   if (!db) return;
   try {
     const { data: pets } = await db
       .from("pets")
-      .select("id, name, species, photo_url")
+      .select("id, name, species, breed, birth_date, photo_url")
       .eq("user_id", userId)
       .order("created_at");
 
-    const nickRaw = window.PetAuth.getDisplayName?.() || "";
-    const nick = nickRaw ? escapeHtml(nickRaw) : "보호자";
-
-    const quickLinks = `<div class="care-hub-actions" onclick="event.stopPropagation()">
-      <button class="care-hub-btn" onclick="document.querySelector('.tab-item[data-tab=search]')?.click()">🏥 병원찾기</button>
-      <button class="care-hub-btn" onclick="window.location.href='mypage.html?tab=pets'">💊 건강기록</button>
-      <button class="care-hub-btn" onclick="document.querySelector('.tab-item[data-tab=write]')?.click()">✏️ 후기쓰기</button>
-    </div>`;
-
     if (!pets?.length) {
-      avatarEl.innerHTML = `<span>🐾</span>`;
-      textEl.innerHTML = `안녕하세요 <strong>${nick}님</strong>!<br>
-        <span>반려동물을 등록하면 건강기록을 관리할 수 있어요</span>
-        <div class="care-hub-actions" style="margin-top:10px;" onclick="event.stopPropagation()">
-          <a href="mypage.html?tab=pets" class="care-hub-btn" style="text-decoration:none;">🐾 마이펫 등록</a>
-          <button class="care-hub-btn" onclick="document.querySelector('.tab-item[data-tab=search]')?.click()">🏥 병원찾기</button>
+      wrapper.innerHTML = `
+        <div class="pet-care-empty">
+          <span class="pet-care-empty-icon">🐾</span>
+          <div>
+            <p class="pet-care-empty-title">반려동물을 등록해보세요</p>
+            <p class="pet-care-empty-sub">건강기록·예방접종 D-day를 관리할 수 있어요</p>
+          </div>
+          <a href="mypage.html?tab=pets" class="pet-care-register-btn">등록하기 →</a>
         </div>`;
-      greetingEl.hidden = false;
       return;
     }
 
-    // 첫 번째 펫 아바타
-    const firstPet = pets[0];
-    avatarEl.innerHTML = firstPet.photo_url
-      ? `<img src="${escapeHtml(firstPet.photo_url)}" alt="${escapeHtml(firstPet.name)}" />`
-      : `<span>${firstPet.species === "고양이" ? "🐱" : "🐶"}</span>`;
-
-    // 펫 셀렉터 (1마리면 바로 링크, 2마리 이상이면 아바타 나열)
-    const petSelectorHtml = `
-      <div class="pet-selector-strip" onclick="event.stopPropagation()">
-        <span class="pet-selector-label">💊 건강기록</span>
-        <div class="pet-selector-avatars">
-          ${pets.map(p => `
-            <a href="mypage.html?pet=${escapeHtml(p.id)}#pets" class="pet-selector-item" title="${escapeHtml(p.name)}의 건강기록">
-              <div class="pet-selector-avatar">
-                ${p.photo_url
-                  ? `<img src="${escapeHtml(p.photo_url)}" alt="${escapeHtml(p.name)}" />`
-                  : `<span>${p.species === "고양이" ? "🐱" : "🐶"}</span>`}
-              </div>
-              <span class="pet-selector-name">${escapeHtml(p.name)}</span>
-            </a>`).join("")}
-        </div>
-      </div>`;
-
-    const greetingText = pets.length === 1
-      ? `안녕하세요 <strong>${nick}님</strong>! 🐾<br><span>${escapeHtml(firstPet.name)}와 함께 오셨군요</span>`
-      : `안녕하세요 <strong>${nick}님</strong>! 🐾<br><span>반려동물 ${pets.length}마리를 키우고 계시는군요</span>`;
-
-    textEl.innerHTML = greetingText + petSelectorHtml + quickLinks;
-    greetingEl.hidden = false;
+    await _renderPetCareCard(wrapper, pets, 0, db);
   } catch { /* ignore */ }
 }
 

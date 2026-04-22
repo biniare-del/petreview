@@ -40,13 +40,15 @@ export default async function handler(req, res) {
     ? `${region} ${categoryKeyword}`
     : `${categoryKeyword}`;
 
-  // keyword 직접 검색 시 1페이지만, 지역 목록 조회 시 최대 3페이지(45건)
+  // keyword 직접 검색: size 45 × 1페이지 = 45건 (누락 최소화)
+  // 지역 목록 조회: size 15 × 3페이지 = 45건
   const maxPages = keyword ? 1 : 3;
+  const pageSize = keyword ? "45" : "15";
 
   const allDocuments = [];
   try {
     for (let page = 1; page <= maxPages; page++) {
-      const params = new URLSearchParams({ query, size: "15", page: String(page) });
+      const params = new URLSearchParams({ query, size: pageSize, page: String(page) });
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -76,18 +78,17 @@ export default async function handler(req, res) {
       if (json?.meta?.is_end) break;
     }
 
-    const results = allDocuments
-      .map((doc) => ({
-        kakaoId: doc.id || "",
-        name: doc.place_name,
-        category,
-        region: extractDistrict(doc.address_name || doc.road_address_name || ""),
-        address: doc.road_address_name || doc.address_name || "",
-        phone: doc.phone || "",
-        lat: parseFloat(doc.y) || null,
-        lng: parseFloat(doc.x) || null,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name, "ko"));
+    // 서버 정렬 제거 — 클라이언트에서 이름 일치 우선 정렬 처리
+    const results = allDocuments.map((doc) => ({
+      kakaoId: doc.id || "",
+      name: doc.place_name,
+      category,
+      region: extractDistrict(doc.address_name || doc.road_address_name || ""),
+      address: doc.road_address_name || doc.address_name || "",
+      phone: doc.phone || "",
+      lat: parseFloat(doc.y) || null,
+      lng: parseFloat(doc.x) || null,
+    }));
 
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
     return res.status(200).json({ results });
