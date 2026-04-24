@@ -3556,3 +3556,14 @@ body[data-theme="grooming"] .place-phone-link {
   border: 1px dashed #e8e2dc;
   border-radius: 10px;
 }
+
+/* 뽐내기 미리보기 */
+.brag-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.brag-preview-card { display: block; text-decoration: none; border-radius: 12px; overflow: hidden; background: #fff; border: 1.5px solid #f0e8e2; }
+.brag-preview-img-wrap { width: 100%; aspect-ratio: 1; overflow: hidden; background: #f5ede8; }
+.brag-preview-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.brag-preview-empty { display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.brag-preview-info { display: flex; align-items: center; gap: 4px; padding: 5px 7px; flex-wrap: wrap; }
+.brag-preview-pet { font-size: 11px; font-weight: 600; color: #3a3530; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brag-preview-badge { font-size: 12px; }
+.brag-preview-likes { font-size: 11px; color: #f43f5e; margin-left: auto; white-space: nowrap; }

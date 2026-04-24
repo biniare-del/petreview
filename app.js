@@ -3074,6 +3074,7 @@ function init() {
   void loadReviews();
   void loadBanner();
   void initGeolocation();
+  void loadBragPreview();
 
   // 방문일: 오늘 이후 날짜 선택 불가 + 클릭 시 달력 자동 펼치기
   const visitDateInput = document.getElementById("visit-date");
@@ -3108,6 +3109,30 @@ function init() {
     // URL 파라미터 정리 (뒤로 가기 시 중복 실행 방지)
     history.replaceState(null, "", location.pathname);
   }
+}
+
+async function loadBragPreview() {
+  const el = document.getElementById("brag-preview-list");
+  if (!el || !window.supabaseClient) return;
+  const { data: posts } = await window.supabaseClient
+    .from("brag_posts")
+    .select("id, photo_urls, caption, like_count, pets(name)")
+    .order("like_count", { ascending: false })
+    .limit(3);
+  if (!posts?.length) { el.innerHTML = '<p class="placeholder-text">아직 자랑이 없어요 🐾</p>'; return; }
+  el.innerHTML = `<div class="brag-preview-grid">${posts.map(p => {
+    const img = p.photo_urls?.[0] || "";
+    const likes = p.like_count || 0;
+    const badge = likes >= 200 ? "👑" : likes >= 100 ? "💎" : likes >= 50 ? "🔥" : likes >= 10 ? "🌟" : "";
+    return `<a href="brag.html" class="brag-preview-card">
+      ${img ? `<div class="brag-preview-img-wrap"><img src="${img}" alt="" loading="lazy" /></div>` : `<div class="brag-preview-img-wrap brag-preview-empty">🐾</div>`}
+      <div class="brag-preview-info">
+        ${p.pets?.name ? `<span class="brag-preview-pet">${p.pets.name}</span>` : ""}
+        ${badge ? `<span class="brag-preview-badge">${badge}</span>` : ""}
+        <span class="brag-preview-likes">❤️ ${likes}</span>
+      </div>
+    </a>`;
+  }).join("")}</div>`;
 }
 
 init();
