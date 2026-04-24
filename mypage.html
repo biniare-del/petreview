@@ -111,50 +111,13 @@
       <p style="margin:0;font-size:14px;color:#888;" id="mypage-greeting"></p>
 
       <div class="mypage-tabs">
-        <button class="mypage-tab is-active" data-tab="pets">🐾 마이펫</button>
-        <button class="mypage-tab" data-tab="expense">💰 가계부</button>
-        <button class="mypage-tab" data-tab="reviews">내 리뷰</button>
-        <button class="mypage-tab" data-tab="favorites">단골병원</button>
-        <button class="mypage-tab" data-tab="myposts">내 글</button>
-        <button class="mypage-tab" data-tab="mycomments">내 댓글</button>
-        <button class="mypage-tab" data-tab="profile">프로필</button>
+        <button class="mypage-tab is-active" data-tab="mypet">🐾 마이펫</button>
+        <button class="mypage-tab" data-tab="activity">✍️ 내 활동</button>
+        <button class="mypage-tab" data-tab="settings">⚙️ 설정</button>
       </div>
 
-      <!-- 가계부 -->
-      <div class="mypage-panel" id="panel-expense">
-        <!-- 월 선택 + 요약 -->
-        <div class="exp-month-bar">
-          <button class="exp-month-nav" id="exp-prev-month">‹</button>
-          <span class="exp-month-label" id="exp-month-label"></span>
-          <button class="exp-month-nav" id="exp-next-month">›</button>
-        </div>
-        <div class="exp-summary-card" id="exp-summary-card">
-          <p class="placeholder-text">불러오는 중...</p>
-        </div>
-        <!-- 카테고리 바 -->
-        <div class="exp-category-bars" id="exp-category-bars"></div>
-        <!-- 비교 -->
-        <div class="exp-compare-card" id="exp-compare-card" hidden></div>
-        <!-- 내역 + 추가 버튼 -->
-        <div class="exp-list-header">
-          <h3>지출 내역</h3>
-          <button class="btn-edit" id="exp-add-btn">+ 직접 추가</button>
-        </div>
-        <div id="exp-list"><p class="placeholder-text">불러오는 중...</p></div>
-      </div>
-
-      <!-- 내 리뷰 -->
-      <div class="mypage-panel" id="panel-reviews">
-        <div id="my-reviews-list"><p class="placeholder-text">불러오는 중...</p></div>
-      </div>
-
-      <!-- 단골병원 -->
-      <div class="mypage-panel" id="panel-favorites">
-        <div id="favorites-list"><p class="placeholder-text">불러오는 중...</p></div>
-      </div>
-
-      <!-- 마이펫 -->
-      <div class="mypage-panel is-active" id="panel-pets">
+      <!-- ===== 마이펫 패널 ===== -->
+      <div class="mypage-panel is-active" id="panel-mypet">
         <!-- 다가오는 예약 -->
         <div id="upcoming-appts-section" style="margin-bottom:20px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -163,23 +126,63 @@
           </div>
           <div id="upcoming-appts-list"><p class="placeholder-text">불러오는 중...</p></div>
         </div>
+        <!-- 펫 목록 -->
         <div class="pet-grid" id="pets-grid">
           <p class="placeholder-text">불러오는 중...</p>
         </div>
+
+        <!-- 단골병원 -->
+        <div class="mypage-subsection">
+          <div class="mypage-subsection-header">🏥 단골병원</div>
+          <div id="favorites-list"><p class="placeholder-text">불러오는 중...</p></div>
+        </div>
+
+        <!-- 가계부 -->
+        <div class="mypage-subsection">
+          <div class="mypage-subsection-header">💰 가계부</div>
+          <div class="exp-month-bar">
+            <button class="exp-month-nav" id="exp-prev-month">‹</button>
+            <span class="exp-month-label" id="exp-month-label"></span>
+            <button class="exp-month-nav" id="exp-next-month">›</button>
+          </div>
+          <div class="exp-summary-card" id="exp-summary-card">
+            <p class="placeholder-text">불러오는 중...</p>
+          </div>
+          <div class="exp-category-bars" id="exp-category-bars"></div>
+          <div class="exp-compare-card" id="exp-compare-card" hidden></div>
+          <div class="exp-list-header">
+            <h3>지출 내역</h3>
+            <button class="btn-edit" id="exp-add-btn">+ 직접 추가</button>
+          </div>
+          <div id="exp-list"><p class="placeholder-text">불러오는 중...</p></div>
+        </div>
       </div>
 
-      <!-- 내 글 -->
-      <div class="mypage-panel" id="panel-myposts">
-        <div id="my-posts-list"><p class="placeholder-text">불러오는 중...</p></div>
+      <!-- ===== 내 활동 패널 ===== -->
+      <div class="mypage-panel" id="panel-activity">
+        <div class="mypage-subsection">
+          <div class="mypage-subsection-header">📝 내 리뷰</div>
+          <div id="my-reviews-list"><p class="placeholder-text">불러오는 중...</p></div>
+        </div>
+        <div class="mypage-subsection">
+          <div class="mypage-subsection-header">✏️ 커뮤니티 글</div>
+          <div id="my-posts-list"><p class="placeholder-text">불러오는 중...</p></div>
+        </div>
+        <div class="mypage-subsection">
+          <div class="mypage-subsection-header">💬 내 댓글</div>
+          <div id="my-comments-list"><p class="placeholder-text">불러오는 중...</p></div>
+        </div>
+        <div class="mypage-subsection">
+          <div class="mypage-subsection-header">🏅 내 뱃지</div>
+          <p style="font-size:12px;color:#aaa;margin:0 0 12px;">조건을 달성하면 뱃지가 켜져요</p>
+          <div class="user-badge-grid" id="user-badges-grid">
+            <p class="placeholder-text" style="font-size:13px;">불러오는 중...</p>
+          </div>
+        </div>
       </div>
 
-      <!-- 내 댓글 -->
-      <div class="mypage-panel" id="panel-mycomments">
-        <div id="my-comments-list"><p class="placeholder-text">불러오는 중...</p></div>
-      </div>
-
-      <!-- 프로필 -->
-      <div class="mypage-panel" id="panel-profile">
+      <!-- ===== 설정 패널 ===== -->
+      <div class="mypage-panel" id="panel-settings">
         <div class="mypage-card profile-form">
           <div class="profile-avatar-area">
             <div class="profile-avatar-big" id="profile-avatar-big">?</div>
@@ -196,25 +199,14 @@
           <button class="primary-btn" id="save-profile-btn" style="margin-top:8px;">저장하기</button>
           <p class="helper-text" id="profile-save-msg" style="margin-top:8px;"></p>
         </div>
-        <!-- 획득한 뱃지 -->
-        <div class="mypage-card" style="margin-top:16px;">
-          <h3 style="margin:0 0 2px;font-size:15px;">🏅 내 뱃지</h3>
-          <p style="font-size:12px;color:#aaa;margin:0 0 12px;">조건을 달성하면 뱃지가 켜져요</p>
-          <div class="user-badge-grid" id="user-badges-grid">
-            <p class="placeholder-text" style="font-size:13px;">불러오는 중...</p>
-          </div>
-        </div>
-
-        <div style="margin-top:16px;">
-          <button class="btn-delete" id="logout-btn-profile">로그아웃</button>
-        </div>
-
-        <!-- 푸시 알림 설정 -->
         <div class="mypage-card" style="margin-top:16px;">
           <h3 style="margin:0 0 8px;font-size:15px;">🔔 건강 알림 설정</h3>
           <p style="font-size:13px;color:#666;margin:0 0 12px;">심장사상충·예방접종 기한이 되면 알림을 보내드려요.</p>
           <div id="push-status-text" style="font-size:13px;color:#aaa;margin-bottom:10px;"></div>
           <button class="primary-btn" id="push-subscribe-btn" style="width:100%;">알림 허용하기</button>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn-delete" id="logout-btn-profile">로그아웃</button>
         </div>
       </div>
     </div>

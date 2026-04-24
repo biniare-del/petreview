@@ -51,6 +51,8 @@
   }
 
   // ===== 탭 전환 =====
+  const OLD_TAB_MAP = { pets: "mypet", expense: "mypet", favorites: "mypet", reviews: "activity", myposts: "activity", mycomments: "activity", profile: "settings" };
+
   function bindTabs() {
     document.querySelectorAll(".mypage-tab").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -59,19 +61,17 @@
         btn.classList.add("is-active");
         const panel = document.getElementById("panel-" + btn.dataset.tab);
         if (panel) panel.classList.add("is-active");
-        if (btn.dataset.tab === "favorites") loadFavorites();
-        if (btn.dataset.tab === "pets") loadPets();
-        if (btn.dataset.tab === "myposts") loadMyPosts();
-        if (btn.dataset.tab === "mycomments") loadMyComments();
-        if (btn.dataset.tab === "expense") initExpenseTab();
+        if (btn.dataset.tab === "mypet") { loadPets(); loadFavorites(); initExpenseTab(); }
+        if (btn.dataset.tab === "activity") { loadMyReviews(); loadMyPosts(); loadMyComments(); }
       });
     });
 
-    // URL 쿼리(?tab=pets) 또는 해시(#pets)로 탭 직접 이동
+    // URL 쿼리(?tab=xxx) 또는 해시(#xxx)로 탭 직접 이동 (구 탭명 하위호환)
     const urlTab = new URLSearchParams(window.location.search).get("tab")
       || window.location.hash.replace("#", "");
     if (urlTab) {
-      const targetBtn = document.querySelector(`.mypage-tab[data-tab="${urlTab}"]`);
+      const mapped = OLD_TAB_MAP[urlTab] || urlTab;
+      const targetBtn = document.querySelector(`.mypage-tab[data-tab="${mapped}"]`);
       if (targetBtn) targetBtn.click();
     }
   }
@@ -1167,6 +1167,8 @@
     bindProfile();
     bindPushNotification();
     await loadPets();
+    loadFavorites();
+    initExpenseTab();
   }
 
   // ===== 푸시 알림 =====
