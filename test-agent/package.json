@@ -6,6 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node index.js",
+    "ideas": "node index.js --ideas",
+    "seed": "node seed.js",
     "install-browsers": "npx playwright install chromium"
   },
   "dependencies": {
