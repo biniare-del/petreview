@@ -109,10 +109,15 @@
     .brag-msg { text-align: center; font-size: 13px; margin-top: 10px; color: #e57373; }
 
     /* 라이트박스 */
-    .brag-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: flex; align-items: center; justify-content: center; }
+    .brag-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; display: flex; align-items: center; justify-content: center; }
     .brag-lightbox[hidden] { display: none; }
-    .brag-lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+    .brag-lightbox img { max-width: 90vw; max-height: 82vh; border-radius: 8px; object-fit: contain; }
     .lightbox-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
+    .lightbox-prev, .lightbox-next { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 32px; line-height: 1; padding: 8px 14px; border-radius: 50%; cursor: pointer; }
+    .lightbox-prev { left: 12px; }
+    .lightbox-next { right: 12px; }
+    .lightbox-prev[hidden], .lightbox-next[hidden] { display: none; }
+    .lightbox-counter { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.7); font-size: 13px; }
 
     .placeholder-text { text-align: center; color: #bbb; padding: 40px 0; font-size: 14px; }
   </style>
@@ -152,7 +157,10 @@
   <!-- 라이트박스 -->
   <div class="brag-lightbox" id="brag-lightbox" hidden>
     <button class="lightbox-close" id="lightbox-close">✕</button>
+    <button class="lightbox-prev" id="lightbox-prev">‹</button>
     <img id="lightbox-img" src="" alt="" />
+    <button class="lightbox-next" id="lightbox-next">›</button>
+    <div class="lightbox-counter" id="lightbox-counter"></div>
   </div>
 
   <!-- 하단 탭바 -->
@@ -287,9 +295,40 @@
       document.querySelectorAll(".brag-delete-btn").forEach(btn => {
         btn.addEventListener("click", () => deletePost(btn.dataset.del));
       });
-      document.querySelectorAll(".brag-photos img").forEach(img => {
-        img.addEventListener("click", () => openLightbox(img.src));
+      document.querySelectorAll(".brag-photos").forEach(wrap => {
+        const urls = JSON.parse(wrap.dataset.urls || "[]");
+        if (urls.length <= 1) {
+          wrap.querySelector("img")?.addEventListener("click", () => openLightbox(urls, 0));
+          return;
+        }
+        // 탭하면 다음 사진
+        wrap.querySelector("img").addEventListener("click", () => {
+          const cur = +wrap.dataset.idx;
+          openLightbox(urls, cur);
+        });
+        // 닷 클릭으로 이동
+        wrap.querySelectorAll(".photo-dot").forEach((dot, i) => {
+          dot.addEventListener("click", e => { e.stopPropagation(); switchPhoto(wrap, urls, i); });
+        });
+        // 터치 스와이프
+        let touchX = null;
+        wrap.addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+        wrap.addEventListener("touchend", e => {
+          if (touchX === null) return;
+          const diff = touchX - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 40) {
+            const cur = +wrap.dataset.idx;
+            switchPhoto(wrap, urls, diff > 0 ? Math.min(cur + 1, urls.length - 1) : Math.max(cur - 1, 0));
+          }
+          touchX = null;
+        }, { passive: true });
       });
+    }
+
+    function switchPhoto(wrap, urls, idx) {
+      wrap.dataset.idx = idx;
+      wrap.querySelector("img").src = urls[idx];
+      wrap.querySelectorAll(".photo-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
     }
 
     async function toggleLike(postId) {
@@ -316,10 +355,21 @@
       document.querySelector(`.brag-card[data-id="${postId}"]`)?.remove();
     }
 
-    function openLightbox(src) {
-      document.getElementById("lightbox-img").src = src;
+    let lbUrls = [], lbIdx = 0;
+    function openLightbox(urls, idx) {
+      lbUrls = Array.isArray(urls) ? urls : [urls];
+      lbIdx = idx || 0;
+      renderLightbox();
       document.getElementById("brag-lightbox").hidden = false;
     }
+    function renderLightbox() {
+      document.getElementById("lightbox-img").src = lbUrls[lbIdx];
+      document.getElementById("lightbox-prev").hidden = lbIdx === 0;
+      document.getElementById("lightbox-next").hidden = lbIdx === lbUrls.length - 1;
+      document.getElementById("lightbox-counter").textContent = lbUrls.length > 1 ? `${lbIdx+1} / ${lbUrls.length}` : "";
+    }
+    document.getElementById("lightbox-prev").addEventListener("click", e => { e.stopPropagation(); if (lbIdx > 0) { lbIdx--; renderLightbox(); } });
+    document.getElementById("lightbox-next").addEventListener("click", e => { e.stopPropagation(); if (lbIdx < lbUrls.length-1) { lbIdx++; renderLightbox(); } });
 
     // 업로드 모달
     document.getElementById("open-upload-btn").addEventListener("click", () => {
