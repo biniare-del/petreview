@@ -855,8 +855,14 @@ function bindTopCategoryTabs() {
         btn.classList.toggle("is-active", btn.dataset.category === cat);
       });
       selectedSearchCategory = cat;
-      document.body.dataset.theme = cat === "grooming" ? "grooming" : "hospital";
+      // 테마는 검색 영역에만 적용 (리뷰 목록 영향 X)
+      document.getElementById("search-section").dataset.theme = cat === "grooming" ? "grooming" : "hospital";
+      document.getElementById("top-category-tabs").dataset.theme = cat === "grooming" ? "grooming" : "hospital";
       renderServiceTags(cat);
+      // 리뷰 목록 카테고리 필터도 동기화 (중복 느낌 제거)
+      const reviewCatSel = document.getElementById("filter-category");
+      if (reviewCatSel) { reviewCatSel.value = cat === "all" ? "all" : cat; reviewCatSel.dispatchEvent(new Event("change")); }
+      document.querySelectorAll(".category-tab-btn").forEach(b => b.classList.toggle("is-active", b.dataset.cat === cat || (cat !== "grooming" && b.dataset.cat === "hospital")));
       if (hasSearched) {
         const q = document.getElementById("search-name-input")?.value.trim();
         q ? void doNameSearch() : void renderSearchResults();
@@ -874,8 +880,8 @@ function bindTopCategoryTabs() {
         if (titleEl) titleEl.textContent = "동물병원 검색";
         if (subEl) subEl.textContent = "병원 이름으로 바로 찾거나, 지역으로 둘러보세요.";
       }
-      // 검색 섹션으로 스크롤
-      document.getElementById("search-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // 카테고리 탭이 보이도록 스크롤 (탭 위로)
+      document.getElementById("top-category-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
   // 기존 category toggle이 바뀔 때 상단 탭도 동기화
