@@ -55,9 +55,9 @@ function restoreFormDraft() {
     const d = JSON.parse(raw);
     if (!d.pendingOpenForm) return;
 
-    // 폼 섹션으로 스크롤
-    document.getElementById("review-form-section")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // 폼 섹션 표시 후 스크롤
+    const _formSec = document.getElementById("review-form-section");
+    if (_formSec) { _formSec.hidden = false; _formSec.scrollIntoView({ behavior: "smooth", block: "start" }); }
 
     // step 2 였으면 업종 선택 후 폼 복원
     if (d.formStep === 2 && d.formCategory) {
@@ -1222,13 +1222,20 @@ function bindTabBar() {
     window.scrollTo({ top, behavior: "smooth" });
   }
 
+  function hideReviewForm() {
+    const formSec = document.getElementById("review-form-section");
+    if (formSec) formSec.hidden = true;
+  }
+
   document.querySelector('.tab-item[data-tab="home"]')?.addEventListener("click", () => {
     setActive("home");
+    hideReviewForm();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   document.querySelector('.tab-item[data-tab="search"]')?.addEventListener("click", () => {
     setActive("search");
+    hideReviewForm();
     scrollToEl(document.getElementById("search-section"));
   });
 
@@ -1236,7 +1243,11 @@ function bindTabBar() {
     setActive("write");
     const userId = window.PetAuth?.currentUser?.id;
     if (!userId) { openLoginModal(); return; }
-    scrollToEl(document.getElementById("review-form-section"));
+    const formSec = document.getElementById("review-form-section");
+    if (formSec) {
+      formSec.hidden = false;
+      scrollToEl(formSec);
+    }
   });
 
   document.querySelector('.tab-item[data-tab="brag"]')?.addEventListener("click", () => {
@@ -2164,8 +2175,8 @@ function openReviewForm() {
     openLoginModal(); // saveFormDraft() 포함 → 로그인 후 복원
     return;
   }
-  document.getElementById("review-form-section")
-    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const _fs = document.getElementById("review-form-section");
+  if (_fs) { _fs.hidden = false; _fs.scrollIntoView({ behavior: "smooth", block: "start" }); }
   showFormStep(1);
 }
 
@@ -3118,8 +3129,8 @@ function init() {
       if (placeRegion) placeRegion.value = prefillRegion;
     }
     setTimeout(() => {
-      document.getElementById("review-form-section")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const _fs2 = document.getElementById("review-form-section");
+      if (_fs2) { _fs2.hidden = false; _fs2.scrollIntoView({ behavior: "smooth", block: "start" }); }
     }, 300);
     // URL 파라미터 정리 (뒤로 가기 시 중복 실행 방지)
     history.replaceState(null, "", location.pathname);
