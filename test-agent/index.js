@@ -19,6 +19,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { TOOL_DEFINITIONS, runTool, browser_close } from "./tools.js";
 
+// Support ANTHROPIC_API_KEY (x-api-key header) or ANTHROPIC_AUTH_TOKEN (Bearer header)
 const client = new Anthropic();
 
 const args = process.argv.slice(2);
