@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>뽐내기 – 펫리뷰</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="/petreview/manifest.json" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="펫리뷰" />
+  <link rel="apple-touch-icon" href="/petreview/icons/icon-192.svg" />
+  <style>
+    body { padding-bottom: 70px; background: #faf7f5; }
+
+    .brag-header {
+      position: sticky; top: 0; z-index: 20;
+      background: #fff; border-bottom: 1px solid #f0e8e2;
+      padding: 14px 16px 10px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .brag-header h1 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin: 0; }
+    .brag-upload-btn {
+      background: linear-gradient(135deg, #16a34a, #0f6e56);
+      color: #fff; border: none; border-radius: 20px;
+      padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+
+    .brag-feed { max-width: 600px; margin: 0 auto; padding: 12px 12px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+    .brag-card {
+      background: #fff; border-radius: 18px; overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07); border: 1.5px solid #f0e8e2;
+      transition: box-shadow 0.2s;
+    }
+    .brag-card.rank-hot    { border-color: #ff9800; box-shadow: 0 0 0 2px #ff980030, 0 4px 16px rgba(255,152,0,0.15); }
+    .brag-card.rank-star   { border-color: #2196f3; box-shadow: 0 0 0 2px #2196f330, 0 4px 16px rgba(33,150,243,0.15); }
+    .brag-card.rank-legend { border-color: transparent; box-shadow: 0 0 0 2.5px #a855f7, 0 4px 24px rgba(168,85,247,0.25); background: linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg,#f59e0b,#ec4899,#a855f7) border-box; }
+
+    .brag-photos { position: relative; width: 100%; aspect-ratio: 1; background: #f5ede8; }
+    .brag-photos img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+    .photo-nav-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
+    .photo-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+    .photo-dot.active { background: #fff; }
+
+    .brag-card-body { padding: 12px 14px 14px; }
+    .brag-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .brag-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 15px; overflow: hidden; flex-shrink: 0; }
+    .brag-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .brag-author-info { flex: 1; min-width: 0; }
+    .brag-author { font-size: 13px; font-weight: 600; color: #2a2520; }
+    .brag-pet-name { font-size: 11px; color: #aaa; }
+
+    .brag-badge {
+      font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; flex-shrink: 0;
+    }
+    .badge-popular { background: #fff8e1; color: #e65100; }
+    .badge-hot     { background: #fff3e0; color: #e65100; }
+    .badge-star    { background: #e3f2fd; color: #1565c0; }
+    .badge-legend  { background: linear-gradient(135deg, #f59e0b, #ec4899); color: #fff; }
+
+    .brag-caption { font-size: 14px; color: #3a3530; line-height: 1.5; margin: 0 0 10px; word-break: break-all; }
+
+    .brag-like-row { display: flex; align-items: center; gap: 8px; }
+    .brag-like-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: none; border: 1.5px solid #e8ddd8; border-radius: 20px;
+      padding: 5px 14px; cursor: pointer; font-size: 13px; color: #888;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .brag-like-btn.liked { background: #fff0f3; border-color: #f43f5e; color: #f43f5e; }
+    .brag-like-btn .heart { font-size: 15px; }
+    .brag-time { font-size: 11px; color: #bbb; margin-left: auto; }
+    .brag-delete-btn { background: none; border: none; color: #ddd; font-size: 18px; cursor: pointer; padding: 0 4px; margin-left: 4px; }
+    .brag-delete-btn:hover { color: #e57373; }
+
+    /* 업로드 모달 */
+    .brag-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+    .brag-overlay[hidden] { display: none; }
+    .brag-modal { background: #fff; border-radius: 22px 22px 0 0; width: 100%; max-width: 600px; padding: 20px 20px 40px; max-height: 90vh; overflow-y: auto; }
+    .brag-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .brag-modal-header h3 { font-size: 17px; font-weight: 700; margin: 0; }
+    .modal-x { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; padding: 0; }
+
+    .photo-upload-area {
+      border: 2px dashed #d4c5be; border-radius: 14px; padding: 20px;
+      text-align: center; cursor: pointer; margin-bottom: 14px; transition: border-color 0.15s;
+    }
+    .photo-upload-area:hover { border-color: #16a34a; }
+    .photo-upload-area p { margin: 6px 0 0; font-size: 13px; color: #aaa; }
+    .photo-preview-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .photo-thumb { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; }
+
+    .brag-caption-input {
+      width: 100%; box-sizing: border-box; border: 1.5px solid #e0d7d2; border-radius: 12px;
+      padding: 12px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 80px;
+      margin-bottom: 14px;
+    }
+    .brag-caption-input:focus { outline: none; border-color: #16a34a; }
+
+    .pet-select { width: 100%; box-sizing: border-box; border: 1.5px solid #e0d7d2; border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; margin-bottom: 16px; background: #fff; }
+    .pet-select:focus { outline: none; border-color: #16a34a; }
+
+    .brag-submit-btn {
+      width: 100%; background: linear-gradient(135deg, #16a34a, #0f6e56);
+      color: #fff; border: none; border-radius: 14px; padding: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .brag-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .brag-msg { text-align: center; font-size: 13px; margin-top: 10px; color: #e57373; }
+
+    /* 라이트박스 */
+    .brag-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: flex; align-items: center; justify-content: center; }
+    .brag-lightbox[hidden] { display: none; }
+    .brag-lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 8px; object-fit: contain; }
+    .lightbox-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
+
+    .placeholder-text { text-align: center; color: #bbb; padding: 40px 0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="brag-header">
+    <h1>🏅 뽐내기</h1>
+    <button class="brag-upload-btn" id="open-upload-btn">+ 자랑하기</button>
+  </div>
+
+  <div class="brag-feed" id="brag-feed">
+    <p class="placeholder-text">불러오는 중...</p>
+  </div>
+
+  <!-- 업로드 모달 -->
+  <div class="brag-overlay" id="upload-overlay" hidden>
+    <div class="brag-modal">
+      <div class="brag-modal-header">
+        <h3>우리 아이 자랑하기 🐾</h3>
+        <button class="modal-x" id="upload-close-btn">✕</button>
+      </div>
+      <div class="photo-upload-area" id="photo-upload-area">
+        <div style="font-size:36px;">📸</div>
+        <p>사진을 선택하세요 (최대 3장)</p>
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none" />
+      </div>
+      <div class="photo-preview-row" id="photo-preview-row"></div>
+      <select class="pet-select" id="pet-select">
+        <option value="">우리 아이 선택 (선택사항)</option>
+      </select>
+      <textarea class="brag-caption-input" id="caption-input" placeholder="우리 아이 자랑 한마디 🐶" maxlength="200"></textarea>
+      <button class="brag-submit-btn" id="brag-submit-btn">자랑하기 🎉</button>
+      <p class="brag-msg" id="brag-msg"></p>
+    </div>
+  </div>
+
+  <!-- 라이트박스 -->
+  <div class="brag-lightbox" id="brag-lightbox" hidden>
+    <button class="lightbox-close" id="lightbox-close">✕</button>
+    <img id="lightbox-img" src="" alt="" />
+  </div>
+
+  <!-- 하단 탭바 -->
+  <nav class="bottom-tab-bar" aria-label="하단 탭 메뉴">
+    <button class="tab-item" onclick="location.href='index.html'" aria-label="홈">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>홈</span>
+    </button>
+    <button class="tab-item" onclick="location.href='index.html#search-section'" aria-label="병원찾기">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>병원찾기</span>
+    </button>
+    <button class="tab-item is-active" aria-label="뽐내기">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>뽐내기</span>
+    </button>
+    <button class="tab-item" onclick="location.href='community.html'" aria-label="커뮤니티">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>커뮤니티</span>
+    </button>
+    <button class="tab-item" onclick="location.href='mypage.html'" aria-label="마이">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>마이</span>
+    </button>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/petreview/sw.js").catch(() => {}); }</script>
+  <script>
+    const db = window.supabaseClient;
+    let currentUser = null;
+    let myPets = [];
+    let selectedFiles = [];
+    let userLikedSet = new Set();
+
+    function escH(v) { return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
+    function timeAgo(d) {
+      const s = Math.floor((Date.now() - new Date(d)) / 1000);
+      if (s < 60) return "방금"; if (s < 3600) return `${Math.floor(s/60)}분 전`;
+      if (s < 86400) return `${Math.floor(s/3600)}시간 전`; return `${Math.floor(s/86400)}일 전`;
+    }
+
+    function getBadge(n) {
+      if (n >= 200) return { cls: "badge-legend", label: "👑 레전드" };
+      if (n >= 100) return { cls: "badge-star",   label: "💎 스타" };
+      if (n >= 50)  return { cls: "badge-hot",    label: "🔥 핫" };
+      if (n >= 10)  return { cls: "badge-popular",label: "🌟 인기" };
+      return null;
+    }
+    function getRankCls(n) {
+      if (n >= 200) return "rank-legend";
+      if (n >= 100) return "rank-star";
+      if (n >= 50)  return "rank-hot";
+      return "";
+    }
+
+    function renderCard(post, profileMap) {
+      const badge = getBadge(post.like_count);
+      const rankCls = getRankCls(post.like_count);
+      const liked = userLikedSet.has(post.id);
+      const nick = profileMap[post.user_id]?.nickname || "익명";
+      const petName = post.pets?.name || "";
+      const avatarUrl = post.pets?.photo_url || "";
+      const isOwner = currentUser && currentUser.id === post.user_id;
+      const urls = post.photo_urls || [];
+
+      const photosHtml = urls.length === 0 ? "" : `
+        <div class="brag-photos" data-urls='${escH(JSON.stringify(urls))}' data-idx="0">
+          <img src="${escH(urls[0])}" alt="뽐내기 사진" loading="lazy" />
+          ${urls.length > 1 ? `<div class="photo-nav-dots">${urls.map((_,i)=>`<div class="photo-dot${i===0?' active':''}"></div>`).join("")}</div>` : ""}
+        </div>`;
+
+      return `
+        <div class="brag-card ${rankCls}" data-id="${escH(post.id)}">
+          ${photosHtml}
+          <div class="brag-card-body">
+            <div class="brag-card-top">
+              <div class="brag-avatar">${avatarUrl ? `<img src="${escH(avatarUrl)}" alt="">` : "🐾"}</div>
+              <div class="brag-author-info">
+                <div class="brag-author">${escH(nick)}</div>
+                ${petName ? `<div class="brag-pet-name">${escH(petName)}</div>` : ""}
+              </div>
+              ${badge ? `<span class="brag-badge ${badge.cls}">${badge.label}</span>` : ""}
+            </div>
+            ${post.caption ? `<p class="brag-caption">${escH(post.caption)}</p>` : ""}
+            <div class="brag-like-row">
+              <button class="brag-like-btn${liked?" liked":""}" data-id="${escH(post.id)}">
+                <span class="heart">${liked?"❤️":"🤍"}</span>
+                <span class="like-count">${post.like_count}</span>
+              </button>
+              <span class="brag-time">${timeAgo(post.created_at)}</span>
+              ${isOwner ? `<button class="brag-delete-btn" data-del="${escH(post.id)}">🗑</button>` : ""}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function loadFeed() {
+      const feed = document.getElementById("brag-feed");
+      if (!db) { feed.innerHTML = '<p class="placeholder-text">서비스 연결 실패</p>'; return; }
+
+      const { data: posts, error } = await db
+        .from("brag_posts")
+        .select("*, pets(name, photo_url)")
+        .order("like_count", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error || !posts?.length) {
+        feed.innerHTML = '<p class="placeholder-text">아직 자랑이 없어요 🐾<br>첫 번째로 올려보세요!</p>'; return;
+      }
+
+      const uids = [...new Set(posts.map(p => p.user_id))];
+      const { data: profiles } = await db.from("profiles").select("id,nickname").in("id", uids);
+      const profileMap = Object.fromEntries((profiles||[]).map(p=>[p.id,p]));
+
+      if (currentUser) {
+        const { data: likes } = await db.from("brag_post_likes").select("post_id").eq("user_id", currentUser.id);
+        userLikedSet = new Set((likes||[]).map(l=>l.post_id));
+      }
+
+      feed.innerHTML = posts.map(p => renderCard(p, profileMap)).join("");
+      attachCardEvents();
+    }
+
+    function attachCardEvents() {
+      document.querySelectorAll(".brag-like-btn").forEach(btn => {
+        btn.addEventListener("click", () => toggleLike(btn.dataset.id));
+      });
+      document.querySelectorAll(".brag-delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => deletePost(btn.dataset.del));
+      });
+      document.querySelectorAll(".brag-photos img").forEach(img => {
+        img.addEventListener("click", () => openLightbox(img.src));
+      });
+    }
+
+    async function toggleLike(postId) {
+      if (!currentUser) { alert("로그인이 필요해요."); return; }
+      const btn = document.querySelector(`.brag-like-btn[data-id="${postId}"]`);
+      const countEl = btn?.querySelector(".like-count");
+      const heartEl = btn?.querySelector(".heart");
+      const liked = userLikedSet.has(postId);
+
+      if (liked) {
+        await db.from("brag_post_likes").delete().eq("post_id", postId).eq("user_id", currentUser.id);
+        userLikedSet.delete(postId);
+        if (btn) { btn.classList.remove("liked"); heartEl.textContent = "🤍"; countEl.textContent = Math.max(0, +countEl.textContent - 1); }
+      } else {
+        await db.from("brag_post_likes").insert({ post_id: postId, user_id: currentUser.id });
+        userLikedSet.add(postId);
+        if (btn) { btn.classList.add("liked"); heartEl.textContent = "❤️"; countEl.textContent = +countEl.textContent + 1; }
+      }
+    }
+
+    async function deletePost(postId) {
+      if (!confirm("삭제할까요?")) return;
+      await db.from("brag_posts").delete().eq("id", postId);
+      document.querySelector(`.brag-card[data-id="${postId}"]`)?.remove();
+    }
+
+    function openLightbox(src) {
+      document.getElementById("lightbox-img").src = src;
+      document.getElementById("brag-lightbox").hidden = false;
+    }
+
+    // 업로드 모달
+    document.getElementById("open-upload-btn").addEventListener("click", () => {
+      if (!currentUser) { alert("로그인이 필요해요."); return; }
+      document.getElementById("upload-overlay").hidden = false;
+    });
+    document.getElementById("upload-close-btn").addEventListener("click", () => {
+      document.getElementById("upload-overlay").hidden = true;
+    });
+    document.getElementById("brag-lightbox").addEventListener("click", e => {
+      if (e.target === e.currentTarget || e.target.id === "lightbox-close") {
+        document.getElementById("brag-lightbox").hidden = true;
+      }
+    });
+    document.getElementById("lightbox-close").addEventListener("click", () => {
+      document.getElementById("brag-lightbox").hidden = true;
+    });
+
+    document.getElementById("photo-upload-area").addEventListener("click", () => {
+      document.getElementById("photo-input").click();
+    });
+    document.getElementById("photo-input").addEventListener("change", e => {
+      selectedFiles = Array.from(e.target.files).slice(0, 3);
+      const row = document.getElementById("photo-preview-row");
+      row.innerHTML = selectedFiles.map(f => `<img class="photo-thumb" src="${URL.createObjectURL(f)}" />`).join("");
+    });
+
+    async function loadMyPets() {
+      if (!currentUser || !db) return;
+      const { data } = await db.from("pets").select("id,name").eq("user_id", currentUser.id);
+      myPets = data || [];
+      const sel = document.getElementById("pet-select");
+      myPets.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id; opt.textContent = p.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    document.getElementById("brag-submit-btn").addEventListener("click", async () => {
+      const msg = document.getElementById("brag-msg");
+      if (!currentUser) { msg.textContent = "로그인이 필요해요."; return; }
+      if (!selectedFiles.length) { msg.textContent = "사진을 최소 1장 선택해주세요."; return; }
+
+      const btn = document.getElementById("brag-submit-btn");
+      btn.disabled = true; msg.textContent = "업로드 중...";
+
+      const urls = [];
+      for (const file of selectedFiles) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `brag/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error } = await db.storage.from("pet-photos").upload(path, file, { contentType: file.type });
+        if (!error) {
+          const { data: u } = db.storage.from("pet-photos").getPublicUrl(path);
+          urls.push(u.publicUrl);
+        }
+      }
+
+      if (!urls.length) { msg.textContent = "사진 업로드에 실패했어요."; btn.disabled = false; return; }
+
+      const caption = document.getElementById("caption-input").value.trim();
+      const petId = document.getElementById("pet-select").value || null;
+
+      const { error } = await db.from("brag_posts").insert({
+        user_id: currentUser.id,
+        pet_id: petId,
+        photo_urls: urls,
+        caption: caption || null,
+      });
+
+      if (error) { msg.textContent = "등록에 실패했어요."; btn.disabled = false; return; }
+
+      document.getElementById("upload-overlay").hidden = true;
+      document.getElementById("caption-input").value = "";
+      document.getElementById("photo-preview-row").innerHTML = "";
+      selectedFiles = [];
+      btn.disabled = false;
+      msg.textContent = "";
+      loadFeed();
+    });
+
+    // 인증 초기화
+    (async () => {
+      if (!db) return;
+      const { data: { session } } = await db.auth.getSession();
+      currentUser = session?.user || null;
+      if (window.PetAuth?.initHeader) window.PetAuth.initHeader(currentUser);
+      await loadMyPets();
+      await loadFeed();
+    })();
+  </script>
+</body>
+</html>
