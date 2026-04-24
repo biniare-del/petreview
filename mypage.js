@@ -1426,7 +1426,10 @@
     document.getElementById("exp-modal-title").textContent = "지출 추가";
     document.getElementById("exp-amount").value = "";
     document.getElementById("exp-memo").value = "";
-    document.getElementById("exp-date").value = new Date().toISOString().slice(0,10);
+    const today = new Date().toISOString().slice(0,10);
+    const dateEl = document.getElementById("exp-date");
+    dateEl.max = today;
+    dateEl.value = today;
     document.getElementById("exp-modal-msg").textContent = "";
     document.getElementById("exp-modal").hidden = false;
   }
