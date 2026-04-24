@@ -467,6 +467,11 @@ function renderReviewList() {
           </div>
           <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
         </div>
+        <div class="card-price-row">
+          ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : ""}
+          <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
+          <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
+        </div>
         <div class="card-pet-header">
           <div class="card-pet-avatar">
             ${review.petPhoto
@@ -481,7 +486,6 @@ function renderReviewList() {
             </div>
             <div class="card-pet-owner">
               ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
-              ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
               ${review.reviewSeq ? `<span class="review-seq-badge">${review.reviewSeq}번째 리뷰</span>` : ""}
             </div>
           </div>
@@ -490,10 +494,6 @@ function renderReviewList() {
           </div>
         </div>
         ${scoresHtml}
-        <div class="card-price-row">
-          <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
-          <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
-        </div>
         <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
         ${hasPhotos ? `
         <div class="review-images review-images--large">
@@ -659,6 +659,11 @@ function renderRecentReviews() {
         </div>
         <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
       </div>
+      <div class="card-price-row">
+        ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : ""}
+        <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
+        <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
+      </div>
       <div class="card-pet-header">
         <div class="card-pet-avatar">
           ${review.petPhoto
@@ -673,15 +678,10 @@ function renderRecentReviews() {
           </div>
           <div class="card-pet-owner">
             ${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate)}
-            ${review.isVerified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
           </div>
         </div>
       </div>
       ${scoresHtml}
-      <div class="card-price-row">
-        <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
-        <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
-      </div>
       <p class="card-review-text">${escapeHtml(review.shortReview)}</p>
       ${(review.reviewPhotoUrls || []).length > 0 ? `
       <div class="review-images">
@@ -2615,14 +2615,15 @@ async function openReviewDetailModal(reviewId) {
       </div>
       <div>
         <div style="font-size:20px;font-weight:800;color:#1a1a1a;">${review.petName ? escapeHtml(review.petName) : "반려동물"} <span style="font-size:13px;font-weight:400;color:#999;">${escapeHtml(review.petSpecies || "")}</span></div>
-        <div style="font-size:13px;color:#aaa;margin-top:3px;">${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate || "")}${review.isVerified ? ' <span class="verified-badge" style="font-size:10px;">✔ 영수증 인증</span>' : ""}</div>
+        <div style="font-size:13px;color:#aaa;margin-top:3px;">${review.userNickname ? escapeHtml(review.userNickname) + " · " : ""}${escapeHtml(review.visitDate || "")}</div>
       </div>
     </div>
-    ${scoresHtml}
-    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap;">
+      ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : ""}
       <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
       <span style="font-size:12px;color:#888;">${escapeHtml(review.serviceDetail || "")}</span>
     </div>
+    ${scoresHtml}
     <p style="font-size:15px;line-height:1.6;color:#333;margin:10px 0;">${escapeHtml(review.shortReview || "")}</p>
     ${(review.reviewPhotoUrls || []).length ? `<div class="review-images">${(review.reviewPhotoUrls).map(u => `<img src="${escapeHtml(u)}" class="review-thumb" />`).join("")}</div>` : ""}`;
 
