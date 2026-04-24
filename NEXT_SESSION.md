@@ -31,11 +31,11 @@ git checkout claude/finish-map-pin-feature-otjfU
 | `supabase/create_feedbacks.sql` | 건의함 테이블 | ✅ 완료 |
 | `supabase/create_comment_likes.sql` | 댓글 좋아요 테이블 | ✅ 완료 |
 | `supabase/admin_rls_bypass.sql` | 관리자 리뷰 수정/삭제 RLS | ✅ 완료 |
-| `supabase/create_post_reports.sql` | 커뮤니티 글 신고 테이블 | ❓ 확인 필요 |
-| `supabase/add_is_hidden.sql` | reviews.is_hidden 컬럼 | ❓ 확인 필요 |
-| `supabase/add_kakao_place_id.sql` | reviews.kakao_place_id 컬럼 | ❓ 확인 필요 |
-| `supabase/add_review_photo_urls.sql` | reviews.review_photo_urls 컬럼 | ❓ 확인 필요 |
-| `supabase/create_banners.sql` | banners 테이블 | ❓ 확인 필요 |
+| `supabase/create_post_reports.sql` | 커뮤니티 글 신고 테이블 | ✅ 완료 |
+| `supabase/add_is_hidden.sql` | reviews.is_hidden 컬럼 | ✅ 완료 |
+| `supabase/add_kakao_place_id.sql` | reviews.kakao_place_id 컬럼 | ✅ 완료 |
+| `supabase/add_review_photo_urls.sql` | reviews.review_photo_urls 컬럼 | ✅ 완료 |
+| `supabase/create_banners.sql` | banners 테이블 | ✅ 완료 |
 
 ---
 
