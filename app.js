@@ -3118,21 +3118,45 @@ async function loadBragPreview() {
     .from("brag_posts")
     .select("id, photo_urls, caption, like_count, pets(name)")
     .order("like_count", { ascending: false })
-    .limit(3);
-  if (!posts?.length) { el.innerHTML = '<p class="placeholder-text">아직 자랑이 없어요 🐾</p>'; return; }
-  el.innerHTML = `<div class="brag-preview-grid">${posts.map(p => {
-    const img = p.photo_urls?.[0] || "";
+    .limit(5);
+  if (!posts?.length) {
+    el.innerHTML = '<p class="placeholder-text" style="padding:24px 0;">아직 자랑이 없어요 🐾<br><a href="brag.html" style="color:#16a34a;font-size:13px;">첫 번째로 올려보기 →</a></p>';
+    return;
+  }
+  function escH(v) { return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
+  el.innerHTML = `<div class="brag-preview-scroll">${posts.map((p, ci) => {
+    const urls = p.photo_urls || [];
     const likes = p.like_count || 0;
-    const badge = likes >= 200 ? "👑" : likes >= 100 ? "💎" : likes >= 50 ? "🔥" : likes >= 10 ? "🌟" : "";
-    return `<a href="brag.html" class="brag-preview-card">
-      ${img ? `<div class="brag-preview-img-wrap"><img src="${img}" alt="" loading="lazy" /></div>` : `<div class="brag-preview-img-wrap brag-preview-empty">🐾</div>`}
-      <div class="brag-preview-info">
-        ${p.pets?.name ? `<span class="brag-preview-pet">${p.pets.name}</span>` : ""}
-        ${badge ? `<span class="brag-preview-badge">${badge}</span>` : ""}
-        <span class="brag-preview-likes">❤️ ${likes}</span>
+    const badge = likes >= 200 ? "👑 레전드" : likes >= 100 ? "💎 스타" : likes >= 50 ? "🔥 핫" : likes >= 10 ? "🌟 인기" : "";
+    const dotsHtml = urls.length > 1 ? `<div class="bpv-dots">${urls.map((_,i)=>`<span class="bpv-dot${i===0?' active':''}"></span>`).join("")}</div>` : "";
+    return `<a href="brag.html" class="brag-pv-card" data-ci="${ci}">
+      <div class="bpv-photo-wrap" data-urls='${escH(JSON.stringify(urls))}' data-idx="0">
+        <img src="${escH(urls[0]||"")}" alt="" loading="lazy" />
+        ${dotsHtml}
+        ${badge ? `<span class="bpv-badge">${badge}</span>` : ""}
+        <span class="bpv-likes">❤️ ${likes}</span>
+      </div>
+      <div class="bpv-body">
+        ${p.pets?.name ? `<span class="bpv-pet">🐾 ${escH(p.pets.name)}</span>` : ""}
+        ${p.caption ? `<p class="bpv-caption">${escH(p.caption)}</p>` : ""}
       </div>
     </a>`;
-  }).join("")}</div>`;
+  }).join("")}</div>
+  <div style="text-align:center;margin-top:14px;">
+    <a href="brag.html" class="brag-more-btn">뽐내기 더보기 →</a>
+  </div>`;
+
+  // 사진 자동 전환
+  el.querySelectorAll(".bpv-photo-wrap").forEach(wrap => {
+    const urls = JSON.parse(wrap.dataset.urls || "[]");
+    if (urls.length < 2) return;
+    let idx = 0;
+    setInterval(() => {
+      idx = (idx + 1) % urls.length;
+      wrap.querySelector("img").src = urls[idx];
+      wrap.querySelectorAll(".bpv-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+    }, 2500);
+  });
 }
 
 init();
