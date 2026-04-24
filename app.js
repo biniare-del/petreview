@@ -1239,8 +1239,8 @@ function bindTabBar() {
     scrollToEl(document.getElementById("review-form-section"));
   });
 
-  document.querySelector('.tab-item[data-tab="community"]')?.addEventListener("click", () => {
-    window.location.href = "community.html";
+  document.querySelector('.tab-item[data-tab="brag"]')?.addEventListener("click", () => {
+    window.location.href = "brag.html";
   });
 
   document.querySelector('.tab-item[data-tab="mypage"]')?.addEventListener("click", () => {
