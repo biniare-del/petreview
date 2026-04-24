@@ -3662,3 +3662,39 @@ body[data-theme="grooming"] .place-phone-link {
   transition: background 0.15s;
 }
 .brag-more-btn:hover { background: #e8e0db; }
+
+/* ===== 가계부 ===== */
+.exp-month-bar { display:flex; align-items:center; justify-content:center; gap:16px; padding:14px 0 10px; }
+.exp-month-nav { background:none; border:1.5px solid #e0d7d2; border-radius:50%; width:32px; height:32px; font-size:18px; cursor:pointer; color:#888; display:flex; align-items:center; justify-content:center; }
+.exp-month-label { font-size:16px; font-weight:700; color:#2a2520; min-width:100px; text-align:center; }
+
+.exp-summary-card { background:linear-gradient(135deg,#0f6e56,#16a34a); border-radius:16px; padding:18px 20px 14px; margin-bottom:14px; color:#fff; }
+.exp-summary-total { display:flex; justify-content:space-between; align-items:flex-end; }
+.exp-summary-label { font-size:13px; opacity:0.85; }
+.exp-summary-amount { font-size:26px; font-weight:800; letter-spacing:-0.5px; }
+.exp-summary-sub { margin:6px 0 0; font-size:12px; opacity:0.75; }
+
+.exp-bars-wrap { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.exp-bar-row { display:flex; align-items:center; gap:8px; }
+.exp-bar-label { font-size:12px; color:#666; width:72px; flex-shrink:0; }
+.exp-bar-track { flex:1; height:8px; background:#f0e8e2; border-radius:4px; overflow:hidden; }
+.exp-bar-fill { height:100%; border-radius:4px; transition:width 0.4s; }
+.exp-bar-amt { font-size:12px; font-weight:600; color:#3a3530; width:70px; text-align:right; flex-shrink:0; }
+
+.exp-compare-card { background:#fff8f0; border:1.5px solid #fde8cc; border-radius:14px; padding:14px 16px; margin-bottom:16px; }
+.exp-compare-inner { display:flex; align-items:center; gap:12px; }
+.exp-compare-emoji { font-size:28px; }
+.exp-compare-title { margin:0 0 3px; font-size:13px; color:#3a3520; }
+.exp-compare-sub { margin:0; font-size:12px; color:#888; }
+
+.exp-list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.exp-list-header h3 { margin:0; font-size:15px; font-weight:700; color:#2a2520; }
+
+.exp-item { display:flex; align-items:center; justify-content:space-between; padding:11px 14px; background:#fff; border:1px solid #f0e8e2; border-radius:12px; margin-bottom:8px; }
+.exp-item-left { display:flex; flex-direction:column; gap:3px; }
+.exp-item-cat { font-size:13px; font-weight:700; color:#2a2520; }
+.exp-item-meta { font-size:11px; color:#aaa; }
+.exp-item-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.exp-item-amt { font-size:15px; font-weight:700; color:#0f6e56; }
+.exp-delete-btn { background:none; border:none; color:#ddd; font-size:14px; cursor:pointer; padding:0; }
+.exp-delete-btn:hover { color:#e57373; }

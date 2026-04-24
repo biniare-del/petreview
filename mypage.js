@@ -63,6 +63,7 @@
         if (btn.dataset.tab === "pets") loadPets();
         if (btn.dataset.tab === "myposts") loadMyPosts();
         if (btn.dataset.tab === "mycomments") loadMyComments();
+        if (btn.dataset.tab === "expense") initExpenseTab();
       });
     });
 
@@ -1253,6 +1254,210 @@
         btn.textContent = "알림 허용하기";
       }
     });
+  }
+
+  // ===== 가계부 =====
+  const EXP_CATEGORIES = {
+    "강아지": ["진료비","미용","사료","간식","배변패드","장난감","산책용품","의류·액세서리","쇼핑","기타"],
+    "고양이": ["진료비","미용","사료","간식","모래·화장실","장난감","스크래쳐","쇼핑","기타"],
+    "default": ["진료비","미용","사료","간식","장난감","쇼핑","기타"],
+  };
+  const CAT_COLORS = ["#16a34a","#0ea5e9","#f59e0b","#ec4899","#8b5cf6","#f97316","#14b8a6","#e11d48","#64748b","#84cc16"];
+
+  let expYear = new Date().getFullYear();
+  let expMonth = new Date().getMonth() + 1;
+  let expPets = [];
+  let expInitialized = false;
+
+  function expMonthStr() { return `${expYear}년 ${expMonth}월`; }
+  function expDateRange() {
+    const from = `${expYear}-${String(expMonth).padStart(2,"0")}-01`;
+    const lastDay = new Date(expYear, expMonth, 0).getDate();
+    const to = `${expYear}-${String(expMonth).padStart(2,"0")}-${lastDay}`;
+    return { from, to };
+  }
+
+  async function initExpenseTab() {
+    if (expInitialized) { await loadExpenses(); return; }
+    expInitialized = true;
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!db || !userId) return;
+
+    document.getElementById("exp-month-label").textContent = expMonthStr();
+    document.getElementById("exp-prev-month").addEventListener("click", () => {
+      expMonth--; if (expMonth < 1) { expMonth = 12; expYear--; }
+      document.getElementById("exp-month-label").textContent = expMonthStr();
+      loadExpenses();
+    });
+    document.getElementById("exp-next-month").addEventListener("click", () => {
+      expMonth++; if (expMonth > 12) { expMonth = 1; expYear++; }
+      document.getElementById("exp-month-label").textContent = expMonthStr();
+      loadExpenses();
+    });
+    document.getElementById("exp-add-btn").addEventListener("click", openExpModal);
+    document.getElementById("exp-modal-close").addEventListener("click", () => { document.getElementById("exp-modal").hidden = true; });
+    document.getElementById("exp-save-btn").addEventListener("click", saveExpense);
+
+    // 펫 목록 로드
+    const { data: pets } = await db.from("pets").select("id,name,species").eq("user_id", userId);
+    expPets = pets || [];
+
+    // 모달 펫 셀렉트 채우기
+    const petSel = document.getElementById("exp-pet-select");
+    petSel.innerHTML = `<option value="">펫 선택 (전체)</option>` +
+      expPets.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+    petSel.addEventListener("change", updateCategoryOptions);
+    updateCategoryOptions();
+
+    await loadExpenses();
+  }
+
+  function updateCategoryOptions() {
+    const petId = document.getElementById("exp-pet-select").value;
+    const pet = expPets.find(p => p.id === petId);
+    const cats = EXP_CATEGORIES[pet?.species] || EXP_CATEGORIES["default"];
+    document.getElementById("exp-category-select").innerHTML = cats.map(c => `<option>${escapeHtml(c)}</option>`).join("");
+  }
+
+  async function loadExpenses() {
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!db || !userId) return;
+    const { from, to } = expDateRange();
+
+    const { data: rows } = await db.from("pet_expenses")
+      .select("*, pets(name,species)")
+      .eq("user_id", userId)
+      .gte("expense_date", from)
+      .lte("expense_date", to)
+      .order("expense_date", { ascending: false });
+
+    renderExpSummary(rows || []);
+    renderExpCategoryBars(rows || []);
+    renderExpList(rows || []);
+    loadExpCompare(rows || []);
+  }
+
+  function renderExpSummary(rows) {
+    const total = rows.reduce((s, r) => s + r.amount, 0);
+    const el = document.getElementById("exp-summary-card");
+    el.innerHTML = `
+      <div class="exp-summary-total">
+        <span class="exp-summary-label">이번달 총 지출</span>
+        <span class="exp-summary-amount">${total.toLocaleString()}원</span>
+      </div>
+      ${rows.filter(r=>r.source==="review").length ? `<p class="exp-summary-sub">리뷰 자동연동 ${rows.filter(r=>r.source==="review").length}건 포함</p>` : ""}`;
+  }
+
+  function renderExpCategoryBars(rows) {
+    const el = document.getElementById("exp-category-bars");
+    if (!rows.length) { el.innerHTML = ""; return; }
+    const totals = {};
+    rows.forEach(r => { totals[r.category] = (totals[r.category] || 0) + r.amount; });
+    const max = Math.max(...Object.values(totals));
+    const sorted = Object.entries(totals).sort((a,b) => b[1]-a[1]);
+    el.innerHTML = `<div class="exp-bars-wrap">${sorted.map(([cat, amt], i) => `
+      <div class="exp-bar-row">
+        <span class="exp-bar-label">${escapeHtml(cat)}</span>
+        <div class="exp-bar-track">
+          <div class="exp-bar-fill" style="width:${Math.round(amt/max*100)}%;background:${CAT_COLORS[i%CAT_COLORS.length]}"></div>
+        </div>
+        <span class="exp-bar-amt">${amt.toLocaleString()}원</span>
+      </div>`).join("")}</div>`;
+  }
+
+  function renderExpList(rows) {
+    const el = document.getElementById("exp-list");
+    if (!rows.length) { el.innerHTML = '<p class="placeholder-text">지출 내역이 없어요</p>'; return; }
+    el.innerHTML = rows.map(r => `
+      <div class="exp-item" data-id="${r.id}">
+        <div class="exp-item-left">
+          <span class="exp-item-cat">${escapeHtml(r.category)}</span>
+          <span class="exp-item-meta">${r.pets?.name ? escapeHtml(r.pets.name) + " · " : ""}${r.expense_date}${r.source==="review" ? " · 🧾리뷰" : ""}${r.memo ? " · " + escapeHtml(r.memo) : ""}</span>
+        </div>
+        <div class="exp-item-right">
+          <span class="exp-item-amt">${r.amount.toLocaleString()}원</span>
+          ${r.source==="manual" ? `<button class="exp-delete-btn" data-id="${r.id}">✕</button>` : ""}
+        </div>
+      </div>`).join("");
+    el.querySelectorAll(".exp-delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => deleteExpense(btn.dataset.id));
+    });
+  }
+
+  async function loadExpCompare(myRows) {
+    const el = document.getElementById("exp-compare-card");
+    if (!expPets.length) { el.hidden = true; return; }
+    const db = window.supabaseClient;
+    const species = expPets[0].species;
+    if (!species) { el.hidden = true; return; }
+    const { from, to } = expDateRange();
+
+    // 같은 species 전체 유저 이번달 평균
+    const { data } = await db.from("pet_expenses")
+      .select("amount, pets!inner(species)")
+      .eq("pets.species", species)
+      .gte("expense_date", from)
+      .lte("expense_date", to);
+
+    if (!data?.length) { el.hidden = true; return; }
+
+    // 유저별 합산 후 평균
+    const byUser = {};
+    data.forEach(r => { byUser[r.pets?.user_id || "x"] = (byUser[r.pets?.user_id || "x"] || 0) + r.amount; });
+    const avg = Math.round(Object.values(byUser).reduce((s,v)=>s+v,0) / Object.keys(byUser).length);
+    const myTotal = myRows.reduce((s,r)=>s+r.amount, 0);
+    const diff = myTotal - avg;
+    const emoji = diff > 0 ? "📈" : "📉";
+    const msg = diff > 0 ? `평균보다 ${Math.abs(diff).toLocaleString()}원 더 씀` : diff < 0 ? `평균보다 ${Math.abs(diff).toLocaleString()}원 절약` : "평균과 같음";
+
+    el.hidden = false;
+    el.innerHTML = `<div class="exp-compare-inner">
+      <span class="exp-compare-emoji">${emoji}</span>
+      <div>
+        <p class="exp-compare-title">${species} 키우는 집 평균 <strong>${avg.toLocaleString()}원</strong></p>
+        <p class="exp-compare-sub">${msg}</p>
+      </div>
+    </div>`;
+  }
+
+  function openExpModal() {
+    document.getElementById("exp-modal-title").textContent = "지출 추가";
+    document.getElementById("exp-amount").value = "";
+    document.getElementById("exp-memo").value = "";
+    document.getElementById("exp-date").value = new Date().toISOString().slice(0,10);
+    document.getElementById("exp-modal-msg").textContent = "";
+    document.getElementById("exp-modal").hidden = false;
+  }
+
+  async function saveExpense() {
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    const petId = document.getElementById("exp-pet-select").value || null;
+    const category = document.getElementById("exp-category-select").value;
+    const amount = parseInt(document.getElementById("exp-amount").value, 10);
+    const date = document.getElementById("exp-date").value;
+    const memo = document.getElementById("exp-memo").value.trim() || null;
+    const msg = document.getElementById("exp-modal-msg");
+
+    if (!amount || amount <= 0) { msg.textContent = "금액을 입력해주세요."; return; }
+    if (!date) { msg.textContent = "날짜를 입력해주세요."; return; }
+
+    const btn = document.getElementById("exp-save-btn");
+    btn.disabled = true;
+    const { error } = await db.from("pet_expenses").insert({ user_id: userId, pet_id: petId, category, amount, memo, expense_date: date, source: "manual" });
+    btn.disabled = false;
+
+    if (error) { msg.textContent = "저장 실패: " + error.message; return; }
+    document.getElementById("exp-modal").hidden = true;
+    loadExpenses();
+  }
+
+  async function deleteExpense(id) {
+    if (!confirm("삭제할까요?")) return;
+    await window.supabaseClient.from("pet_expenses").delete().eq("id", id);
+    loadExpenses();
   }
 
   init();

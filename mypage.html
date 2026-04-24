@@ -112,11 +112,35 @@
 
       <div class="mypage-tabs">
         <button class="mypage-tab is-active" data-tab="pets">🐾 마이펫</button>
+        <button class="mypage-tab" data-tab="expense">💰 가계부</button>
         <button class="mypage-tab" data-tab="reviews">내 리뷰</button>
         <button class="mypage-tab" data-tab="favorites">단골병원</button>
         <button class="mypage-tab" data-tab="myposts">내 글</button>
         <button class="mypage-tab" data-tab="mycomments">내 댓글</button>
         <button class="mypage-tab" data-tab="profile">프로필</button>
+      </div>
+
+      <!-- 가계부 -->
+      <div class="mypage-panel" id="panel-expense">
+        <!-- 월 선택 + 요약 -->
+        <div class="exp-month-bar">
+          <button class="exp-month-nav" id="exp-prev-month">‹</button>
+          <span class="exp-month-label" id="exp-month-label"></span>
+          <button class="exp-month-nav" id="exp-next-month">›</button>
+        </div>
+        <div class="exp-summary-card" id="exp-summary-card">
+          <p class="placeholder-text">불러오는 중...</p>
+        </div>
+        <!-- 카테고리 바 -->
+        <div class="exp-category-bars" id="exp-category-bars"></div>
+        <!-- 비교 -->
+        <div class="exp-compare-card" id="exp-compare-card" hidden></div>
+        <!-- 내역 + 추가 버튼 -->
+        <div class="exp-list-header">
+          <h3>지출 내역</h3>
+          <button class="btn-edit" id="exp-add-btn">+ 직접 추가</button>
+        </div>
+        <div id="exp-list"><p class="placeholder-text">불러오는 중...</p></div>
       </div>
 
       <!-- 내 리뷰 -->
@@ -414,6 +438,38 @@
       <a href="feedback.html" style="color:#aaa;font-size:12px;text-decoration:none;margin:0 8px;">건의함</a>
     </div>
   </footer>
+
+  <!-- 지출 추가 모달 -->
+  <div class="modal-overlay" id="exp-modal" hidden>
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <h3 id="exp-modal-title">지출 추가</h3>
+        <button class="modal-close" id="exp-modal-close">✕</button>
+      </div>
+      <div class="form-group">
+        <label>반려동물</label>
+        <select id="exp-pet-select" class="form-control"></select>
+      </div>
+      <div class="form-group">
+        <label>카테고리</label>
+        <select id="exp-category-select" class="form-control"></select>
+      </div>
+      <div class="form-group">
+        <label>금액 (원)</label>
+        <input type="number" id="exp-amount" class="form-control" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label>날짜</label>
+        <input type="date" id="exp-date" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label>메모 (선택)</label>
+        <input type="text" id="exp-memo" class="form-control" placeholder="어디서, 무엇을..." maxlength="100" />
+      </div>
+      <button class="primary-btn" id="exp-save-btn" style="width:100%;margin-top:4px;">저장</button>
+      <p id="exp-modal-msg" style="text-align:center;font-size:13px;color:#e57373;margin-top:8px;"></p>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>

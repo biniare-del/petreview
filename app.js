@@ -1869,7 +1869,9 @@ function _healthDday(dateStr) {
 }
 
 async function _fetchPetStats(petId, db) {
-  const [wRes, hwRes, vacRes] = await Promise.all([
+  const now = new Date();
+  const monthFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-01`;
+  const [wRes, hwRes, vacRes, expRes] = await Promise.all([
     db.from("pet_weight_logs").select("weight, recorded_at")
       .eq("pet_id", petId).order("recorded_at", { ascending: false }).limit(1),
     db.from("pet_health_records").select("next_due_date, record_date")
@@ -1878,11 +1880,15 @@ async function _fetchPetStats(petId, db) {
     db.from("pet_health_records").select("next_due_date, record_date, content")
       .eq("pet_id", petId).eq("record_type", "예방접종")
       .order("record_date", { ascending: false }).limit(1),
+    db.from("pet_expenses").select("amount")
+      .eq("pet_id", petId).gte("expense_date", monthFrom),
   ]);
+  const monthlyExpense = (expRes.data || []).reduce((s, r) => s + r.amount, 0);
   return {
-    weight:    wRes.data?.[0]   ?? null,
-    heartworm: hwRes.data?.[0]  ?? null,
-    vaccine:   vacRes.data?.[0] ?? null,
+    weight:         wRes.data?.[0]   ?? null,
+    heartworm:      hwRes.data?.[0]  ?? null,
+    vaccine:        vacRes.data?.[0] ?? null,
+    monthlyExpense,
   };
 }
 
@@ -1966,6 +1972,15 @@ async function _renderPetCareCard(wrapper, pets, activeIdx, db) {
             <span class="care-stat-icon">💉</span>
             <span class="care-stat-label">예방접종</span>
             <div class="care-stat-right">${vacHtml}</div>
+          </div>
+          <div class="care-stat-row">
+            <span class="care-stat-icon">💰</span>
+            <span class="care-stat-label">이번달 지출</span>
+            <div class="care-stat-right">
+              ${stats.monthlyExpense > 0
+                ? `<a href="mypage.html?tab=expense" class="care-stat-value ok" style="text-decoration:none;">${stats.monthlyExpense.toLocaleString()}원</a>`
+                : `<a href="mypage.html?tab=expense" class="care-stat-add">+ 기록하기</a>`}
+            </div>
           </div>
         </div>
 
