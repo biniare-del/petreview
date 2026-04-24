@@ -394,9 +394,14 @@
       document.getElementById("photo-input").click();
     });
     document.getElementById("photo-input").addEventListener("change", e => {
-      selectedFiles = Array.from(e.target.files).slice(0, 3);
+      const all = Array.from(e.target.files);
+      selectedFiles = all.slice(0, 3);
       const row = document.getElementById("photo-preview-row");
       row.innerHTML = selectedFiles.map(f => `<img class="photo-thumb" src="${URL.createObjectURL(f)}" />`).join("");
+      if (all.length > 3) {
+        const msg = document.getElementById("brag-form-msg") || row;
+        row.insertAdjacentHTML("afterend", `<p style="font-size:12px;color:#ff8a65;margin:4px 0 0;">사진은 최대 3장까지만 업로드됩니다 (${all.length}장 중 3장 선택됨)</p>`);
+      }
     });
 
     async function loadMyPets() {

@@ -428,9 +428,15 @@
 
     form.reset();
 
-    // 생년월일 최대값 = 오늘 (미래 날짜 방지)
+    // 생년월일 범위: 최대 오늘, 최소 35년 전
     const birthInput = document.getElementById("pet-birth-date");
-    if (birthInput) birthInput.max = new Date().toISOString().split("T")[0];
+    if (birthInput) {
+      const today = new Date().toISOString().split("T")[0];
+      birthInput.max = today;
+      const minD = new Date();
+      minD.setFullYear(minD.getFullYear() - 35);
+      birthInput.min = minD.toISOString().split("T")[0];
+    }
 
     if (pet) {
       title.textContent = "반려동물 수정";
@@ -482,7 +488,9 @@
 
       if (birthVal) {
         const today = new Date().toISOString().split("T")[0];
+        const minD = new Date(); minD.setFullYear(minD.getFullYear() - 35);
         if (birthVal > today) { alert("생년월일은 오늘 이전 날짜여야 합니다."); document.getElementById("pet-birth-date").focus(); return; }
+        if (birthVal < minD.toISOString().split("T")[0]) { alert("생년월일이 올바르지 않습니다. (최대 35년 이내)"); document.getElementById("pet-birth-date").focus(); return; }
       }
 
       const submitBtn = document.getElementById("pet-submit-btn");
