@@ -1305,15 +1305,7 @@ function bindReviewForm() {
       return;
     }
 
-    // 별점 필수 체크
-    const requiredScores = ["score_kindness", "score_price", "score_facility", "score_wait"];
-    const missingScore = requiredScores.find((f) => !selectedScores[f]);
-    if (missingScore) {
-      const labelMap = { score_kindness: "친절도", score_price: "진료비 수준", score_facility: "시설 청결도", score_wait: "대기시간" };
-      alert(`항목별 평가를 모두 입력해주세요.\n미입력: ${labelMap[missingScore]}`);
-      document.querySelector(`.star-select[data-field="${missingScore}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
+    // 별점은 선택 사항 — 필수 체크 제거됨
 
     const submitBtn = els.reviewForm.querySelector('[type="submit"]');
     submitBtn.disabled = true;
@@ -1338,7 +1330,7 @@ function bindReviewForm() {
         category: String(formData.get("place-category")),
         city: String(formData.get("place-city") || "서울").trim(),
         region: String(formData.get("place-region")).trim(),
-        visit_date: String(formData.get("visit-date")),
+        visit_date: String(formData.get("visit-date")) || new Date().toISOString().split("T")[0],
         service_detail: String(formData.get("service-detail")).trim(),
         total_price: Number(formData.get("total-price")),
         short_review: String(formData.get("short-review")).trim(),
@@ -2221,6 +2213,26 @@ function selectFormCategory(category) {
   // 서비스 태그 재렌더링
   renderServiceTags(category);
   showFormStep(2);
+
+  // 상세 정보 토글 바인딩
+  const extrasToggle = document.getElementById("review-extras-toggle");
+  const extrasPanel = document.getElementById("review-extras");
+  const extrasLabel = document.getElementById("review-extras-toggle-label");
+  if (extrasToggle && extrasPanel) {
+    extrasToggle.onclick = () => {
+      const open = extrasPanel.hidden;
+      extrasPanel.hidden = !open;
+      if (extrasLabel) extrasLabel.textContent = open ? "− 상세 정보 접기" : "+ 상세 정보 추가하기";
+      extrasToggle.classList.toggle("is-open", open);
+    };
+  }
+
+  // 방문일 기본값 = 오늘
+  const visitDateEl = document.getElementById("visit-date");
+  if (visitDateEl && !visitDateEl.value) {
+    visitDateEl.value = new Date().toISOString().split("T")[0];
+    visitDateEl.max = new Date().toISOString().split("T")[0];
+  }
 
   // 마이펫 선택 UI 로드
   loadPetSelector();
