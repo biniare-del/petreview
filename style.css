@@ -1,17 +1,17 @@
 /* ── 브랜드 색상 변수 ── */
 :root {
-  --brand-dark:   var(--brand-dark);
-  --brand:        var(--brand);
-  --brand-light:  var(--brand-light);
-  --brand-bg:     var(--brand-bg);
-  --brand-border: var(--brand-border);
+  --brand-dark:   #0f6e56;
+  --brand:        #16a34a;
+  --brand-light:  #86efac;
+  --brand-bg:     #f0fdf4;
+  --brand-border: #bbf7d0;
 
-  --accent-red:   var(--accent-red);
-  --accent-red-dark: var(--accent-red-dark);
-  --accent-orange: var(--accent-orange);
-  --accent-yellow: var(--accent-yellow);
-  --accent-yellow-bg: var(--accent-yellow-bg);
-  --accent-yellow-dark: var(--accent-yellow-dark);
+  --accent-red:      #ef4444;
+  --accent-red-dark: #b91c1c;
+  --accent-orange:   #ff8a65;
+  --accent-yellow:   #fcd34d;
+  --accent-yellow-bg:   #fff8f0;
+  --accent-yellow-dark: #92400e;
 
   --text-primary:   #1a1a1a;
   --text-secondary: #555;
