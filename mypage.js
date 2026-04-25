@@ -1476,4 +1476,121 @@
   }
 
   init();
+
+  // ── 연간 리포트 ────────────────────────────────────────────
+  (function initAnnualReport() {
+    const modal = document.getElementById("annual-report-modal");
+    const openBtn = document.getElementById("annual-report-btn");
+    const closeBtn = document.getElementById("annual-report-close");
+    const prevYearBtn = document.getElementById("ar-prev-year");
+    const nextYearBtn = document.getElementById("ar-next-year");
+    const yearLabel = document.getElementById("ar-year-label");
+    const content = document.getElementById("ar-content");
+    const shareBtn = document.getElementById("ar-share-btn");
+    if (!modal || !openBtn) return;
+
+    let currentYear = new Date().getFullYear();
+
+    openBtn.addEventListener("click", () => {
+      modal.hidden = false;
+      loadReport(currentYear);
+    });
+    closeBtn.addEventListener("click", () => { modal.hidden = true; });
+    modal.addEventListener("click", e => { if (e.target === modal) modal.hidden = true; });
+    prevYearBtn.addEventListener("click", () => { currentYear--; loadReport(currentYear); });
+    nextYearBtn.addEventListener("click", () => {
+      if (currentYear >= new Date().getFullYear()) return;
+      currentYear++;
+      loadReport(currentYear);
+    });
+
+    shareBtn.addEventListener("click", () => {
+      const text = yearLabel.textContent + " 펫 리포트 — 펫리뷰에서 확인하세요!";
+      if (navigator.share) {
+        navigator.share({ title: "🐾 연간 펫 리포트", text, url: "https://biniare-del.github.io/petreview/" }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(text).then(() => alert("클립보드에 복사됐어요!")).catch(() => {});
+      }
+    });
+
+    async function loadReport(year) {
+      yearLabel.textContent = year;
+      nextYearBtn.disabled = year >= new Date().getFullYear();
+      content.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+      shareBtn.hidden = true;
+
+      const db = window.supabaseClient;
+      const { data: { user } } = await db.auth.getUser();
+      if (!user) { content.innerHTML = '<p class="placeholder-text">로그인이 필요합니다.</p>'; return; }
+
+      const from = `${year}-01-01`;
+      const to = `${year}-12-31`;
+
+      const [expRes, rvRes] = await Promise.all([
+        db.from("pet_expenses").select("amount, category, expense_date, pets(name)")
+          .eq("user_id", user.id).gte("expense_date", from).lte("expense_date", to),
+        db.from("reviews").select("price_paid, visit_date, place_name, category")
+          .eq("user_id", user.id).gte("visit_date", from).lte("visit_date", to)
+      ]);
+
+      const expenses = expRes.data || [];
+      const reviews = rvRes.data || [];
+
+      const totalExp = expenses.reduce((s, r) => s + (r.amount || 0), 0);
+      const reviewCount = reviews.length;
+
+      // 월별 집계
+      const monthly = Array(12).fill(0);
+      expenses.forEach(r => {
+        const m = new Date(r.expense_date).getMonth();
+        monthly[m] += r.amount || 0;
+      });
+      const maxMonth = Math.max(...monthly, 1);
+
+      // 카테고리별 집계
+      const catTotals = {};
+      expenses.forEach(r => { catTotals[r.category] = (catTotals[r.category] || 0) + (r.amount || 0); });
+      const catSorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      // 가장 많이 간 병원
+      const placeCount = {};
+      reviews.forEach(r => { if (r.place_name) placeCount[r.place_name] = (placeCount[r.place_name] || 0) + 1; });
+      const topPlace = Object.entries(placeCount).sort((a, b) => b[1] - a[1])[0];
+
+      const monthNames = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
+      const monthBars = monthly.map((v, i) => `
+        <div class="ar-month-col">
+          <div class="ar-month-bar-wrap">
+            <div class="ar-month-bar-fill" style="height:${Math.round((v / maxMonth) * 80)}px;" title="${v.toLocaleString()}원"></div>
+          </div>
+          <span class="ar-month-label-sm">${monthNames[i]}</span>
+        </div>`).join("");
+
+      const catRows = catSorted.length ? catSorted.map(([cat, amt]) => `
+        <div class="ar-cat-row">
+          <span class="ar-cat-name">${escapeHtml(cat)}</span>
+          <div class="ar-cat-bar-track"><div class="ar-cat-bar-fill" style="width:${Math.round((amt / (catSorted[0][1] || 1)) * 100)}%"></div></div>
+          <span class="ar-cat-amt">${amt.toLocaleString()}원</span>
+        </div>`).join("") : '<p class="placeholder-text" style="margin:0">지출 내역이 없어요</p>';
+
+      const hasData = totalExp > 0 || reviewCount > 0;
+
+      content.innerHTML = `
+        <div class="ar-total-card">
+          <div class="ar-total-label">올해 총 지출</div>
+          <div class="ar-total-amount">${totalExp.toLocaleString()}<span class="ar-total-unit">원</span></div>
+          <div class="ar-total-sub">리뷰 ${reviewCount}개 작성${topPlace ? ` · 단골 ${escapeHtml(topPlace[0])}` : ""}</div>
+        </div>
+
+        ${hasData ? `
+        <div class="ar-section-title">월별 지출</div>
+        <div class="ar-monthly-chart">${monthBars}</div>
+
+        <div class="ar-section-title">항목별 지출</div>
+        <div class="ar-cat-list">${catRows}</div>
+        ` : `<p class="placeholder-text" style="padding:20px 0;">아직 ${year}년 데이터가 없어요.<br>가계부나 영수증 리뷰를 작성해보세요!</p>`}`;
+
+      shareBtn.hidden = !hasData;
+    }
+  })();
 })();

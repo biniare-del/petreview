@@ -1404,7 +1404,8 @@ function bindReviewForm() {
             <div style="font-size:52px;margin-bottom:12px;">🎉</div>
             <p style="font-size:18px;font-weight:700;color:#2a2520;margin:0 0 8px;">리뷰가 등록됐어요!</p>
             <p style="font-size:14px;color:#888;margin:0 0 6px;">영수증 검토 후 인증 뱃지가 부여됩니다.</p>
-            <p style="font-size:13px;color:#ff8a65;margin:0 0 24px;">🏅 포인트 적립 &amp; 이벤트 기능이 곧 추가될 예정이에요!</p>
+            <p style="font-size:13px;color:#ff8a65;margin:0 0 16px;">🏅 포인트 적립 &amp; 이벤트 기능이 곧 추가될 예정이에요!</p>
+            <a href="mypage.html?tab=mypet" style="display:block;margin:0 0 10px;padding:11px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;color:#15803d;font-size:13px;font-weight:700;text-decoration:none;">📊 올해 연간 리포트 보러가기 →</a>
             <button type="button" class="primary-btn" id="write-another-btn">다른 리뷰 작성하기</button>
           </div>`;
         document.getElementById("write-another-btn")?.addEventListener("click", () => {

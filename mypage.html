@@ -139,7 +139,9 @@
 
         <!-- 가계부 -->
         <div class="mypage-subsection">
-          <div class="mypage-subsection-header">💰 가계부</div>
+          <div class="mypage-subsection-header">💰 가계부
+            <button type="button" id="annual-report-btn" class="annual-report-trigger-btn">📊 연간 리포트</button>
+          </div>
           <div class="exp-month-bar">
             <button class="exp-month-nav" id="exp-prev-month">‹</button>
             <span class="exp-month-label" id="exp-month-label"></span>
@@ -488,6 +490,25 @@
       <span>마이</span>
     </button>
   </nav>
+
+  <!-- 연간 리포트 모달 -->
+  <div class="modal-overlay" id="annual-report-modal" hidden>
+    <div class="modal annual-report-modal">
+      <button class="modal-close" id="annual-report-close" aria-label="닫기">✕</button>
+      <div class="ar-header">
+        <div class="ar-year-row">
+          <button class="ar-year-nav" id="ar-prev-year">‹</button>
+          <span class="ar-year-label" id="ar-year-label">2025</span>
+          <button class="ar-year-nav" id="ar-next-year">›</button>
+        </div>
+        <div class="ar-title">🐾 연간 펫 리포트</div>
+      </div>
+      <div id="ar-content">
+        <p class="placeholder-text">불러오는 중...</p>
+      </div>
+      <button type="button" class="ar-share-btn" id="ar-share-btn" hidden>📤 공유하기</button>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="supabase-client.js"></script>
