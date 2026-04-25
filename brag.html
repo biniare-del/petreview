@@ -131,6 +131,7 @@
   <div class="brag-feed" id="brag-feed">
     <p class="placeholder-text">불러오는 중...</p>
   </div>
+  <div id="brag-feed-sentinel" style="height:1px;margin-bottom:80px;"></div>
 
   <!-- 업로드 모달 -->
   <div class="brag-overlay" id="upload-overlay" hidden>
@@ -262,32 +263,67 @@
         </div>`;
     }
 
-    async function loadFeed() {
+    const PAGE_SIZE = 20;
+    let feedOffset = 0;
+    let feedLoading = false;
+    let feedDone = false;
+    let profileCache = {};
+
+    async function loadFeed(reset = false) {
+      if (feedLoading || feedDone) return;
       const feed = document.getElementById("brag-feed");
       if (!db) { feed.innerHTML = '<p class="placeholder-text">서비스 연결 실패</p>'; return; }
 
+      if (reset) {
+        feedOffset = 0;
+        feedDone = false;
+        profileCache = {};
+        feed.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
+        if (currentUser) {
+          const { data: likes } = await db.from("brag_post_likes").select("post_id").eq("user_id", currentUser.id);
+          userLikedSet = new Set((likes||[]).map(l=>l.post_id));
+        }
+      }
+
+      feedLoading = true;
       const { data: posts, error } = await db
         .from("brag_posts")
         .select("*, pets(name, photo_url)")
         .order("like_count", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(50);
+        .range(feedOffset, feedOffset + PAGE_SIZE - 1);
 
-      if (error || !posts?.length) {
-        feed.innerHTML = '<p class="placeholder-text">아직 자랑이 없어요 🐾<br>첫 번째로 올려보세요!</p>'; return;
+      feedLoading = false;
+
+      if (error) { feed.innerHTML = '<p class="placeholder-text">불러오기 실패</p>'; return; }
+
+      if (!posts?.length) {
+        if (feedOffset === 0) feed.innerHTML = '<p class="placeholder-text">아직 자랑이 없어요 🐾<br>첫 번째로 올려보세요!</p>';
+        feedDone = true;
+        return;
       }
 
-      const uids = [...new Set(posts.map(p => p.user_id))];
-      const { data: profiles } = await db.from("profiles").select("id,nickname").in("id", uids);
-      const profileMap = Object.fromEntries((profiles||[]).map(p=>[p.id,p]));
-
-      if (currentUser) {
-        const { data: likes } = await db.from("brag_post_likes").select("post_id").eq("user_id", currentUser.id);
-        userLikedSet = new Set((likes||[]).map(l=>l.post_id));
+      // 프로필 캐시 업데이트 (새 uid만 조회)
+      const newUids = [...new Set(posts.map(p => p.user_id))].filter(id => !profileCache[id]);
+      if (newUids.length) {
+        const { data: profiles } = await db.from("profiles").select("id,nickname").in("id", newUids);
+        (profiles||[]).forEach(p => { profileCache[p.id] = p; });
       }
 
-      feed.innerHTML = posts.map(p => renderCard(p, profileMap)).join("");
+      if (feedOffset === 0) feed.innerHTML = "";
+      feed.insertAdjacentHTML("beforeend", posts.map(p => renderCard(p, profileCache)).join(""));
       attachCardEvents();
+
+      feedOffset += posts.length;
+      if (posts.length < PAGE_SIZE) feedDone = true;
+    }
+
+    function initInfiniteScroll() {
+      const sentinel = document.getElementById("brag-feed-sentinel");
+      if (!sentinel || !("IntersectionObserver" in window)) return;
+      new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) loadFeed();
+      }, { rootMargin: "200px" }).observe(sentinel);
     }
 
     function attachCardEvents() {
@@ -455,7 +491,7 @@
       selectedFiles = [];
       btn.disabled = false;
       msg.textContent = "";
-      loadFeed();
+      loadFeed(true); // 새 글 올린 후 피드 리셋
     });
 
     // 인증 초기화
@@ -465,7 +501,8 @@
       currentUser = session?.user || null;
       if (window.PetAuth?.initHeader) window.PetAuth.initHeader(currentUser);
       await loadMyPets();
-      await loadFeed();
+      await loadFeed(true);
+      initInfiniteScroll();
     })();
   </script>
 </body>
