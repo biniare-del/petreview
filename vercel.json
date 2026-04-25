@@ -5,6 +5,10 @@
     {
       "path": "/api/push-cron",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/push-favorites-cron",
+      "schedule": "0 * * * *"
     }
   ]
 }
