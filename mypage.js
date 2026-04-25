@@ -1322,7 +1322,52 @@
     petSel.addEventListener("change", updateCategoryOptions);
     updateCategoryOptions();
 
-    await loadExpenses();
+    await Promise.all([loadExpenses(), loadMonthlyTrend()]);
+  }
+
+  async function loadMonthlyTrend() {
+    const db = window.supabaseClient;
+    const userId = window.PetAuth?.currentUser?.id;
+    const el = document.getElementById("exp-monthly-chart");
+    if (!db || !userId || !el) return;
+
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const from = sixMonthsAgo.toISOString().split("T")[0];
+    const to = now.toISOString().split("T")[0];
+
+    const { data } = await db.from("pet_expenses")
+      .select("amount, expense_date")
+      .eq("user_id", userId)
+      .gte("expense_date", from)
+      .lte("expense_date", to);
+
+    if (!data?.length) { el.hidden = true; return; }
+
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`, label: `${d.getMonth()+1}월`, total: 0 });
+    }
+    data.forEach(r => {
+      const key = r.expense_date.substring(0, 7);
+      const m = months.find(m => m.key === key);
+      if (m) m.total += r.amount || 0;
+    });
+
+    const max = Math.max(...months.map(m => m.total), 1);
+    const bars = months.map(m => `
+      <div class="exp-trend-col">
+        <div class="exp-trend-bar-wrap">
+          <div class="exp-trend-bar" style="height:${Math.round((m.total/max)*56)}px"
+            title="${m.total.toLocaleString()}원"></div>
+        </div>
+        <span class="exp-trend-label">${m.label}</span>
+        ${m.total ? `<span class="exp-trend-amt">${m.total >= 10000 ? Math.round(m.total/10000)+"만" : m.total.toLocaleString()}</span>` : ""}
+      </div>`).join("");
+
+    el.hidden = false;
+    el.innerHTML = `<div class="exp-trend-title">최근 6개월 지출</div><div class="exp-trend-bars">${bars}</div>`;
   }
 
   function updateCategoryOptions() {
