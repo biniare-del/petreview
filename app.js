@@ -3249,11 +3249,13 @@ init();
         return;
       }
       resultsEl.innerHTML = places.map(p => {
+        const name = p.name || p.place_name || "";
+        const addr = p.address || p.road_address_name || p.address_name || "";
         const phone = p.phone || p.mobile || "";
-        const mapUrl = p.place_url || `https://map.kakao.com/link/search/${encodeURIComponent(p.place_name || "")}`;
+        const mapUrl = p.place_url || `https://map.kakao.com/link/search/${encodeURIComponent(name)}`;
         return `<div class="emergency-hospital-card">
-          <div class="emergency-hospital-name">${escapeHtml(p.place_name || "")}</div>
-          <div class="emergency-hospital-addr">📍 ${escapeHtml(p.address_name || p.road_address_name || "")}</div>
+          <div class="emergency-hospital-name">${escapeHtml(name)}</div>
+          ${addr ? `<div class="emergency-hospital-addr">📍 ${escapeHtml(addr)}</div>` : ""}
           <div class="emergency-hospital-actions">
             ${phone ? `<a href="tel:${escapeHtml(phone)}" class="emergency-call-btn">📞 ${escapeHtml(phone)}</a>` : ""}
             <a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener" class="emergency-map-btn">🗺️ 지도보기</a>
