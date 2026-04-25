@@ -535,16 +535,42 @@ body[data-theme="grooming"] .search-name-input:focus { border-color: #ec4899; }
 
 /* 검색 결과/리뷰 카드 공통 */
 .card {
-  border-radius: 18px;
-  background-color: #ffffff;
-  border: 1px solid #e2f5eb;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
   transition: box-shadow 0.15s;
 }
 .card:hover {
-  box-shadow: 0 4px 16px rgba(15, 110, 86, 0.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+}
+
+/* 커뮤니티 글 카드 (style.css로 통합) */
+.post-card {
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  transition: box-shadow 0.15s;
+  cursor: pointer;
+}
+.post-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.09); }
+.post-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.post-card-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 6px; line-height: 1.4; }
+.post-card-meta { font-size: 12px; color: var(--text-faint); display: flex; gap: 10px; }
+
+/* 뽐내기 카드 베이스 (style.css로 통합) */
+.brag-card {
+  background: var(--surface);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s;
 }
 
 /* 리뷰 작성 섹션 */

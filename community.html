@@ -49,8 +49,8 @@
       flex-shrink: 0;
     }
     .tag-filter-btn.is-active {
-      background: #0f6e56;
-      border-color: #0f6e56;
+      background: var(--brand-dark);
+      border-color: var(--brand-dark);
       color: #fff;
     }
 
@@ -62,22 +62,7 @@
       gap: 10px;
     }
 
-    .post-card {
-      background: #fffaf7;
-      border: 1px solid #f5ded2;
-      border-radius: 14px;
-      padding: 14px 16px;
-      cursor: pointer;
-      transition: box-shadow 0.15s;
-    }
-    .post-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
-
-    .post-card-top {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
+    /* post-card, post-card-top/title/meta → style.css로 이동 */
 
     .tag-badge {
       font-size: 11px;
@@ -87,27 +72,12 @@
       flex-shrink: 0;
     }
 
-    .post-card-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #2a2520;
-      margin: 0 0 6px;
-      line-height: 1.4;
-    }
-
-    .post-card-meta {
-      font-size: 12px;
-      color: #aaa;
-      display: flex;
-      gap: 10px;
-    }
-
     /* 글쓰기 FAB */
     .write-fab {
       position: fixed;
       bottom: 70px;
       right: 20px;
-      background: #0f6e56;
+      background: var(--brand-dark);
       color: #fff;
       border: none;
       border-radius: 24px;
