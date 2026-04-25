@@ -3239,7 +3239,8 @@ init();
     const city = citySelect.value;
     resultsEl.innerHTML = '<p class="placeholder-text">검색 중...</p>';
     try {
-      const url = `https://petreview.vercel.app/api/facilities?category=hospital&city=${encodeURIComponent(city || "전국")}&keyword=${encodeURIComponent(activeKeyword)}`;
+      const regionParam = city && city !== "전국" ? `&region=${encodeURIComponent(city)}` : "";
+      const url = `https://petreview.vercel.app/api/facilities?category=hospital&keyword=${encodeURIComponent(activeKeyword)}${regionParam}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
