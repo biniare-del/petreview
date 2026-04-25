@@ -3205,3 +3205,61 @@ async function loadBragPreview() {
 }
 
 init();
+
+// ── 24시간·특수병원 찾기 ──────────────────────────────────────
+(function initEmergencyHospital() {
+  const modal = document.getElementById("emergency-hospital-modal");
+  const openBtn = document.getElementById("emergency-hospital-btn");
+  const closeBtn = document.getElementById("emergency-modal-close");
+  const searchBtn = document.getElementById("emergency-search-btn");
+  const resultsEl = document.getElementById("emergency-results");
+  const citySelect = document.getElementById("emergency-city-select");
+  const presetBtns = modal?.querySelectorAll(".emergency-preset-btn");
+  if (!modal || !openBtn) return;
+
+  let activeKeyword = "24시 동물병원";
+
+  openBtn.addEventListener("click", () => { modal.hidden = false; });
+  closeBtn.addEventListener("click", () => { modal.hidden = true; });
+  modal.addEventListener("click", e => { if (e.target === modal) modal.hidden = true; });
+
+  presetBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      presetBtns.forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      activeKeyword = btn.dataset.keyword;
+    });
+  });
+
+  searchBtn.addEventListener("click", searchEmergencyHospitals);
+
+  async function searchEmergencyHospitals() {
+    const city = citySelect.value;
+    resultsEl.innerHTML = '<p class="placeholder-text">검색 중...</p>';
+    try {
+      const url = `https://petreview.vercel.app/api/facilities?category=hospital&city=${encodeURIComponent(city || "전국")}&keyword=${encodeURIComponent(activeKeyword)}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      const places = data.results || [];
+      if (!places.length) {
+        resultsEl.innerHTML = '<p class="placeholder-text">검색 결과가 없어요. 지역을 바꿔 다시 시도해 보세요.</p>';
+        return;
+      }
+      resultsEl.innerHTML = places.map(p => {
+        const phone = p.phone || p.mobile || "";
+        const mapUrl = p.place_url || `https://map.kakao.com/link/search/${encodeURIComponent(p.place_name || "")}`;
+        return `<div class="emergency-hospital-card">
+          <div class="emergency-hospital-name">${escapeHtml(p.place_name || "")}</div>
+          <div class="emergency-hospital-addr">📍 ${escapeHtml(p.address_name || p.road_address_name || "")}</div>
+          <div class="emergency-hospital-actions">
+            ${phone ? `<a href="tel:${escapeHtml(phone)}" class="emergency-call-btn">📞 ${escapeHtml(phone)}</a>` : ""}
+            <a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener" class="emergency-map-btn">🗺️ 지도보기</a>
+          </div>
+        </div>`;
+      }).join("");
+    } catch {
+      resultsEl.innerHTML = '<p class="placeholder-text">검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>';
+    }
+  }
+})();

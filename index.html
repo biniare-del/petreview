@@ -114,6 +114,18 @@
       </button>
     </div>
 
+    <!-- 응급/특수병원 빠른 찾기 버튼 -->
+    <div class="emergency-cta-wrap">
+      <button type="button" id="emergency-hospital-btn" class="emergency-cta-btn">
+        <span class="emergency-cta-icon">🚨</span>
+        <span class="emergency-cta-text">
+          <strong>24시간 · 특수병원 찾기</strong>
+          <small>응급·안과·치과·정형외과 등</small>
+        </span>
+        <span class="emergency-cta-arrow">›</span>
+      </button>
+    </div>
+
     <!-- 1. 검색 섹션 -->
     <section id="search-section" class="section search-section" aria-label="업체 검색">
       <header class="section-header">
@@ -630,6 +642,53 @@
       }).catch(() => {});
     }
   </script>
+  <!-- 24시간·특수병원 찾기 모달 -->
+  <div class="modal-overlay" id="emergency-hospital-modal" hidden>
+    <div class="modal emergency-hospital-modal">
+      <button class="modal-close" id="emergency-modal-close" aria-label="닫기">✕</button>
+      <h2 class="modal-title">🚨 24시간 · 특수병원 찾기</h2>
+      <p class="modal-desc">유형을 선택하고 지역을 설정하세요.</p>
+
+      <div class="emergency-preset-grid">
+        <button class="emergency-preset-btn is-active" data-keyword="24시 동물병원" data-label="24시간">🌙<br>24시간</button>
+        <button class="emergency-preset-btn" data-keyword="동물 치과" data-label="치과">🦷<br>치과</button>
+        <button class="emergency-preset-btn" data-keyword="동물 안과" data-label="안과">👁<br>안과</button>
+        <button class="emergency-preset-btn" data-keyword="동물 정형외과" data-label="정형외과">🦴<br>정형외과</button>
+        <button class="emergency-preset-btn" data-keyword="동물 종양" data-label="종양·암">🧬<br>종양·암</button>
+        <button class="emergency-preset-btn" data-keyword="조류 파충류 동물병원" data-label="특수동물">🐦<br>특수동물</button>
+      </div>
+
+      <div class="emergency-city-row">
+        <label class="emergency-city-label" for="emergency-city-select">지역</label>
+        <select id="emergency-city-select" class="city-pill-select">
+          <option value="">전국</option>
+          <option value="서울">서울</option>
+          <option value="경기">경기</option>
+          <option value="인천">인천</option>
+          <option value="부산">부산</option>
+          <option value="대구">대구</option>
+          <option value="광주">광주</option>
+          <option value="대전">대전</option>
+          <option value="울산">울산</option>
+          <option value="세종">세종</option>
+          <option value="강원">강원</option>
+          <option value="충북">충북</option>
+          <option value="충남">충남</option>
+          <option value="전북">전북</option>
+          <option value="전남">전남</option>
+          <option value="경북">경북</option>
+          <option value="경남">경남</option>
+          <option value="제주">제주</option>
+        </select>
+        <button type="button" class="emergency-search-btn" id="emergency-search-btn">검색</button>
+      </div>
+
+      <div id="emergency-results" class="emergency-results">
+        <p class="placeholder-text">병원 유형을 선택하고 검색하세요.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- 데이터 제공자(모의 -> 실데이터로 교체 가능) -->
   <script src="dataProvider.js" defer></script>
   <!-- 앱 로직 -->
