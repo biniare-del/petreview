@@ -3918,3 +3918,75 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   border-radius: 12px; color: #15803d; font-size: 15px; font-weight: 800;
   cursor: pointer; margin-top: 8px;
 }
+
+/* ── 빠른 도구 2버튼 레이아웃 ── */
+.quick-tools-wrap { padding: 10px 16px 4px; display: flex; flex-direction: column; gap: 8px; }
+.quick-tool-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  border: none; border-radius: 14px; padding: 13px 16px;
+  cursor: pointer; text-align: left; transition: transform 0.15s, box-shadow 0.15s;
+}
+.quick-tool-btn:active { transform: scale(0.98); }
+.quick-tool-icon { font-size: 22px; flex-shrink: 0; }
+.quick-tool-text { flex: 1; }
+.quick-tool-text strong { display: block; font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+.quick-tool-text small { display: block; font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.quick-tool-arrow { font-size: 22px; font-weight: 300; opacity: 0.8; }
+.price-calc-tool { background: linear-gradient(135deg, #0f6e56, #16a34a); color: #fff; box-shadow: 0 3px 10px rgba(15,110,86,0.3); }
+.emergency-tool  { background: linear-gradient(135deg, #b91c1c, #ef4444); color: #fff; box-shadow: 0 3px 10px rgba(185,28,28,0.3); }
+
+/* ── 진료비 계산기 모달 ── */
+.price-calc-modal { max-width: 460px; max-height: 88vh; overflow-y: auto; }
+.pc-field-label { font-size: 13px; font-weight: 700; color: #444; margin: 14px 0 8px; }
+.pc-species-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.pc-species-btn {
+  padding: 8px 14px; border: 2px solid #e5e7eb; border-radius: 20px;
+  background: #fff; color: #555; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.pc-species-btn.is-active { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+
+.pc-treatment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
+.pc-treatment-btn {
+  padding: 9px 4px; border: 1.5px solid #e5e7eb; border-radius: 10px;
+  background: #fff; color: #555; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.pc-treatment-btn.is-active { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+
+.pc-search-btn {
+  width: 100%; padding: 13px; background: #16a34a; color: #fff; border: none;
+  border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; margin-bottom: 16px;
+}
+
+.pc-stat-card {
+  background: linear-gradient(135deg, #0f6e56, #16a34a); border-radius: 16px;
+  padding: 18px 20px; color: #fff; margin-bottom: 16px;
+}
+.pc-stat-header { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.pc-stat-tag { background: rgba(255,255,255,0.25); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.pc-stat-count { font-size: 11px; opacity: 0.8; margin-left: auto; }
+.pc-big-avg { font-size: 36px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+.pc-big-unit { font-size: 16px; font-weight: 600; margin-left: 2px; }
+.pc-stat-label { font-size: 12px; opacity: 0.8; margin: 4px 0 14px; }
+.pc-range-row { display: flex; gap: 0; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; }
+.pc-range-item { flex: 1; text-align: center; }
+.pc-range-item + .pc-range-item { border-left: 1px solid rgba(255,255,255,0.2); }
+.pc-range-label { display: block; font-size: 11px; opacity: 0.75; margin-bottom: 3px; }
+.pc-range-val { display: block; font-size: 13px; font-weight: 800; }
+
+.pc-section-title { font-size: 13px; font-weight: 700; color: #555; margin: 0 0 8px; }
+.pc-place-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.pc-place-row { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1.5px solid #f0e8e2; border-radius: 10px; padding: 10px 12px; }
+.pc-place-info { display: flex; flex-direction: column; gap: 2px; }
+.pc-place-name { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+.pc-place-city { font-size: 11px; color: #aaa; }
+.pc-place-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.pc-place-avg { font-size: 14px; font-weight: 800; color: #0f6e56; }
+.pc-place-cnt { font-size: 11px; color: #aaa; }
+
+.pc-review-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.pc-review-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; background: #fafafa; border-radius: 8px; }
+.pc-review-info { display: flex; flex-direction: column; gap: 2px; }
+.pc-review-place { font-size: 13px; font-weight: 700; color: #2a2520; }
+.pc-review-species, .pc-review-detail { font-size: 11px; color: #aaa; }
+.pc-review-price { font-size: 13px; font-weight: 800; color: #0f6e56; flex-shrink: 0; margin-left: 8px; }
+.pc-data-note { font-size: 11px; color: #bbb; margin: 0; }

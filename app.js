@@ -3264,3 +3264,137 @@ init();
     }
   }
 })();
+
+// ── 진료비 알아보기 ──────────────────────────────────────────
+(function initPriceCalc() {
+  const modal = document.getElementById("price-calc-modal");
+  const openBtn = document.getElementById("price-calc-btn");
+  const closeBtn = document.getElementById("price-calc-close");
+  const searchBtn = document.getElementById("pc-search-btn");
+  const resultsEl = document.getElementById("pc-results");
+  if (!modal || !openBtn) return;
+
+  let selectedSpecies = "";
+  let selectedKw = "";
+
+  openBtn.addEventListener("click", () => { modal.hidden = false; });
+  closeBtn.addEventListener("click", () => { modal.hidden = true; });
+  modal.addEventListener("click", e => { if (e.target === modal) modal.hidden = true; });
+
+  modal.querySelectorAll(".pc-species-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      modal.querySelectorAll(".pc-species-btn").forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      selectedSpecies = btn.dataset.species;
+    });
+  });
+
+  modal.querySelectorAll(".pc-treatment-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      modal.querySelectorAll(".pc-treatment-btn").forEach(b => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      selectedKw = btn.dataset.kw;
+    });
+  });
+
+  searchBtn.addEventListener("click", queryPriceData);
+
+  async function queryPriceData() {
+    resultsEl.innerHTML = '<p class="placeholder-text">조회 중...</p>';
+    const db = window.supabaseClient;
+    if (!db) { resultsEl.innerHTML = '<p class="placeholder-text">데이터베이스에 연결할 수 없어요.</p>'; return; }
+
+    try {
+      let q = db.from("reviews")
+        .select("total_price, place_name, city, pet_species, visit_date, service_detail, is_verified")
+        .eq("category", "hospital")
+        .not("total_price", "is", null)
+        .gt("total_price", 0)
+        .limit(500);
+
+      if (selectedSpecies) q = q.eq("pet_species", selectedSpecies);
+      if (selectedKw) q = q.ilike("service_detail", `%${selectedKw}%`);
+
+      const { data, error } = await q;
+      if (error) throw error;
+
+      const rows = (data || []).filter(r => r.total_price > 0 && r.total_price < 50000000);
+      if (!rows.length) {
+        const hint = selectedKw || selectedSpecies;
+        resultsEl.innerHTML = `<p class="placeholder-text">아직 ${hint ? `'${escapeHtml(hint)}' ` : ""}데이터가 없어요.<br>리뷰를 작성해서 데이터를 쌓아주세요! 🙏</p>`;
+        return;
+      }
+
+      const prices = rows.map(r => r.total_price).sort((a, b) => a - b);
+      const avg = Math.round(prices.reduce((s, v) => s + v, 0) / prices.length);
+      const min = prices[0];
+      const max = prices[prices.length - 1];
+      const median = prices[Math.floor(prices.length / 2)];
+
+      // 병원별 평균 집계
+      const placeMap = {};
+      rows.forEach(r => {
+        if (!r.place_name) return;
+        if (!placeMap[r.place_name]) placeMap[r.place_name] = { sum: 0, count: 0, city: r.city || "" };
+        placeMap[r.place_name].sum += r.total_price;
+        placeMap[r.place_name].count++;
+      });
+      const topPlaces = Object.entries(placeMap)
+        .map(([name, d]) => ({ name, avg: Math.round(d.sum / d.count), count: d.count, city: d.city }))
+        .filter(p => p.count >= 1)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      const recentReviews = [...rows].sort((a, b) => (b.visit_date || "").localeCompare(a.visit_date || "")).slice(0, 5);
+      const verifiedCount = rows.filter(r => r.is_verified).length;
+
+      resultsEl.innerHTML = `
+        <div class="pc-stat-card">
+          <div class="pc-stat-header">
+            ${selectedKw ? `<span class="pc-stat-tag">${escapeHtml(selectedKw)}</span>` : ""}
+            ${selectedSpecies ? `<span class="pc-stat-tag">${escapeHtml(selectedSpecies)}</span>` : ""}
+            <span class="pc-stat-count">리뷰 ${rows.length}건 기준${verifiedCount ? ` (영수증 인증 ${verifiedCount}건)` : ""}</span>
+          </div>
+          <div class="pc-big-avg">${avg.toLocaleString()}<span class="pc-big-unit">원</span></div>
+          <div class="pc-stat-label">평균 진료비</div>
+          <div class="pc-range-row">
+            <div class="pc-range-item"><span class="pc-range-label">최저</span><span class="pc-range-val">${min.toLocaleString()}원</span></div>
+            <div class="pc-range-item"><span class="pc-range-label">중간값</span><span class="pc-range-val">${median.toLocaleString()}원</span></div>
+            <div class="pc-range-item"><span class="pc-range-label">최고</span><span class="pc-range-val">${max.toLocaleString()}원</span></div>
+          </div>
+        </div>
+
+        ${topPlaces.length ? `
+        <div class="pc-section-title">많이 등록된 병원</div>
+        <div class="pc-place-list">
+          ${topPlaces.map(p => `
+            <div class="pc-place-row">
+              <div class="pc-place-info">
+                <span class="pc-place-name">${escapeHtml(p.name)}</span>
+                <span class="pc-place-city">${escapeHtml(p.city)}</span>
+              </div>
+              <div class="pc-place-right">
+                <span class="pc-place-avg">${p.avg.toLocaleString()}원</span>
+                <span class="pc-place-cnt">${p.count}건</span>
+              </div>
+            </div>`).join("")}
+        </div>` : ""}
+
+        <div class="pc-section-title">최근 리뷰</div>
+        <div class="pc-review-list">
+          ${recentReviews.map(r => `
+            <div class="pc-review-row">
+              <div class="pc-review-info">
+                <span class="pc-review-place">${escapeHtml(r.place_name || "")}</span>
+                ${r.pet_species ? `<span class="pc-review-species">${escapeHtml(r.pet_species)}</span>` : ""}
+                ${r.service_detail ? `<span class="pc-review-detail">${escapeHtml(r.service_detail.substring(0, 20))}</span>` : ""}
+              </div>
+              <span class="pc-review-price">${(r.total_price || 0).toLocaleString()}원</span>
+            </div>`).join("")}
+        </div>
+        <p class="pc-data-note">* 펫리뷰 사용자가 직접 작성한 실제 데이터입니다. 병원마다 차이가 있을 수 있어요.</p>`;
+    } catch {
+      resultsEl.innerHTML = '<p class="placeholder-text">조회 중 오류가 발생했습니다.</p>';
+    }
+  }
+})();

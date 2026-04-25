@@ -114,15 +114,23 @@
       </button>
     </div>
 
-    <!-- 응급/특수병원 빠른 찾기 버튼 -->
-    <div class="emergency-cta-wrap">
-      <button type="button" id="emergency-hospital-btn" class="emergency-cta-btn">
-        <span class="emergency-cta-icon">🚨</span>
-        <span class="emergency-cta-text">
+    <!-- 빠른 도구 버튼 영역 -->
+    <div class="quick-tools-wrap">
+      <button type="button" id="price-calc-btn" class="quick-tool-btn price-calc-tool">
+        <span class="quick-tool-icon">💰</span>
+        <span class="quick-tool-text">
+          <strong>진료비 알아보기</strong>
+          <small>품종·진료별 실제 데이터</small>
+        </span>
+        <span class="quick-tool-arrow">›</span>
+      </button>
+      <button type="button" id="emergency-hospital-btn" class="quick-tool-btn emergency-tool">
+        <span class="quick-tool-icon">🚨</span>
+        <span class="quick-tool-text">
           <strong>24시간 · 특수병원 찾기</strong>
           <small>응급·안과·치과·정형외과 등</small>
         </span>
-        <span class="emergency-cta-arrow">›</span>
+        <span class="quick-tool-arrow">›</span>
       </button>
     </div>
 
@@ -642,6 +650,41 @@
       }).catch(() => {});
     }
   </script>
+  <!-- 진료비 알아보기 모달 -->
+  <div class="modal-overlay" id="price-calc-modal" hidden>
+    <div class="modal price-calc-modal">
+      <button class="modal-close" id="price-calc-close" aria-label="닫기">✕</button>
+      <h2 class="modal-title">💰 진료비 알아보기</h2>
+      <p class="modal-desc">실제 영수증 리뷰 데이터 기반 평균 진료비를 확인하세요.</p>
+
+      <div class="pc-field-label">어떤 동물인가요?</div>
+      <div class="pc-species-row">
+        <button class="pc-species-btn is-active" data-species="">🐾 전체</button>
+        <button class="pc-species-btn" data-species="강아지">🐕 강아지</button>
+        <button class="pc-species-btn" data-species="고양이">🐈 고양이</button>
+        <button class="pc-species-btn" data-species="기타">🐾 기타</button>
+      </div>
+
+      <div class="pc-field-label">어떤 진료인가요?</div>
+      <div class="pc-treatment-grid" id="pc-treatment-grid">
+        <button class="pc-treatment-btn is-active" data-kw="">전체</button>
+        <button class="pc-treatment-btn" data-kw="기본진료">기본진료</button>
+        <button class="pc-treatment-btn" data-kw="예방접종">예방접종</button>
+        <button class="pc-treatment-btn" data-kw="심장사상충">심장사상충</button>
+        <button class="pc-treatment-btn" data-kw="중성화수술">중성화수술</button>
+        <button class="pc-treatment-btn" data-kw="스케일링">스케일링</button>
+        <button class="pc-treatment-btn" data-kw="일반수술">일반수술</button>
+        <button class="pc-treatment-btn" data-kw="안과진료">안과진료</button>
+        <button class="pc-treatment-btn" data-kw="정형외과">정형외과</button>
+        <button class="pc-treatment-btn" data-kw="건강검진">건강검진</button>
+        <button class="pc-treatment-btn" data-kw="입원치료">입원치료</button>
+      </div>
+
+      <button type="button" class="pc-search-btn" id="pc-search-btn">조회하기</button>
+      <div id="pc-results" class="pc-results"></div>
+    </div>
+  </div>
+
   <!-- 24시간·특수병원 찾기 모달 -->
   <div class="modal-overlay" id="emergency-hospital-modal" hidden>
     <div class="modal emergency-hospital-modal">
