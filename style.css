@@ -1159,51 +1159,20 @@ body[data-theme="grooming"] .tag-btn.is-selected {
   background: linear-gradient(135deg, #f472b6, #a855f7);
 }
 
-/* ===== 동물병원(hospital) 테마 ===== */
-body[data-theme="hospital"] {
-  background-color: #f0f7ff;
-}
+/* ===== 동물병원(hospital) 테마 — 폼/버튼 악센트만 ===== */
 body[data-theme="hospital"] .primary-btn,
 body[data-theme="hospital"] .pagination-btn:not(:disabled) {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3);
 }
-body[data-theme="hospital"] .hero-cta-btn {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-}
 body[data-theme="hospital"] .tag-btn.is-selected {
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-}
-body[data-theme="hospital"] .logo-icon {
-  background: linear-gradient(135deg, #93c5fd, #3b82f6);
-}
-body[data-theme="hospital"] .site-nav a {
-  color: #1d4ed8;
-  border-color: rgba(59, 130, 246, 0.4);
-  background-color: rgba(59, 130, 246, 0.06);
-}
-body[data-theme="hospital"] input:focus,
-body[data-theme="hospital"] select:focus,
-body[data-theme="hospital"] textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-body[data-theme="hospital"] .card {
-  border-color: #bfdbfe;
 }
 body[data-theme="hospital"] .toggle-btn.is-active {
   background-color: #3b82f6;
 }
-body[data-theme="hospital"] .pet-greeting-bar {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border-color: #bfdbfe;
-}
 
-/* ===== 펫미용실(grooming) 테마 ===== */
-body[data-theme="grooming"] {
-  background-color: #fdf4ff;
-}
-
+/* ===== 펫미용실(grooming) 테마 — 폼/버튼 악센트만 ===== */
 body[data-theme="grooming"] .primary-btn,
 body[data-theme="grooming"] .pagination-btn:not(:disabled) {
   background: linear-gradient(135deg, #f472b6, #a855f7);
@@ -1219,37 +1188,8 @@ body[data-theme="grooming"] .toggle-btn.is-active {
   background-color: #f472b6;
 }
 
-body[data-theme="grooming"] .category-toggle {
-  background-color: #fce7f3;
-}
-
-body[data-theme="grooming"] .logo-icon {
-  background: linear-gradient(135deg, #f9a8d4, #f472b6);
-}
-
-body[data-theme="grooming"] input:focus,
-body[data-theme="grooming"] select:focus,
-body[data-theme="grooming"] textarea:focus {
-  border-color: #f472b6;
-  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.18);
-}
-
-body[data-theme="grooming"] .site-nav a {
-  color: #c026d3;
-  border-color: rgba(244, 114, 182, 0.45);
-  background-color: rgba(244, 114, 182, 0.07);
-}
-
-body[data-theme="grooming"] .site-nav a:hover {
-  background-color: rgba(244, 114, 182, 0.16);
-  color: #a21caf;
-  border-color: #f472b6;
-  box-shadow: 0 2px 8px rgba(244, 114, 182, 0.2);
-}
-
-body[data-theme="grooming"] .card {
-  border-color: #f5d0fe;
-  background-color: #fdf4ff;
+body[data-theme="grooming"] .tag-btn.is-selected {
+  background: linear-gradient(135deg, #f472b6, #a855f7);
 }
 
 body[data-theme="grooming"] .hero-pet-card {
@@ -4052,3 +3992,13 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .exp-trend-bar { width: 100%; max-width: 32px; min-height: 3px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--brand), var(--brand-light)); transition: height 0.4s; }
 .exp-trend-label { font-size: 9px; color: var(--text-faint); margin-top: 3px; }
 .exp-trend-amt { font-size: 9px; color: var(--brand-dark); font-weight: 700; margin-top: 1px; }
+
+/* ── 영수증 업로드 혜택 표시 ── */
+.receipt-benefits {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px;
+}
+.receipt-benefit-item {
+  font-size: 12px; font-weight: 700; color: var(--brand-dark);
+  background: var(--brand-bg); border: 1px solid var(--brand-border);
+  border-radius: 20px; padding: 4px 10px;
+}
