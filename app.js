@@ -55,9 +55,9 @@ function restoreFormDraft() {
     const d = JSON.parse(raw);
     if (!d.pendingOpenForm) return;
 
-    // 폼 섹션 표시 후 스크롤
+    // 폼 섹션 표시 (스크롤은 하지 않음 — 로그인 후 페이지 상단 유지)
     const _formSec = document.getElementById("review-form-section");
-    if (_formSec) { _formSec.hidden = false; _formSec.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    if (_formSec) { _formSec.hidden = false; }
 
     // step 2 였으면 업종 선택 후 폼 복원
     if (d.formStep === 2 && d.formCategory) {
@@ -3229,6 +3229,7 @@ init();
       presetBtns.forEach(b => b.classList.remove("is-active"));
       btn.classList.add("is-active");
       activeKeyword = btn.dataset.keyword;
+      searchEmergencyHospitals();
     });
   });
 

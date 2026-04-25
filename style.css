@@ -1262,7 +1262,8 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .auth-login-btn {
@@ -2719,16 +2720,17 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 
 .see-all-btn {
-  background: none;
-  border: none;
+  background: var(--brand-bg);
+  border: 1.5px solid var(--brand-border);
+  border-radius: 20px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--brand-dark);
   cursor: pointer;
   font-family: inherit;
-  padding: 4px 0;
+  padding: 6px 14px;
 }
-.see-all-btn:hover { text-decoration: underline; }
+.see-all-btn:hover { background: var(--brand-border); }
 
 /* ===== 히어로 섹션 ===== */
 .hero-section {
@@ -2748,7 +2750,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .hero-sub {
   margin: 0;
   font-size: 12px;
-  color: #9fe1cb;
+  color: rgba(255,255,255,0.85);
   line-height: 1.5;
 }
 
@@ -2809,7 +2811,8 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   margin-bottom: 2px;
 }
 .tab-item--write .write-tab-icon svg {
-  stroke: #fff;
+  stroke: #fff !important;
+  color: #fff !important;
 }
 .tab-item--write span {
   font-weight: 700;
@@ -3917,13 +3920,14 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   display: flex; align-items: center; gap: 12px; width: 100%;
   border: none; border-radius: 14px; padding: 13px 16px;
   cursor: pointer; text-align: left; transition: transform 0.15s, box-shadow 0.15s;
+  color: #fff;
 }
 .quick-tool-btn:active { transform: scale(0.98); }
 .quick-tool-icon { font-size: 22px; flex-shrink: 0; }
-.quick-tool-text { flex: 1; }
-.quick-tool-text strong { display: block; font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
-.quick-tool-text small { display: block; font-size: 12px; opacity: 0.85; margin-top: 2px; }
-.quick-tool-arrow { font-size: 22px; font-weight: 300; opacity: 0.8; }
+.quick-tool-text { flex: 1; color: #fff; }
+.quick-tool-text strong { display: block; font-size: 15px; font-weight: 800; letter-spacing: -0.3px; color: #fff; }
+.quick-tool-text small { display: block; font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+.quick-tool-arrow { font-size: 22px; font-weight: 300; color: rgba(255,255,255,0.8); }
 .price-calc-tool { background: linear-gradient(135deg, var(--brand-dark), var(--brand)); color: #fff; box-shadow: 0 3px 10px rgba(15,110,86,0.3); }
 .emergency-tool  { background: linear-gradient(135deg, var(--accent-red-dark), var(--accent-red)); color: #fff; box-shadow: 0 3px 10px rgba(185,28,28,0.3); }
 
