@@ -3252,7 +3252,8 @@ init();
         const name = p.name || p.place_name || "";
         const addr = p.address || p.road_address_name || p.address_name || "";
         const phone = p.phone || p.mobile || "";
-        const mapUrl = p.place_url || `https://map.kakao.com/link/search/${encodeURIComponent(name)}`;
+        const mapQuery = encodeURIComponent(addr ? `${name} ${addr.split(" ").slice(0, 3).join(" ")}` : name);
+        const mapUrl = `https://map.naver.com/v5/search/${mapQuery}`;
         return `<div class="emergency-hospital-card">
           <div class="emergency-hospital-name">${escapeHtml(name)}</div>
           ${addr ? `<div class="emergency-hospital-addr">📍 ${escapeHtml(addr)}</div>` : ""}
