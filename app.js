@@ -459,7 +459,7 @@ function renderReviewList() {
       const hasPhotos = (review.reviewPhotoUrls || []).length > 0;
       const isGrooming = review.category === "grooming";
       return `
-      <article class="card card--${review.category}${review.isVerified ? " card--verified" : ""}${hasPhotos ? " card--has-photos" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
+      <article class="card card--${review.category}${review.isVerified ? " card--verified" : " card--unverified"}${hasPhotos ? " card--has-photos" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
         <div class="card-place-info">
           <div>
             <span class="card-place-name">${escapeHtml(review.placeName)}</span>
@@ -468,7 +468,7 @@ function renderReviewList() {
           <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
         </div>
         <div class="card-price-row">
-          ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : ""}
+          ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : '<span class="unverified-badge">✏️ 일반 후기</span>'}
           <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
           <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
         </div>
@@ -651,7 +651,7 @@ function renderRecentReviews() {
         ${review.scoreWait ? `<div class="score-row"><span class="score-label">대기시간</span><div class="score-bar-wrap"><div class="score-bar" style="width:${review.scoreWait * 20}%"></div></div><span class="score-val">${review.scoreWait}.0</span></div>` : ""}
       </div>` : "";
     return `
-    <article class="card${review.isVerified ? " card--verified" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
+    <article class="card${review.isVerified ? " card--verified" : " card--unverified"}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
       <div class="card-place-info">
         <div>
           <span class="card-place-name">${escapeHtml(review.placeName)}</span>
@@ -660,7 +660,7 @@ function renderRecentReviews() {
         <span class="category-tag category-tag--${review.category}">${CATEGORY_LABEL[review.category]}</span>
       </div>
       <div class="card-price-row">
-        ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : ""}
+        ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : '<span class="unverified-badge">✏️ 일반 후기</span>'}
         <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
         <span class="card-service-detail">${escapeHtml(review.serviceDetail)}</span>
       </div>
@@ -2632,8 +2632,8 @@ async function openReviewDetailModal(reviewId) {
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap;">
-      ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : ""}
-      <span class="card-price">₩ ${formatPrice(review.totalPrice)}</span>
+      ${review.isVerified ? '<span class="verified-badge">🧾 영수증 인증</span>' : '<span class="unverified-badge">✏️ 일반 후기</span>'}
+      <span class="card-price" style="${review.isVerified ? "color:#15803d;font-weight:900;" : "color:#999;"}">₩ ${formatPrice(review.totalPrice)}</span>
       <span style="font-size:12px;color:#888;">${escapeHtml(review.serviceDetail || "")}</span>
     </div>
     ${scoresHtml}
@@ -3011,7 +3011,7 @@ async function openPlaceDetail(place) {
     ${i > 0 ? '<hr style="border:none;border-top:1px solid #f0e8e2;margin:0;">' : ""}
     <div class="detail-review-item">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span class="verified-badge">✔ 영수증 인증</span>
+        ${r.is_verified ? '<span class="verified-badge">🧾 영수증 인증</span>' : '<span class="unverified-badge">✏️ 일반 후기</span>'}
         <span style="font-size:12px;color:#aaa;">${escapeHtml(r.visit_date || "")}</span>
       </div>
       <p style="margin:3px 0;font-size:13px;color:#666;">항목: ${escapeHtml(r.service_detail || "")}</p>
