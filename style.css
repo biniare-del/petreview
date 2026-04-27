@@ -3900,6 +3900,46 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   color: var(--accent-yellow-dark); font-size: 13px; font-weight: 700; text-decoration: none;
 }
 
+/* ── 병원 검색 페이지 ── */
+.emergency-pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 8px 0;
+}
+.epag-btn {
+  padding: 7px 16px; border-radius: 8px; border: 1.5px solid #e0d5cf;
+  background: #fff; font-size: 13px; font-weight: 700; color: #555; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.epag-btn:not([disabled]):hover { border-color: var(--accent-red); color: var(--accent-red); background: #fff5f5; }
+.epag-btn[disabled] { opacity: 0.35; cursor: default; }
+.epag-info { font-size: 13px; color: #888; font-weight: 600; }
+
+/* ── 병원 제보하기 ── */
+.emergency-report-wrap { margin-top: 18px; }
+.emergency-report-toggle {
+  width: 100%; padding: 11px 14px; background: #f7f3ef; border: 1.5px dashed #d6c9bf;
+  border-radius: 10px; font-size: 13px; font-weight: 700; color: #8a7565;
+  cursor: pointer; text-align: left; transition: background 0.15s;
+}
+.emergency-report-toggle:hover { background: #eee6de; }
+.emergency-report-form {
+  margin-top: 10px; display: flex; flex-direction: column; gap: 8px;
+  background: #faf7f5; border: 1.5px solid #e8ddd6; border-radius: 10px; padding: 14px;
+}
+.er-input, .er-textarea {
+  width: 100%; box-sizing: border-box; border: 1.5px solid #e0d5cf; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; color: #2a2520; background: #fff; outline: none;
+  font-family: inherit;
+}
+.er-input:focus, .er-textarea:focus { border-color: var(--brand); }
+.er-textarea { resize: vertical; min-height: 72px; }
+.emergency-report-submit {
+  width: 100%; padding: 11px; background: var(--brand-dark); color: #fff;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+.emergency-report-submit:hover { background: var(--brand); }
+.er-result { font-size: 13px; color: #15803d; font-weight: 700; margin: 0; }
+
 /* ── 연간 리포트 트리거 버튼 ── */
 .mypage-subsection-header { display: flex; justify-content: space-between; align-items: center; }
 .annual-report-trigger-btn {

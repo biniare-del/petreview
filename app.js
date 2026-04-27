@@ -3214,11 +3214,16 @@ init();
   const closeBtn = document.getElementById("emergency-modal-close");
   const searchBtn = document.getElementById("emergency-search-btn");
   const resultsEl = document.getElementById("emergency-results");
+  const paginationEl = document.getElementById("emergency-pagination");
   const citySelect = document.getElementById("emergency-city-select");
   const presetBtns = modal?.querySelectorAll(".emergency-preset-btn");
   if (!modal || !openBtn) return;
 
   let activeKeyword = "24시 동물병원";
+  let activeLabel = "24시간";
+  let allPlaces = [];
+  let currentPage = 0;
+  const PAGE_SIZE = 10;
 
   openBtn.addEventListener("click", () => { modal.hidden = false; });
   closeBtn.addEventListener("click", () => { modal.hidden = true; });
@@ -3229,48 +3234,100 @@ init();
       presetBtns.forEach(b => b.classList.remove("is-active"));
       btn.classList.add("is-active");
       activeKeyword = btn.dataset.keyword;
+      activeLabel = btn.dataset.label;
       searchEmergencyHospitals();
     });
   });
 
   searchBtn.addEventListener("click", searchEmergencyHospitals);
 
+  // 제보하기 토글
+  document.getElementById("emergency-report-toggle")?.addEventListener("click", () => {
+    const form = document.getElementById("emergency-report-form");
+    if (form) form.hidden = !form.hidden;
+  });
+
+  // 제보 제출
+  document.getElementById("er-submit-btn")?.addEventListener("click", async () => {
+    const name = document.getElementById("er-hospital-name")?.value.trim();
+    const addr = document.getElementById("er-hospital-addr")?.value.trim();
+    const desc = document.getElementById("er-hospital-desc")?.value.trim();
+    const resultEl = document.getElementById("er-result");
+    if (!desc) { alert("병원에 대한 정보를 입력해 주세요."); return; }
+    const db = window.supabaseClient;
+    if (!db) { alert("로그인 후 제보할 수 있어요."); return; }
+    const content = [
+      name ? `병원명: ${name}` : "",
+      addr ? `위치: ${addr}` : "",
+      `분야: ${activeLabel}`,
+      `내용: ${desc}`
+    ].filter(Boolean).join("\n");
+    const { error } = await db.from("feedbacks").insert([{
+      category: "병원등록요청",
+      content,
+      user_id: window.PetAuth?.currentUser?.id ?? null,
+    }]);
+    if (error) { alert("제보 실패: " + error.message); return; }
+    if (resultEl) { resultEl.textContent = "✅ 제보가 접수됐습니다. 확인 후 반영할게요!"; resultEl.hidden = false; }
+    document.getElementById("er-hospital-name").value = "";
+    document.getElementById("er-hospital-addr").value = "";
+    document.getElementById("er-hospital-desc").value = "";
+  });
+
+  function renderPage(page) {
+    currentPage = page;
+    const start = page * PAGE_SIZE;
+    const slice = allPlaces.slice(start, start + PAGE_SIZE);
+    resultsEl.innerHTML = slice.map(p => {
+      const name = p.name || p.place_name || "";
+      const addr = p.address || p.road_address_name || p.address_name || "";
+      const phone = p.phone || p.mobile || "";
+      const mapQuery = encodeURIComponent(addr ? `${name} ${addr.split(" ").slice(0, 3).join(" ")}` : name);
+      const mapUrl = `https://map.naver.com/v5/search/${mapQuery}`;
+      return `<div class="emergency-hospital-card">
+        <div class="emergency-hospital-name">${escapeHtml(name)}</div>
+        ${addr ? `<div class="emergency-hospital-addr">📍 ${escapeHtml(addr)}</div>` : ""}
+        <div class="emergency-hospital-actions">
+          ${phone ? `<a href="tel:${escapeHtml(phone)}" class="emergency-call-btn">📞 ${escapeHtml(phone)}</a>` : ""}
+          <a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener" class="emergency-map-btn">🗺️ 지도보기</a>
+        </div>
+      </div>`;
+    }).join("");
+
+    // 페이징 버튼
+    const totalPages = Math.ceil(allPlaces.length / PAGE_SIZE);
+    if (totalPages <= 1) { paginationEl.hidden = true; return; }
+    paginationEl.hidden = false;
+    paginationEl.innerHTML = `
+      <button class="epag-btn" ${page === 0 ? "disabled" : ""} data-page="${page - 1}">← 이전</button>
+      <span class="epag-info">${page + 1} / ${totalPages}</span>
+      <button class="epag-btn" ${page >= totalPages - 1 ? "disabled" : ""} data-page="${page + 1}">다음 →</button>`;
+    paginationEl.querySelectorAll(".epag-btn:not([disabled])").forEach(btn => {
+      btn.addEventListener("click", () => { renderPage(Number(btn.dataset.page)); resultsEl.scrollIntoView({ behavior: "smooth", block: "nearest" }); });
+    });
+  }
+
   async function searchEmergencyHospitals() {
     const city = citySelect.value;
     resultsEl.innerHTML = '<p class="placeholder-text">검색 중...</p>';
+    paginationEl.hidden = true;
     try {
       const regionParam = city && city !== "전국" ? `&region=${encodeURIComponent(city)}` : "";
       const url = `https://petreview.vercel.app/api/facilities?category=hospital&keyword=${encodeURIComponent(activeKeyword)}${regionParam}`;
       const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
-      const places = data.results || [];
-      if (!places.length) {
-        resultsEl.innerHTML = `<p class="placeholder-text">검색 결과가 없어요.<br>지역을 바꾸거나 다른 항목으로 찾아보세요.<br><br>
-          <button onclick="document.getElementById('suggest-hospital-btn')?.click()" style="margin-top:8px;padding:8px 16px;background:#16a34a;color:#fff;border:none;border-radius:20px;font-size:13px;cursor:pointer;">
-            📋 병원 정보 제보하기
-          </button></p>`;
+      allPlaces = data.results || [];
+      if (!allPlaces.length) {
+        resultsEl.innerHTML = `<p class="placeholder-text">검색 결과가 없어요.<br>지역을 바꾸거나 다른 항목으로 찾아보세요.</p>`;
         return;
       }
-      resultsEl.innerHTML = places.map(p => {
-        const name = p.name || p.place_name || "";
-        const addr = p.address || p.road_address_name || p.address_name || "";
-        const phone = p.phone || p.mobile || "";
-        const mapQuery = encodeURIComponent(addr ? `${name} ${addr.split(" ").slice(0, 3).join(" ")}` : name);
-        const mapUrl = `https://map.naver.com/v5/search/${mapQuery}`;
-        return `<div class="emergency-hospital-card">
-          <div class="emergency-hospital-name">${escapeHtml(name)}</div>
-          ${addr ? `<div class="emergency-hospital-addr">📍 ${escapeHtml(addr)}</div>` : ""}
-          <div class="emergency-hospital-actions">
-            ${phone ? `<a href="tel:${escapeHtml(phone)}" class="emergency-call-btn">📞 ${escapeHtml(phone)}</a>` : ""}
-            <a href="${escapeHtml(mapUrl)}" target="_blank" rel="noopener" class="emergency-map-btn">🗺️ 지도보기</a>
-          </div>
-        </div>`;
-      }).join("");
+      renderPage(0);
     } catch {
       resultsEl.innerHTML = '<p class="placeholder-text">검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.</p>';
     }
   }
+
 })();
 
 // ── 진료비 알아보기 ──────────────────────────────────────────

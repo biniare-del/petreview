@@ -736,6 +736,21 @@
       <div id="emergency-results" class="emergency-results">
         <p class="placeholder-text">병원 유형을 선택하고 검색하세요.</p>
       </div>
+      <div id="emergency-pagination" class="emergency-pagination" hidden></div>
+
+      <!-- 병원 제보하기 -->
+      <div class="emergency-report-wrap">
+        <button type="button" class="emergency-report-toggle" id="emergency-report-toggle">
+          📋 찾는 병원이 없나요? 제보하기
+        </button>
+        <div class="emergency-report-form" id="emergency-report-form" hidden>
+          <input type="text" id="er-hospital-name" placeholder="병원 이름 (알고 있다면)" class="er-input" />
+          <input type="text" id="er-hospital-addr" placeholder="주소 또는 지역 (예: 강남구)" class="er-input" />
+          <textarea id="er-hospital-desc" placeholder="어떤 병원인지 알려주세요 (예: 강남에 조류 전문 병원이 있어요)" class="er-textarea" rows="3"></textarea>
+          <button type="button" class="emergency-report-submit" id="er-submit-btn">제보 보내기</button>
+          <p class="er-result" id="er-result" hidden></p>
+        </div>
+      </div>
     </div>
   </div>
 
