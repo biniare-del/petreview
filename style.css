@@ -1529,16 +1529,25 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 
 /* ===== 히어로 CTA 버튼 ===== */
 .hero-cta-btn {
-  font-size: 16px;
-  padding: 14px 28px;
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 13px 28px;
   border-radius: 999px;
-  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.35);
+  border: none;
+  background: #fff;
+  color: var(--brand-dark);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   letter-spacing: -0.2px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.15s, box-shadow 0.15s;
+  margin-top: 4px;
 }
 
 .hero-cta-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(22, 163, 74, 0.4);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
 }
 
 /* ===== 리뷰 폼 스텝 ===== */
@@ -3850,7 +3859,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 /* ── 응급·특수병원 모달 ── */
 .emergency-hospital-modal { max-width: 460px; max-height: 85vh; overflow-y: auto; }
 .emergency-preset-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0;
 }
 .emergency-preset-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

@@ -3246,7 +3246,10 @@ init();
       const data = await res.json();
       const places = data.results || [];
       if (!places.length) {
-        resultsEl.innerHTML = '<p class="placeholder-text">검색 결과가 없어요. 지역을 바꿔 다시 시도해 보세요.</p>';
+        resultsEl.innerHTML = `<p class="placeholder-text">검색 결과가 없어요.<br>지역을 바꾸거나 다른 항목으로 찾아보세요.<br><br>
+          <button onclick="document.getElementById('suggest-hospital-btn')?.click()" style="margin-top:8px;padding:8px 16px;background:#16a34a;color:#fff;border:none;border-radius:20px;font-size:13px;cursor:pointer;">
+            📋 병원 정보 제보하기
+          </button></p>`;
         return;
       }
       resultsEl.innerHTML = places.map(p => {
@@ -3327,6 +3330,10 @@ init();
       if (!rows.length) {
         const hint = selectedKw || selectedSpecies;
         resultsEl.innerHTML = `<p class="placeholder-text">아직 ${hint ? `'${escapeHtml(hint)}' ` : ""}데이터가 없어요.<br>리뷰를 작성해서 데이터를 쌓아주세요! 🙏</p>`;
+        return;
+      }
+      if (rows.length < 10) {
+        resultsEl.innerHTML = `<p class="placeholder-text">📊 통계 데이터가 부족합니다 (현재 ${rows.length}건)<br>10건 이상 리뷰가 모이면 평균 진료비를 보여드릴게요.<br>첫 번째 리뷰를 남겨주세요! 🙏</p>`;
         return;
       }
 

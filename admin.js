@@ -93,22 +93,44 @@
         <p>후기: ${escapeHtml(r.short_review ?? "")}</p>
         ${r.signedUrl ? `<img src="${escapeHtml(r.signedUrl)}" class="receipt-thumb-admin" alt="영수증" />` : '<p class="helper-text">영수증 이미지 없음</p>'}
         <div class="card-actions">
-          <button class="btn-approve" data-action="approve" data-id="${escapeHtml(r.id)}">✔ 인증 승인</button>
+          <button class="btn-receipt-toggle" data-id="${escapeHtml(r.id)}" data-verified="0">✔ 인증 승인</button>
           <button class="btn-reject" data-action="reject" data-id="${escapeHtml(r.id)}">✕ 반려</button>
         </div>
       </div>`).join("");
 
-    container.querySelectorAll("[data-action]").forEach((btn) => {
+    // 영수증 인증 토글 (승인 ↔ 인증취소)
+    container.querySelectorAll(".btn-receipt-toggle").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
-        const isApprove = btn.dataset.action === "approve";
-        const updateData = isApprove
-          ? { is_verified: true, status: "approved" }
-          : { status: "rejected" };
-        const { error: updErr } = await db
-          .from("reviews")
-          .update(updateData)
-          .eq("id", id);
+        const isVerified = btn.dataset.verified === "1";
+        const updateData = isVerified
+          ? { is_verified: false, status: "pending" }
+          : { is_verified: true, status: "approved" };
+        const { error: updErr } = await db.from("reviews").update(updateData).eq("id", id);
+        if (updErr) { alert("처리 실패: " + updErr.message); return; }
+        if (!isVerified) {
+          btn.dataset.verified = "1";
+          btn.textContent = "✔ 인증취소";
+          btn.style.background = "#888";
+          const card = container.querySelector(`[data-review-id="${id}"]`);
+          const badge = card?.querySelector(".badge-approved, .badge-pending, [style*='color:#aaa']");
+          if (badge) badge.outerHTML = '<span class="badge-approved">✔ 영수증 인증</span>';
+        } else {
+          btn.dataset.verified = "0";
+          btn.textContent = "✔ 인증 승인";
+          btn.style.background = "";
+          const card = container.querySelector(`[data-review-id="${id}"]`);
+          const badge = card?.querySelector(".badge-approved");
+          if (badge) badge.outerHTML = '<span class="badge-pending">⏳ 검수 대기</span>';
+        }
+        loadStats();
+      });
+    });
+
+    container.querySelectorAll("[data-action='reject']").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        const { error: updErr } = await db.from("reviews").update({ status: "rejected" }).eq("id", id);
         if (updErr) { alert("처리 실패: " + updErr.message); return; }
         const card = container.querySelector(`[data-review-id="${id}"]`);
         if (card) card.remove();
@@ -170,8 +192,7 @@
         <p class="review-card-review">후기: ${escapeHtml(r.short_review ?? "")}</p>
         <p class="helper-text">등록일: ${escapeHtml(r.created_at?.slice(0, 10) ?? "")}</p>
         <div class="card-actions">
-          <button class="btn-approve review-approve-btn" data-id="${escapeHtml(r.id)}">인증승인</button>
-          <button class="btn-pending review-pending-btn" data-id="${escapeHtml(r.id)}">보류</button>
+          <button class="btn-pending review-pending-btn" data-id="${escapeHtml(r.id)}" data-status="${escapeHtml(status)}">${status === "pending" ? "승인" : "보류"}</button>
           <button class="${hideToggleClass}" data-id="${escapeHtml(r.id)}">${hideToggleLabel}</button>
           <button class="btn-edit review-edit-btn" data-id="${escapeHtml(r.id)}"
             data-place-name="${escapeHtml(r.place_name)}" data-category="${escapeHtml(r.category ?? "hospital")}"
@@ -212,29 +233,25 @@
       </div>`;
     }).join("");
 
-    container.querySelectorAll(".review-approve-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const { error: updErr } = await db.from("reviews").update({ is_verified: true, status: "approved" }).eq("id", btn.dataset.id);
-        if (updErr) { alert("처리 실패: " + updErr.message); return; }
-        const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
-        if (card) {
-          card.removeAttribute("style");
-          const badge = card.querySelector(".badge-approved, .badge-pending, .badge-rejected, [style*='color:#aaa']");
-          if (badge) badge.outerHTML = '<span class="badge-approved">✔ 영수증 인증</span>';
-        }
-        loadStats();
-      });
-    });
-
+    // 보류/승인 토글 (인증승인은 영수증검수 탭에서만)
     container.querySelectorAll(".review-pending-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        const { error: updErr } = await db.from("reviews").update({ status: "pending" }).eq("id", btn.dataset.id);
+        const currentStatus = btn.dataset.status;
+        const newStatus = currentStatus === "pending" ? "approved" : "pending";
+        const { error: updErr } = await db.from("reviews").update({ status: newStatus }).eq("id", btn.dataset.id);
         if (updErr) { alert("처리 실패: " + updErr.message); return; }
+        btn.dataset.status = newStatus;
+        btn.textContent = newStatus === "pending" ? "승인" : "보류";
         const card = container.querySelector(`[data-review-id="${btn.dataset.id}"]`);
         if (card) {
-          card.style.background = "#2a2520";
           const badge = card.querySelector(".badge-approved, .badge-pending, .badge-rejected, [style*='color:#aaa']");
-          if (badge) badge.outerHTML = '<span class="badge-pending">⏳ 검수 대기</span>';
+          if (newStatus === "pending") {
+            card.style.background = "#2a2520";
+            if (badge) badge.outerHTML = '<span class="badge-pending">⏳ 검수 대기</span>';
+          } else {
+            card.removeAttribute("style");
+            if (badge) badge.outerHTML = '<span class="badge-approved">✔ 승인</span>';
+          }
         }
         loadStats();
       });

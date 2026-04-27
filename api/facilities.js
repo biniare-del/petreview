@@ -32,13 +32,14 @@ export default async function handler(req, res) {
 
   const categoryKeyword = category === "grooming" ? "애견미용" : "동물병원";
 
-  // [자동완성] keyword 있을 때: "키워드 동물병원" / "키워드 애견미용"
-  // [일반 검색] keyword 없을 때: 기존 지역+카테고리 방식 유지
-  const query = keyword
+  // keyword + region 동시 지정 시 region을 앞에 추가해 지역 필터 적용
+  const query = keyword && region
+    ? `${region} ${keyword} ${categoryKeyword}`
+    : keyword
     ? `${keyword} ${categoryKeyword}`
     : region
     ? `${region} ${categoryKeyword}`
-    : `${categoryKeyword}`;
+    : categoryKeyword;
 
   // Kakao size 최대 15 — 3페이지 × 15건 = 최대 45건 (is_end 시 조기 종료)
   const maxPages = 3;
