@@ -637,12 +637,13 @@ body[data-theme="grooming"] .search-name-input:focus { border-color: #ec4899; }
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .region-picker select {
   flex: 0 0 auto;
   min-width: 80px;
+  max-width: 110px;
 }
 
 .region-picker input {
@@ -1211,14 +1212,6 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   color: #fff;
 }
 
-/* region-picker 가로 한 줄 고정 */
-.region-picker {
-  flex-wrap: nowrap;
-}
-.region-picker select {
-  max-width: 110px;
-}
-
 /* ===== 헤더 인증 영역 ===== */
 .header-auth {
   display: flex;
@@ -1400,21 +1393,9 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   transition: opacity 0.15s ease, transform 0.08s ease;
 }
 
-.btn-kakao {
-  background: #FEE500;
-  color: #3C1E1E;
-}
-
-.btn-google {
-  background: #ffffff;
-  color: #333;
-  border: 1.5px solid #ddd;
-}
-
-.btn-naver {
-  background: #03C75A;
-  color: #fff;
-}
+.btn-kakao { background: #FEE500; color: #3C1E1E; }
+.btn-google { background: #ffffff; color: #333; border: 1.5px solid #ddd; }
+.btn-naver  { background: #03C75A; color: #fff; }
 
 .btn-kakao:hover,
 .btn-naver:hover,
@@ -1829,22 +1810,6 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   transform: translateY(-1px);
 }
 
-.vaccine-preset-btn {
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1.5px solid #d1d5db;
-  background: #f9f9f9;
-  font-size: 12px;
-  font-weight: 600;
-  color: #555;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.vaccine-preset-btn:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-  background: var(--brand-bg);
-}
 
 .pet-greeting-text span {
   font-size: 13px;
@@ -2257,28 +2222,11 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   border: 1.5px solid;
   transition: opacity 0.15s;
 }
-.admin-hide-btn {
-  background: #fff8e1;
-  color: #b45309;
-  border-color: var(--accent-yellow);
-}
-.admin-delete-btn {
-  background: #fff1f0;
-  color: #dc2626;
-  border-color: #fca5a5;
-}
+.admin-hide-btn   { background: #fff8e1; color: #b45309; border-color: var(--accent-yellow); }
+.admin-delete-btn { background: #fff1f0; color: #dc2626; border-color: #fca5a5; }
 .admin-hide-btn:hover,
 .admin-delete-btn:hover { opacity: 0.75; }
 
-/* ===== 병원 상세 모달 ===== */
-.place-detail-modal {
-  max-width: 600px;
-  width: 100%;
-  max-height: 85vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
 
 .detail-review-item {
   padding: 12px 0;
@@ -3489,9 +3437,12 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 /* ===== 병원 상세 모달 ===== */
 .place-detail-modal {
   max-width: 480px;
+  width: 100%;
   max-height: 88vh;
   overflow-y: auto;
   padding: 22px 20px 28px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .detail-header { margin-bottom: 14px; }
@@ -3765,6 +3716,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 /* ===== 가계부 ===== */
 .mypage-subsection { margin-top: 28px; }
 .mypage-subsection-header {
+  display: flex; justify-content: space-between; align-items: center;
   font-size: 15px; font-weight: 700; color: #2a2520;
   padding: 0 0 10px; margin-bottom: 4px;
   border-bottom: 2px solid #f0e8e2;
@@ -3906,7 +3858,6 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .er-result { font-size: 13px; color: #15803d; font-weight: 700; margin: 0; }
 
 /* ── 연간 리포트 트리거 버튼 ── */
-.mypage-subsection-header { display: flex; justify-content: space-between; align-items: center; }
 .annual-report-trigger-btn {
   font-size: 12px; font-weight: 700; padding: 5px 10px;
   background: var(--accent-yellow-bg); border: 1.5px solid var(--accent-yellow); border-radius: 8px;
