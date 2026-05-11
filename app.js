@@ -564,7 +564,8 @@ async function loadReviews() {
     .or("status.eq.approved,status.is.null")
     .or("is_hidden.is.null,is_hidden.eq.false")
     .order("is_verified", { ascending: false })
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   // is_hidden 컬럼이 아직 없을 경우(PGRST200) → 컬럼 없이 재시도
   if (error && (error.code === "PGRST200" || error.message?.includes("is_hidden"))) {
@@ -573,7 +574,8 @@ async function loadReviews() {
       .select("*")
       .or("status.eq.approved,status.is.null")
       .order("is_verified", { ascending: false })
-      .order("created_at", { ascending: false }));
+      .order("created_at", { ascending: false })
+      .limit(50));
   }
 
   if (error) {

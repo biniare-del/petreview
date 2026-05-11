@@ -329,66 +329,6 @@ textarea {
   color: #aaaaaa;
 }
 
-/* 히어로 섹션 — 신규 디자인으로 대체됨, 하단 override가 실제 스타일 */
-.hero-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.hero-text h2 {
-  margin: 0 0 10px;
-  font-size: 24px;
-}
-
-.hero-text p {
-  margin: 0 0 16px;
-  font-size: 14px;
-  color: #666666;
-  line-height: 1.5;
-}
-
-.hero-visual {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hero-pet-card {
-  width: 210px;
-  padding: 14px 16px;
-  border-radius: 20px;
-  background: linear-gradient(145deg, #dcfce7, var(--brand-border));
-  box-shadow: 0 10px 30px rgba(22, 163, 74, 0.25);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.hero-pet-icon {
-  width: 55px;
-  height: 55px;
-  border-radius: 18px;
-  background-color: rgba(255, 255, 255, 0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-}
-
-.hero-pet-info span {
-  display: block;
-  font-size: 13px;
-  color: #166534;
-}
-
-.hero-pet-info strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 18px;
-  color: #14532d;
-}
-
 /* 검색 섹션 */
 .search-controls {
   margin-top: 14px;
