@@ -1003,7 +1003,8 @@ body[data-theme="grooming"] .search-name-input:focus { border-color: #ec4899; }
   overflow-y: auto;
 }
 
-.autocomplete-dropdown li {
+.autocomplete-dropdown li,
+.ac-item {
   padding: 8px 12px;
   cursor: pointer;
   border-radius: 6px;
@@ -1012,7 +1013,8 @@ body[data-theme="grooming"] .search-name-input:focus { border-color: #ec4899; }
 }
 
 .autocomplete-dropdown li:hover,
-.autocomplete-dropdown li.is-active {
+.autocomplete-dropdown li.is-active,
+.ac-item:hover {
   background-color: var(--brand-bg);
 }
 

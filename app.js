@@ -184,6 +184,51 @@ function formatPrice(amount) {
   return Number(amount).toLocaleString("ko-KR");
 }
 
+// 자동완성 공통: 키워드 강조
+function highlightKeyword(text, keyword) {
+  if (!keyword) return escapeHtml(text);
+  const idx = text.toLowerCase().indexOf(keyword.toLowerCase());
+  if (idx === -1) return escapeHtml(text);
+  return escapeHtml(text.slice(0, idx)) +
+    `<mark class="autocomplete-highlight">${escapeHtml(text.slice(idx, idx + keyword.length))}</mark>` +
+    escapeHtml(text.slice(idx + keyword.length));
+}
+
+// 자동완성 공통: Kakao + Supabase 병합 결과 반환
+async function fetchPlaceSuggestions(keyword, category, regionVal = "") {
+  const db = window.supabaseClient;
+  const supabasePromise = db
+    ? db.from("reviews").select("place_name, region, category")
+        .eq("category", category).ilike("place_name", `%${keyword}%`).limit(5)
+        .then(({ data }) => {
+          const seen = new Set();
+          return (data || []).reduce((acc, r) => {
+            if (!seen.has(r.place_name)) {
+              seen.add(r.place_name);
+              acc.push({ name: r.place_name, region: r.region, category: r.category, address: "", hasReview: true });
+            }
+            return acc;
+          }, []);
+        }).catch(() => [])
+    : Promise.resolve([]);
+
+  const regionParam = regionVal ? `&region=${encodeURIComponent(regionVal)}` : "";
+  const kakaoPromise = fetch(
+    `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(category)}&keyword=${encodeURIComponent(keyword)}${regionParam}`,
+    { signal: AbortSignal.timeout(5000) }
+  ).then(r => r.ok ? r.json() : { results: [] })
+   .then(json => json?.results ?? [])
+   .catch(() => []);
+
+  const [kakaoResults, supabaseResults] = await Promise.all([kakaoPromise, supabasePromise]);
+  const reviewedNames = new Set(supabaseResults.map(r => r.name));
+  const merged = kakaoResults.map(p => ({ ...p, hasReview: reviewedNames.has(p.name) }));
+  const uniqueSupabase = supabaseResults.filter(p => !kakaoResults.some(k => k.name === p.name));
+  const combined = [...merged, ...uniqueSupabase];
+  combined.sort((a, b) => (b.hasReview ? 1 : 0) - (a.hasReview ? 1 : 0));
+  return combined;
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -909,79 +954,21 @@ function bindSearch() {
   nameBtn?.addEventListener("click", doNameSearch);
   nameInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") doNameSearch(); });
 
-  // 이름 검색 자동완성 (Kakao API + Supabase 병합)
-  let acTimer;
-  let acCurrentQuery = "";
-
-  async function runNameAutocomplete(q) {
-    if (!autocompleteList) return;
-    acCurrentQuery = q;
-    const cat = selectedSearchCategory;
-    const db = window.supabaseClient;
-
-    // Supabase 결과 즉시 표시 (빠름)
-    let supabaseItems = [];
-    if (db) {
-      try {
-        const { data } = await db.from("reviews").select("place_name, region, category")
-          .eq("category", cat).ilike("place_name", `%${q}%`).limit(5);
-        const seen = new Set();
-        supabaseItems = (data || []).reduce((acc, r) => {
-          if (!seen.has(r.place_name)) {
-            seen.add(r.place_name);
-            acc.push({ name: r.place_name, region: r.region, address: "", hasReview: true });
-          }
-          return acc;
-        }, []);
-      } catch { /* ignore */ }
-    }
-    if (q !== acCurrentQuery) return;
-    if (supabaseItems.length) showAcResults(supabaseItems, q);
-
-    // Kakao API 결과 추가 (약간 늦을 수 있음)
-    const cityVal = document.getElementById("search-city")?.value || "";
-    try {
-      const res = await fetch(
-        `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(cat)}&city=${encodeURIComponent(cityVal || "전국")}&keyword=${encodeURIComponent(q)}`,
-        { signal: AbortSignal.timeout(4000) }
-      );
-      if (!res.ok) throw new Error("api error");
-      const data = await res.json();
-      const kakaoItems = (data.results || []).slice(0, 6);
-      if (q !== acCurrentQuery) return;
-      if (!kakaoItems.length && !supabaseItems.length) {
-        autocompleteList.innerHTML = `<li style="padding:10px 14px;color:#aaa;font-size:13px;">검색 결과가 없어요</li>`;
-        autocompleteList.hidden = false;
-        return;
-      }
-      if (!kakaoItems.length) return;
-      // Supabase 결과에 hasReview 플래그 추가하며 병합
-      const reviewedNames = new Set(supabaseItems.map((p) => p.name));
-      const merged = kakaoItems.map((p) => ({ ...p, hasReview: reviewedNames.has(p.name) }));
-      const supabaseOnly = supabaseItems.filter((p) => !merged.some((m) => m.name === p.name));
-      const combined = [...merged, ...supabaseOnly];
-      combined.sort((a, b) => (b.hasReview ? 1 : 0) - (a.hasReview ? 1 : 0));
-      showAcResults(combined, q);
-    } catch { /* ignore, show supabase results only */ }
-  }
+  let acTimer, acCurrentQuery = "";
 
   function showAcResults(places, keyword) {
     if (!autocompleteList || !places.length) return;
-    autocompleteList.innerHTML = places.slice(0, 7).map((p) => {
-      const idx = p.name.toLowerCase().indexOf(keyword.toLowerCase());
-      const nameParts = idx === -1
-        ? escapeHtml(p.name)
-        : escapeHtml(p.name.slice(0, idx)) + `<mark class="autocomplete-highlight">${escapeHtml(p.name.slice(idx, idx + keyword.length))}</mark>` + escapeHtml(p.name.slice(idx + keyword.length));
+    autocompleteList.innerHTML = places.slice(0, 7).map(p => {
       const meta = p.address || p.region || "";
       const badge = p.hasReview ? `<span class="autocomplete-review-badge">리뷰 있음</span>` : "";
-      return `<li data-name="${escapeHtml(p.name)}" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5;">
-        <div style="font-weight:600;font-size:14px;">${nameParts}${badge}</div>
-        ${meta ? `<div style="font-size:12px;color:#aaa;margin-top:2px;">${escapeHtml(meta)}</div>` : ""}
+      return `<li class="ac-item" data-name="${escapeHtml(p.name)}">
+        <div class="autocomplete-name">${highlightKeyword(p.name, keyword)}${badge}</div>
+        ${meta ? `<div class="autocomplete-meta">${escapeHtml(meta)}</div>` : ""}
       </li>`;
     }).join("");
     autocompleteList.hidden = false;
-    autocompleteList.querySelectorAll("li").forEach((li) => {
-      li.addEventListener("mousedown", (e) => {
+    autocompleteList.querySelectorAll(".ac-item").forEach(li => {
+      li.addEventListener("mousedown", e => {
         e.preventDefault();
         nameInput.value = li.dataset.name;
         autocompleteList.hidden = true;
@@ -994,11 +981,20 @@ function bindSearch() {
     clearTimeout(acTimer);
     const q = nameInput.value.trim();
     if (q.length < 2) { autocompleteList && (autocompleteList.hidden = true); return; }
-    acTimer = setTimeout(() => void runNameAutocomplete(q), 200);
+    acCurrentQuery = q;
+    const city = document.getElementById("search-city")?.value || "";
+    acTimer = setTimeout(async () => {
+      const places = await fetchPlaceSuggestions(q, selectedSearchCategory, city !== "전국" ? city : "");
+      if (q === acCurrentQuery) showAcResults(places, q);
+    }, 200);
   });
   nameInput?.addEventListener("blur", () => setTimeout(() => { if (autocompleteList) autocompleteList.hidden = true; }, 200));
   nameInput?.addEventListener("focus", () => {
-    if (nameInput.value.trim().length >= 2) void runNameAutocomplete(nameInput.value.trim());
+    const q = nameInput.value.trim();
+    if (q.length >= 2) {
+      const city = document.getElementById("search-city")?.value || "";
+      void fetchPlaceSuggestions(q, selectedSearchCategory, city !== "전국" ? city : "").then(p => showAcResults(p, q));
+    }
   });
 }
 
@@ -1467,18 +1463,6 @@ function bindPlaceNameAutocomplete() {
     hideDropdown();
   }
 
-  // 검색어 매칭 부분 강조
-  function highlight(text, keyword) {
-    if (!keyword) return escapeHtml(text);
-    const idx = text.toLowerCase().indexOf(keyword.toLowerCase());
-    if (idx === -1) return escapeHtml(text);
-    return (
-      escapeHtml(text.slice(0, idx)) +
-      `<mark class="autocomplete-highlight">${escapeHtml(text.slice(idx, idx + keyword.length))}</mark>` +
-      escapeHtml(text.slice(idx + keyword.length))
-    );
-  }
-
   function renderDropdown(places, keyword) {
     if (!places.length) {
       dropdown.innerHTML = `
@@ -1500,7 +1484,7 @@ function bindPlaceNameAutocomplete() {
           : "";
         return `
           <li data-idx="${i}" role="option">
-            <div class="autocomplete-name">${highlight(p.name, keyword)}${badge}</div>
+            <div class="autocomplete-name">${highlightKeyword(p.name, keyword)}${badge}</div>
             ${meta ? `<div class="autocomplete-meta">${meta}</div>` : ""}
           </li>`;
       })
@@ -1508,76 +1492,15 @@ function bindPlaceNameAutocomplete() {
     dropdown.hidden = false;
   }
 
-  async function fetchFromKakao(keyword, category) {
-    try {
-      const url = `https://petreview.vercel.app/api/facilities?category=${encodeURIComponent(category)}&keyword=${encodeURIComponent(keyword)}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-      if (!res.ok) return [];
-      const json = await res.json();
-      return json?.results ?? [];
-    } catch {
-      return [];
-    }
-  }
-
-  async function fetchFromSupabase(keyword, category) {
-    const db = window.supabaseClient;
-    if (!db) return [];
-    try {
-      const { data } = await db
-        .from("reviews")
-        .select("place_name, region, category")
-        .eq("category", category)
-        .ilike("place_name", `%${keyword}%`)
-        .limit(5);
-      // 중복 제거 (같은 place_name)
-      const seen = new Set();
-      return (data || []).reduce((acc, r) => {
-        if (!seen.has(r.place_name)) {
-          seen.add(r.place_name);
-          acc.push({ name: r.place_name, region: r.region, category: r.category, address: "", hasReview: true });
-        }
-        return acc;
-      }, []);
-    } catch {
-      return [];
-    }
-  }
-
-  async function fetchSuggestions(keyword) {
-    const category = els.placeCategorySelect.value || "hospital";
-    const [kakaoResults, supabaseResults] = await Promise.all([
-      fetchFromKakao(keyword, category),
-      fetchFromSupabase(keyword, category),
-    ]);
-
-    // 리뷰 있는 병원명 Set
-    const reviewedNames = new Set(supabaseResults.map((r) => r.name));
-
-    // Kakao 결과에 hasReview 플래그 추가
-    const mergedKakao = kakaoResults.map((p) => ({ ...p, hasReview: reviewedNames.has(p.name) }));
-
-    // Supabase 결과 중 Kakao에 없는 것만 추가 (리뷰만 있고 Kakao API에 없는 곳)
-    const kakaoNames = new Set(kakaoResults.map((p) => p.name));
-    const uniqueSupabase = supabaseResults.filter((p) => !kakaoNames.has(p.name));
-
-    // 리뷰 있는 것 상단 정렬
-    const combined = [...mergedKakao, ...uniqueSupabase];
-    combined.sort((a, b) => (b.hasReview ? 1 : 0) - (a.hasReview ? 1 : 0));
-    return combined;
-  }
-
   input.addEventListener("input", () => {
     clearTimeout(debounceTimer);
     const val = input.value.trim();
     if (val.length < 2) { hideDropdown(); return; }
-
-    // 로딩 상태 표시
     dropdown.innerHTML = `<li class="autocomplete-empty">검색 중...</li>`;
     dropdown.hidden = false;
-
     debounceTimer = setTimeout(async () => {
-      const places = await fetchSuggestions(val);
+      const category = els.placeCategorySelect.value || "hospital";
+      const places = await fetchPlaceSuggestions(val, category);
       renderDropdown(places, val);
     }, 150);
   });
