@@ -91,6 +91,7 @@ let geoState = 'pending';  // 'pending' | 'granted' | 'denied'
 let reviewLikes = {};            // { reviewId: likeCount }
 let userLikedReviews = new Set(); // 현재 유저가 좋아요한 review ID 집합
 let commentCounts = {};          // { reviewId: commentCount }
+let userHasReview = false;       // 현재 유저의 리뷰 작성 여부 (잠금 해제 조건)
 let filterPetSpecies = "all";    // 동물 종류 필터
 let reviewSortMode = "verified"; // 리뷰 정렬 모드
 let reportingReviewId = null;    // 신고 처리 중인 review ID
@@ -490,8 +491,12 @@ function renderReviewList() {
     return b.isVerified - a.isVerified;
   });
 
+  const isUnlocked = userHasReview || window.PetAuth?.isAdmin();
+  const FREE_COUNT = 3;
+
   const items = sorted
-    .map((review) => {
+    .map((review, idx) => {
+      const locked = !isUnlocked && idx >= FREE_COUNT;
       const likeCount = reviewLikes[review.id] || 0;
       const isLiked = userLikedReviews.has(review.id);
       const scoresHtml = (review.scoreKindness || review.scorePrice || review.scoreFacility || review.scoreWait) ? `
@@ -504,7 +509,7 @@ function renderReviewList() {
       const hasPhotos = (review.reviewPhotoUrls || []).length > 0;
       const isGrooming = review.category === "grooming";
       return `
-      <article class="card card--${review.category}${review.isVerified ? " card--verified" : " card--unverified"}${hasPhotos ? " card--has-photos" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
+      <article class="card card--${review.category}${review.isVerified ? " card--verified" : " card--unverified"}${hasPhotos ? " card--has-photos" : ""}${locked ? " card--locked" : ""}" data-review-id="${escapeHtml(review.id)}" style="cursor:pointer;">
         <div class="card-place-info">
           <div>
             <span class="card-place-name">${escapeHtml(review.placeName)}</span>
@@ -553,7 +558,16 @@ function renderReviewList() {
           <button class="admin-delete-btn" data-review-id="${escapeHtml(review.id)}" title="관리자: 삭제">🗑️ 삭제</button>
           ` : ""}
         </div>
-      </article>`;
+      </article>
+      ${locked && idx === FREE_COUNT ? `
+      <div class="review-lock-banner">
+        <div class="review-lock-icon">🔒</div>
+        <p class="review-lock-title">후기를 작성하면 모든 리뷰가 열려요</p>
+        <p class="review-lock-desc">${window.PetAuth?.isLoggedIn() ? "리뷰 1개만 작성하면 전체 후기를 볼 수 있어요" : "로그인 후 리뷰를 작성하면 전체 후기가 공개돼요"}</p>
+        <button class="review-lock-cta" onclick="${window.PetAuth?.isLoggedIn() ? "document.getElementById('write-tab-btn')?.click()" : "openLoginModal()"}">
+          ${window.PetAuth?.isLoggedIn() ? "✍️ 리뷰 작성하기" : "로그인하고 리뷰 쓰기"}
+        </button>
+      </div>` : ""}`;
     })
     .join("");
 
@@ -669,6 +683,17 @@ async function loadReviews() {
   });
 
   reviews = rawReviews;
+
+  // 현재 유저 리뷰 작성 여부 확인 (잠금 해제 조건)
+  userHasReview = false;
+  const uid = window.PetAuth?.currentUser?.id;
+  if (uid) {
+    const { data: myReviews } = await db.from("reviews")
+      .select("id").eq("user_id", uid)
+      .neq("status", "rejected").limit(1);
+    userHasReview = (myReviews || []).length > 0;
+  }
+
   await Promise.all([loadLikes(), loadCommentCounts()]);
   renderReviewList();
   renderRecentReviews();
