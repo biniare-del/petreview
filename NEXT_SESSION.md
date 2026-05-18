@@ -21,8 +21,11 @@
 ## 0. 세션 시작 시 필수 (매번)
 
 ```bash
-git remote set-url origin https://<PAT_TOKEN>@github.com/biniare-del/petreview.git
+PAT=$(cat /home/user/petreview/.pat)
+git remote set-url origin https://${PAT}@github.com/biniare-del/petreview.git
 ```
+
+> PAT는 `/home/user/petreview/.pat` 파일에 저장됨 (gitignore, 만료 없음)
 
 작업 브랜치: `claude/fix-turn-failure-6aAuK`
 
