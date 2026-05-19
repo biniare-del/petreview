@@ -4175,3 +4175,119 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   font-size: 13px; color: #333;
 }
 .care-history-date { color: #aaa; font-size: 12px; }
+
+/* =====================================================
+   식단 섹션 (care.html 서브탭)
+   ===================================================== */
+
+.care-subtabs {
+  display: flex; gap: 0;
+  background: #fff; border-bottom: 1px solid #f0e8e2;
+  padding: 0 16px;
+}
+.care-subtab {
+  flex: 1; padding: 10px 0; font-size: 14px; font-weight: 700;
+  color: #aaa; background: none; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; transition: all 0.15s;
+}
+.care-subtab.is-active { color: var(--brand-dark); border-bottom-color: var(--brand-dark); }
+
+.diet-pet-summary {
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px 8px;
+}
+.diet-pet-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+
+.diet-block {
+  background: #fff; margin: 8px 12px; border-radius: 14px;
+  padding: 14px 16px; border: 1.5px solid #f0e8e2;
+}
+.diet-block-title {
+  font-size: 13px; font-weight: 700; color: #333;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.diet-meals-done, .diet-water-stat {
+  font-size: 12px; font-weight: 600; color: var(--brand-dark);
+  background: var(--brand-bg); border-radius: 20px; padding: 2px 8px;
+}
+.diet-snack-count {
+  font-size: 12px; font-weight: 600; color: #e67e22;
+  background: #fdf3e7; border-radius: 20px; padding: 2px 8px;
+}
+
+/* 식사 버튼 그리드 */
+.diet-meals-grid { display: flex; gap: 8px; }
+.diet-meal-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 10px 8px; border-radius: 12px;
+  background: #f8f4f0; border: 1.5px solid #e8ddd6;
+  cursor: pointer; transition: all 0.15s;
+}
+.diet-meal-btn.is-done {
+  background: var(--brand-bg); border-color: var(--brand-border);
+}
+.diet-meal-btn:disabled { cursor: default; }
+.diet-meal-label { font-size: 13px; font-weight: 700; color: #333; }
+.diet-meal-state { font-size: 11px; color: #aaa; }
+.diet-meal-btn.is-done .diet-meal-state { color: var(--brand-dark); font-weight: 700; }
+.diet-meal-amount { font-size: 10px; color: #bbb; }
+
+/* 물 섭취 */
+.diet-water-bar-wrap {
+  height: 8px; background: #f0f0f0; border-radius: 999px; overflow: hidden; margin-bottom: 10px;
+}
+.diet-water-bar { height: 100%; background: linear-gradient(90deg, #38bdf8, #0ea5e9); border-radius: 999px; transition: width 0.4s; }
+.diet-water-btns { display: flex; gap: 8px; }
+.diet-water-btn {
+  flex: 1; padding: 7px 0; font-size: 12px; font-weight: 700;
+  color: #0ea5e9; background: #f0f9ff; border: 1px solid #bae6fd;
+  border-radius: 999px; cursor: pointer;
+}
+
+/* 간식 */
+.diet-snack-input-row { display: flex; gap: 8px; }
+.diet-snack-input {
+  flex: 1; padding: 8px 12px; border: 1.5px solid #e8ddd6; border-radius: 10px;
+  font-size: 13px; outline: none;
+}
+.diet-snack-btn {
+  padding: 8px 16px; background: var(--brand-dark); color: #fff;
+  border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.diet-snack-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.diet-snack-chip {
+  font-size: 12px; color: #666; background: #f4f0ec;
+  border-radius: 999px; padding: 3px 10px;
+}
+
+/* 설정 */
+.diet-settings-details { margin: 8px 12px 16px; }
+.diet-settings-toggle {
+  font-size: 13px; font-weight: 700; color: #666; cursor: pointer;
+  padding: 12px 16px; background: #fff; border-radius: 12px;
+  border: 1.5px solid #f0e8e2; list-style: none;
+}
+.diet-settings-toggle::-webkit-details-marker { display: none; }
+.diet-settings-body {
+  background: #fff; border: 1.5px solid #f0e8e2; border-top: none;
+  border-radius: 0 0 12px 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.diet-settings-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.diet-settings-row label { font-size: 13px; font-weight: 600; color: #444; flex-shrink: 0; }
+.diet-meals-picker { display: flex; gap: 6px; }
+.diet-pick-btn {
+  padding: 5px 14px; font-size: 13px; font-weight: 700; color: #888;
+  background: #f4f0ec; border: 1.5px solid transparent; border-radius: 999px; cursor: pointer;
+}
+.diet-pick-btn.is-active { color: var(--brand-dark); background: var(--brand-bg); border-color: var(--brand-border); }
+.diet-input {
+  flex: 1; padding: 7px 10px; border: 1.5px solid #e8ddd6; border-radius: 8px;
+  font-size: 13px; outline: none; min-width: 0;
+}
+.diet-input-unit { display: flex; align-items: center; gap: 6px; flex: 1; }
+.diet-input-unit span { font-size: 13px; color: #888; flex-shrink: 0; }
+.diet-save-btn {
+  width: 100%; padding: 11px; background: var(--brand-dark); color: #fff;
+  border: none; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer;
+}
