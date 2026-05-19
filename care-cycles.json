@@ -1,0 +1,639 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "반려동물 케어 권장 주기 데이터 (수의학 기반)",
+    "sources": [
+      "American Animal Hospital Association (AAHA) Canine Vaccination Guidelines",
+      "American Heartworm Society",
+      "ASPCA Pet Care",
+      "TICA (The International Cat Association)",
+      "VCA Animal Hospitals",
+      "PetMD veterinary-reviewed articles"
+    ],
+    "note": "모든 주기는 일반 권장 기준입니다. 개별 반려동물의 건강 상태에 따라 수의사 상담을 권장합니다."
+  },
+
+  "dog": {
+
+    "grooming": {
+      "full_grooming": {
+        "label": "전체 미용",
+        "description": "목욕 + 드라이 + 트리밍/클리핑 + 발톱 + 귀세척 포함 전체 미용",
+        "default_days": 42,
+        "by_coat": {
+          "short": {
+            "label": "단모 (비글, 달마시안 등)",
+            "days": 84,
+            "note": "8~12주마다. 짧은 코트는 자연 유지가 쉬움"
+          },
+          "medium": {
+            "label": "중모 (골든 리트리버, 시베리안 허스키 등)",
+            "days": 42,
+            "note": "6주마다 권장"
+          },
+          "long": {
+            "label": "장모 (말티즈, 시추, 요크셔테리어 등)",
+            "days": 28,
+            "note": "4~6주마다. 모질이 빠르게 자라고 엉킴 위험"
+          },
+          "curly": {
+            "label": "컬리/웨이비 (푸들, 비숑프리제, 포르투갈 워터독 등)",
+            "days": 35,
+            "note": "4~6주마다. 엉킴과 이물 끼임 방지 필수"
+          },
+          "double": {
+            "label": "더블코트 (포메라니안, 사모예드 등)",
+            "days": 42,
+            "note": "털갈이 시기(봄·가을)에는 2~4주마다 브러싱 강화"
+          }
+        },
+        "special_breeds": {
+          "poodle": "4~6주 (털이 계속 자람)",
+          "maltese": "4주 (장모 관리 필수)",
+          "yorkshire_terrier": "4~6주",
+          "shih_tzu": "4~6주",
+          "bichon_frise": "4~6주",
+          "golden_retriever": "6~8주",
+          "labrador_retriever": "8~12주 (단모·더블코트)",
+          "corgi": "6~8주 (이중모, 털갈이 시 주의)"
+        }
+      },
+
+      "brushing": {
+        "label": "브러싱",
+        "description": "집에서 빗질로 엉킴 방지 및 죽은 털 제거",
+        "default_days": 3,
+        "by_coat": {
+          "short": {
+            "label": "단모",
+            "days": 7,
+            "note": "주 1회"
+          },
+          "medium": {
+            "label": "중모",
+            "days": 3,
+            "note": "주 2~3회"
+          },
+          "long": {
+            "label": "장모",
+            "days": 1,
+            "note": "매일 권장. 엉킴 방지"
+          },
+          "curly": {
+            "label": "컬리/웨이비",
+            "days": 1,
+            "note": "매일 권장"
+          },
+          "double": {
+            "label": "더블코트",
+            "days": 3,
+            "note": "털갈이 시기에는 매일"
+          }
+        }
+      },
+
+      "nail_trim": {
+        "label": "발톱 정리",
+        "description": "발톱이 바닥에 닿거나 클릭 소리가 나기 전에 정리",
+        "default_days": 21,
+        "by_activity": {
+          "indoor_small": {
+            "label": "실내 위주 소형견",
+            "days": 14,
+            "note": "2~3주. 실내 생활로 자연 마모가 적음"
+          },
+          "active_large": {
+            "label": "활동적인 중·대형견 (포장도로 산책)",
+            "days": 35,
+            "note": "4~6주. 포장도로 산책으로 자연 마모"
+          },
+          "standard": {
+            "label": "일반",
+            "days": 21,
+            "note": "3~4주 권장 (가장 보편적)"
+          }
+        },
+        "note": "발톱 끝에서 클릭 소리가 날 때가 정리 신호"
+      },
+
+      "teeth_brushing": {
+        "label": "양치",
+        "description": "반려동물 전용 치약 사용. 치석 및 치주질환 예방",
+        "default_days": 1,
+        "ideal_days": 1,
+        "minimum_days": 2,
+        "note": "수의사 권장: 매일 1회 이상. 최소 격일. 3세 이상 개의 80%가 치주질환 보유",
+        "by_size": {
+          "small": {
+            "label": "소형견",
+            "days": 1,
+            "note": "소형견은 구강이 좁고 치석 축적이 빠름 — 매일 필수"
+          },
+          "medium": {
+            "label": "중형견",
+            "days": 1
+          },
+          "large": {
+            "label": "대형견",
+            "days": 1
+          }
+        }
+      },
+
+      "ear_cleaning": {
+        "label": "귀세척",
+        "description": "귀지 및 이물 제거. 귀 감염 예방",
+        "default_days": 30,
+        "by_ear_type": {
+          "floppy": {
+            "label": "늘어진 귀 (코커스패니얼, 바셋하운드, 비글 등)",
+            "days": 14,
+            "note": "1~2주마다. 공기 순환이 적어 습기·세균 축적 위험"
+          },
+          "erect": {
+            "label": "직립 귀 (저먼 셰퍼드, 시바이누 등)",
+            "days": 30,
+            "note": "한 달에 1회 또는 필요시"
+          },
+          "hairy": {
+            "label": "귀 안 털이 많은 견종 (푸들, 말티즈 등)",
+            "days": 21,
+            "note": "2~3주마다. 귀 털 제거 병행 권장"
+          },
+          "swimmer": {
+            "label": "수영·목욕 잦은 개",
+            "days": 7,
+            "note": "목욕·수영 후마다 확인 및 건조"
+          }
+        },
+        "special_breeds": {
+          "cocker_spaniel": "1~2주 (귀 감염 고위험)",
+          "basset_hound": "2주",
+          "beagle": "2~3주",
+          "poodle": "2~3주 (귀 털 많음)",
+          "labrador_retriever": "수영 후마다"
+        },
+        "warning": "이상한 냄새, 분비물, 발로 긁는 행동이 있으면 즉시 수의사 방문"
+      },
+
+      "anal_gland": {
+        "label": "항문낭 관리",
+        "description": "항문낭액 배출. 대부분의 개는 자연 배출됨",
+        "default_days": 90,
+        "note": "건강한 개는 정기 처치 불필요. 증상 발생 시에만",
+        "by_condition": {
+          "normal": {
+            "label": "정상 (자연 배출)",
+            "days": null,
+            "note": "필요 없음 — 대변 시 자연 배출됨"
+          },
+          "occasional": {
+            "label": "가끔 문제 있는 경우",
+            "days": 90,
+            "note": "3~6개월마다 또는 증상 시"
+          },
+          "chronic": {
+            "label": "만성 문제 있는 경우",
+            "days": 21,
+            "note": "3~4주마다. 수의사 정기 관리 권장"
+          }
+        },
+        "symptoms": [
+          "바닥에 항문 끌기 (스쿠팅)",
+          "항문을 지나치게 핥거나 물어뜯음",
+          "생선 냄새 또는 악취",
+          "배변 시 불편함 또는 통증"
+        ],
+        "high_risk_breeds": ["닥스훈트", "비글", "바셋하운드", "시추", "치와와"]
+      }
+    },
+
+    "health_prevention": {
+      "heartworm": {
+        "label": "심장사상충 예방",
+        "description": "모기 매개 기생충. 예방이 치료보다 중요",
+        "default_days": 30,
+        "options": {
+          "monthly_oral": {
+            "label": "먹는 약 (월 1회)",
+            "days": 30
+          },
+          "monthly_topical": {
+            "label": "바르는 약 (월 1회)",
+            "days": 30
+          },
+          "injection_6m": {
+            "label": "주사 (6개월)",
+            "days": 180,
+            "note": "수의사 처방 및 투여 필요"
+          },
+          "injection_12m": {
+            "label": "주사 (12개월)",
+            "days": 365,
+            "note": "수의사 처방 및 투여 필요"
+          }
+        },
+        "guideline": "미국 심장사상충학회(AHS): 연중 12개월 예방 + 연 1회 항원 검사 권장",
+        "note": "처방전 필요 제품. 투여 전 감염 여부 검사 필수"
+      },
+
+      "flea_tick": {
+        "label": "외부기생충 (벼룩·진드기) 예방",
+        "description": "벼룩·진드기·모기 등 외부기생충 예방",
+        "default_days": 30,
+        "options": {
+          "monthly": {
+            "label": "월 1회 (경구/국소)",
+            "days": 30,
+            "note": "가장 일반적. 먹는 약 또는 바르는 약"
+          },
+          "3_month": {
+            "label": "3개월 1회 (일부 제품)",
+            "days": 90,
+            "note": "브라벡토(Bravecto) 등 일부 제품"
+          }
+        },
+        "guideline": "수의사 96%가 연중 12개월 예방 권장 (실내견 포함)",
+        "note": "연중 투여 권장. 단 1회 누락도 감염 위험"
+      },
+
+      "deworming": {
+        "label": "내부기생충 (구충제)",
+        "description": "회충, 십이지장충, 편충, 조충 등 장내 기생충 구제",
+        "default_days": 90,
+        "by_age_lifestyle": {
+          "puppy_under_6m": {
+            "label": "생후 6개월 미만 강아지",
+            "days": 14,
+            "note": "2주마다. 2주령부터 12주까지 격주 투여"
+          },
+          "puppy_6m_to_1y": {
+            "label": "6개월~1세",
+            "days": 30,
+            "note": "월 1회"
+          },
+          "adult_indoor": {
+            "label": "성견 (실내 위주)",
+            "days": 90,
+            "note": "3개월마다"
+          },
+          "adult_outdoor": {
+            "label": "성견 (야외 활동 많음)",
+            "days": 30,
+            "note": "1~3개월마다. 흙, 동물 접촉 위험 증가"
+          }
+        },
+        "note": "심장사상충 예방약 중 일부(Heartgard 등)는 회충·십이지장충 동시 예방"
+      }
+    },
+
+    "vaccination": {
+      "_note": "핵심 백신(Core)은 모든 개에게 권장. 비핵심 백신(Non-core)은 생활환경·위험도에 따라 수의사 결정",
+
+      "dhpp": {
+        "label": "종합백신 (DHPP/DHPPL)",
+        "description": "홍역(Distemper) + 간염(Hepatitis/Adenovirus) + 파보바이러스(Parvovirus) + 파라인플루엔자",
+        "type": "core",
+        "puppy_series": {
+          "description": "강아지 기초 접종",
+          "schedule": [
+            { "week": "6~8주령", "note": "1차" },
+            { "week": "10~12주령", "note": "2차 (3~4주 간격)" },
+            { "week": "14~16주령", "note": "3차" }
+          ]
+        },
+        "adult_booster": {
+          "first_booster_days": 365,
+          "first_booster_note": "기초 접종 완료 후 1년 뒤 추가 접종",
+          "ongoing_days": 1095,
+          "ongoing_note": "이후 3년마다 (AAHA 2022 가이드라인)",
+          "default_days": 1095
+        }
+      },
+
+      "rabies": {
+        "label": "광견병 (Rabies)",
+        "description": "필수 법정 백신",
+        "type": "core",
+        "puppy_schedule": "12~16주령 최초 접종",
+        "booster": {
+          "first_booster_days": 365,
+          "first_booster_note": "1차 접종 후 1년",
+          "ongoing_1yr_vaccine_days": 365,
+          "ongoing_3yr_vaccine_days": 1095,
+          "default_days": 1095,
+          "note": "백신 종류에 따라 1년 또는 3년 주기. 지역 법규 확인 필요"
+        }
+      },
+
+      "leptospirosis": {
+        "label": "렙토스피라 (Leptospirosis)",
+        "description": "물·흙 접촉을 통한 세균성 질환",
+        "type": "non_core",
+        "default_days": 365,
+        "note": "야외 활동이 많거나 물가·농촌 환경 개에게 권장. 연 1회",
+        "at_risk": ["야외 활동 많은 견종", "농촌/물가 거주", "대형견"]
+      },
+
+      "bordetella": {
+        "label": "켄넬코프 (Bordetella / 전염성 기관지염)",
+        "description": "개 군집 시설(호텔, 훈련소, 도그파크)에서 전파",
+        "type": "non_core",
+        "default_days": 365,
+        "options": {
+          "injectable_days": 365,
+          "intranasal_days": 180
+        },
+        "note": "위탁·훈련·미용 시설 이용 전 접종 권장. 비강 접종은 6개월마다"
+      },
+
+      "canine_influenza": {
+        "label": "개 인플루엔자 (CIV H3N2/H3N8)",
+        "description": "개 군집 시설에서 전파되는 호흡기 질환",
+        "type": "non_core",
+        "default_days": 365,
+        "note": "도그파크·호텔 등 사회화 잦은 개에게 권장"
+      }
+    }
+  },
+
+  "cat": {
+
+    "grooming": {
+      "full_grooming": {
+        "label": "전체 미용",
+        "description": "목욕 + 드라이 + 트리밍 + 발톱 + 귀세척 포함",
+        "default_days": 60,
+        "note": "고양이는 기본적으로 자가 그루밍을 함",
+        "by_coat": {
+          "shorthair": {
+            "label": "단모 (아메리칸 숏헤어, 러시안 블루 등)",
+            "days": 90,
+            "note": "2~3개월마다 또는 필요시"
+          },
+          "longhair": {
+            "label": "장모 (페르시안, 메인쿤, 랙돌 등)",
+            "days": 42,
+            "note": "4~6주마다. 엉킴 및 헤어볼 방지"
+          },
+          "medium": {
+            "label": "중모 (노르웨이 숲고양이 등)",
+            "days": 60,
+            "note": "6~8주마다"
+          }
+        },
+        "special_breeds": {
+          "persian": "4주 (눈물자국 + 장모 관리 필수)",
+          "maine_coon": "4~6주",
+          "ragdoll": "4~6주",
+          "norwegian_forest": "6~8주",
+          "sphinx": "1~2주 (목욕 필요 — 무모종 피지 관리)",
+          "devon_rex": "2~3주 (곱슬 단모, 피지 관리)"
+        }
+      },
+
+      "brushing": {
+        "label": "브러싱",
+        "description": "헤어볼 예방, 죽은 털 제거, 피부 자극",
+        "default_days": 3,
+        "by_coat": {
+          "shorthair": {
+            "label": "단모",
+            "days": 4,
+            "note": "주 2회 권장 (ASPCA)"
+          },
+          "mediumhair": {
+            "label": "중모",
+            "days": 3,
+            "note": "주 2~3회"
+          },
+          "longhair": {
+            "label": "장모",
+            "days": 1,
+            "note": "매일 필수. 엉킴 및 헤어볼 방지 (TICA)"
+          }
+        },
+        "note": "헤어볼이 잦은 고양이는 빈도를 높이고 헤어볼 방지 제품 병행 권장"
+      },
+
+      "nail_trim": {
+        "label": "발톱 정리",
+        "description": "과성장 및 발바닥 찔림 방지",
+        "default_days": 14,
+        "note": "10일~2주마다 권장 (ASPCA). 실내 고양이는 더 자주 필요",
+        "by_lifestyle": {
+          "indoor": {
+            "label": "실내 고양이",
+            "days": 14,
+            "note": "2주마다. 자연 마모 없음"
+          },
+          "outdoor": {
+            "label": "실외·반실외 고양이",
+            "days": 21,
+            "note": "3주마다. 나무 타기 등으로 일부 마모"
+          }
+        }
+      },
+
+      "teeth_brushing": {
+        "label": "양치",
+        "description": "고양이 전용 치약 사용. 치주질환 예방",
+        "default_days": 1,
+        "ideal_days": 1,
+        "minimum_days": 2,
+        "note": "매일 권장. 3세 고양이의 약 70%가 치주질환 보유 (수의학 통계)"
+      },
+
+      "ear_cleaning": {
+        "label": "귀세척",
+        "description": "귀지 및 이물 제거",
+        "default_days": 30,
+        "note": "월 1회 권장 또는 필요시",
+        "high_risk": {
+          "scottish_fold": "2주마다 (귀가 접혀 통기 불량)",
+          "rex_breeds": "2~3주마다"
+        },
+        "warning": "고양이는 귀 진드기(ear mites) 감염에 취약. 검은 귀지 발견 시 수의사 방문"
+      },
+
+      "anal_gland": {
+        "label": "항문낭 관리",
+        "description": "고양이는 개보다 항문낭 문제 드물어 일반적으로 관리 불필요",
+        "default_days": null,
+        "note": "일반 건강 고양이는 불필요. 비만, 알레르기, 염증성 장 질환 고양이는 주의",
+        "symptoms": [
+          "바닥에 항문 끌기",
+          "항문 주위 과도한 그루밍",
+          "배변 시 불편함"
+        ]
+      }
+    },
+
+    "health_prevention": {
+      "heartworm": {
+        "label": "심장사상충 예방",
+        "description": "고양이는 치료약이 없어 예방이 절대적으로 중요",
+        "default_days": 30,
+        "note": "치료법 없음 — 예방이 유일한 방법. 실내 고양이도 권장",
+        "guideline": "미국 심장사상충학회(AHS): 모든 고양이에게 연중 예방 권장",
+        "options": {
+          "monthly_topical": {
+            "label": "바르는 약 (월 1회)",
+            "days": 30
+          }
+        }
+      },
+
+      "flea_tick": {
+        "label": "외부기생충 (벼룩·진드기) 예방",
+        "description": "벼룩은 실내 고양이에게도 흔한 기생충",
+        "default_days": 30,
+        "options": {
+          "monthly": {
+            "label": "월 1회",
+            "days": 30
+          },
+          "3_month": {
+            "label": "3개월 1회 (일부 제품)",
+            "days": 90
+          }
+        },
+        "note": "실내 고양이도 연중 예방 권장. 벼룩은 창문·문·옷으로 유입 가능"
+      },
+
+      "deworming": {
+        "label": "내부기생충 (구충제)",
+        "description": "회충, 조충 등 장내 기생충 구제",
+        "default_days": 90,
+        "by_age_lifestyle": {
+          "kitten_under_12w": {
+            "label": "생후 12주 미만 새끼 고양이",
+            "days": 14,
+            "note": "2주령부터 12주까지 2주마다"
+          },
+          "kitten_12w_to_6m": {
+            "label": "3~6개월",
+            "days": 30,
+            "note": "월 1회"
+          },
+          "adult_indoor": {
+            "label": "성묘 (실내 전용)",
+            "days": 90,
+            "note": "3~6개월마다"
+          },
+          "adult_outdoor": {
+            "label": "성묘 (실외 접근)",
+            "days": 30,
+            "note": "1~3개월마다. 사냥·외출로 위험 증가"
+          }
+        },
+        "note": "조충 예방을 위해 벼룩 예방과 병행 권장 (벼룩이 조충 중간 숙주)"
+      }
+    },
+
+    "vaccination": {
+      "_note": "핵심 백신(Core)은 실내외 모든 고양이 권장. 비핵심 백신은 생활환경에 따라 결정",
+
+      "fvrcp": {
+        "label": "고양이 종합백신 (FVRCP)",
+        "description": "고양이 바이러스성 비기관염(FVR) + 칼리시바이러스(Calicivirus) + 범백혈구감소증(Panleukopenia)",
+        "type": "core",
+        "kitten_series": {
+          "description": "새끼 고양이 기초 접종",
+          "schedule": [
+            { "week": "6~8주령", "note": "1차" },
+            { "week": "10~12주령", "note": "2차 (3~4주 간격)" },
+            { "week": "14~16주령", "note": "3차" }
+          ]
+        },
+        "adult_booster": {
+          "first_booster_days": 365,
+          "first_booster_note": "기초 접종 후 1년",
+          "ongoing_days": 1095,
+          "ongoing_note": "이후 3년마다",
+          "default_days": 1095
+        }
+      },
+
+      "rabies": {
+        "label": "광견병 (Rabies)",
+        "description": "지역 법규에 따라 의무 접종",
+        "type": "core",
+        "kitten_schedule": "12주령 이후 최초 접종",
+        "booster": {
+          "first_booster_days": 365,
+          "ongoing_1yr_vaccine_days": 365,
+          "ongoing_3yr_vaccine_days": 1095,
+          "default_days": 1095,
+          "note": "백신 종류 및 지역 법규에 따라 1년 또는 3년 주기"
+        }
+      },
+
+      "felv": {
+        "label": "고양이 백혈병 바이러스 (FeLV)",
+        "description": "고양이 백혈병. 접촉 감염",
+        "type": "non_core_kitten_core",
+        "note": "새끼 고양이 및 실외 고양이 핵심 백신으로 권장",
+        "kitten_series": {
+          "description": "8주령 이후 1차, 3~4주 후 2차",
+          "schedule": [
+            { "week": "8주령 이후", "note": "1차" },
+            { "week": "3~4주 후", "note": "2차" }
+          ]
+        },
+        "adult_booster": {
+          "default_days": 365,
+          "indoor_only_note": "실내 전용 성묘는 1년차 접종 후 중단 가능. 수의사 판단에 따름",
+          "outdoor_note": "실외 접근 고양이는 연 1회 지속 권장"
+        }
+      },
+
+      "fip": {
+        "label": "고양이 전염성 복막염 (FIP)",
+        "description": "다두 사육 또는 보호소 환경 고양이",
+        "type": "non_core",
+        "default_days": 365,
+        "note": "16주 이후 접종 가능. 실내 단독 사육이면 필요성 낮음"
+      },
+
+      "chlamydia": {
+        "label": "클라미디아 (Chlamydophila felis)",
+        "description": "안구 결막염 원인균",
+        "type": "non_core",
+        "default_days": 365,
+        "note": "다두 사육 환경에서 권장"
+      }
+    }
+  },
+
+  "app_defaults": {
+    "_note": "앱 케어 기록 입력 시 기본값으로 사용할 간소화 데이터",
+    "dog": {
+      "full_grooming":  { "label": "전체 미용",         "default_days": 42, "by_coat": { "short": 84, "medium": 42, "long": 28, "curly": 35 } },
+      "brushing":       { "label": "브러싱",             "default_days": 3,  "by_coat": { "short": 7, "medium": 3, "long": 1, "curly": 1 } },
+      "nail_trim":      { "label": "발톱 정리",          "default_days": 21, "by_size": { "small": 14, "medium": 21, "large": 35 } },
+      "teeth_brushing": { "label": "양치",               "default_days": 1 },
+      "ear_cleaning":   { "label": "귀세척",             "default_days": 30, "by_ear": { "floppy": 14, "erect": 30, "hairy": 21 } },
+      "anal_gland":     { "label": "항문낭 관리",        "default_days": 90, "note": "증상 있을 때만" },
+      "heartworm":      { "label": "심장사상충 예방",    "default_days": 30 },
+      "flea_tick":      { "label": "벼룩·진드기 예방",  "default_days": 30 },
+      "deworming":      { "label": "구충제",             "default_days": 90 },
+      "vaccine_dhpp":   { "label": "종합백신 (DHPP)",    "default_days": 1095 },
+      "vaccine_rabies": { "label": "광견병 백신",        "default_days": 1095 }
+    },
+    "cat": {
+      "full_grooming":  { "label": "전체 미용",         "default_days": 60, "by_coat": { "short": 90, "medium": 60, "long": 42 } },
+      "brushing":       { "label": "브러싱",             "default_days": 3,  "by_coat": { "short": 4, "medium": 3, "long": 1 } },
+      "nail_trim":      { "label": "발톱 정리",          "default_days": 14 },
+      "teeth_brushing": { "label": "양치",               "default_days": 1 },
+      "ear_cleaning":   { "label": "귀세척",             "default_days": 30 },
+      "anal_gland":     { "label": "항문낭 관리",        "default_days": null, "note": "일반적으로 불필요" },
+      "heartworm":      { "label": "심장사상충 예방",    "default_days": 30 },
+      "flea_tick":      { "label": "벼룩·진드기 예방",  "default_days": 30 },
+      "deworming":      { "label": "구충제",             "default_days": 90 },
+      "vaccine_fvrcp":  { "label": "종합백신 (FVRCP)",   "default_days": 1095 },
+      "vaccine_rabies": { "label": "광견병 백신",        "default_days": 1095 },
+      "vaccine_felv":   { "label": "고양이백혈병 (FeLV)","default_days": 365, "note": "실외 접근 고양이만" }
+    }
+  }
+}
