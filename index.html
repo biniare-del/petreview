@@ -636,6 +636,10 @@
   <!-- 인증 모듈 -->
   <script src="auth.js"></script>
   <script>
+    // 직접 루트 방문 시 케어 홈으로 리다이렉트 (탭 네비게이션은 ?c 파라미터로 제외)
+    if (!location.search) { location.replace("care.html"); }
+  </script>
+  <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/petreview/sw.js").then((reg) => {
         reg.addEventListener("updatefound", () => {

@@ -527,12 +527,45 @@ async function init() {
 
   const user = window.PetAuth?.currentUser ?? null;
 
+  // 헤더 로그인 버튼 표시
+  document.getElementById("care-login-btn").hidden = !!user;
+
   if (!user) {
-    content.innerHTML = `<div class="care-empty-state">
-      <div class="care-empty-icon">🔒</div>
-      <p class="care-empty-title">로그인이 필요해요</p>
-      <p class="care-empty-desc">로그인 후 반려동물 케어와 식단을 관리할 수 있어요.</p>
-      <button class="care-login-btn" onclick="location.href='index.html'">로그인하러 가기</button>
+    document.getElementById("care-subtabs").hidden = true;
+    content.innerHTML = `
+    <div class="care-landing">
+      <div class="care-landing-hero">
+        <div class="care-landing-logo">🐾</div>
+        <h2 class="care-landing-title">우쭈쭈</h2>
+        <p class="care-landing-sub">우리 아이 건강, 놓치지 않게</p>
+      </div>
+      <div class="care-landing-features">
+        <div class="care-feature-card">
+          <span class="care-feature-icon">🩺</span>
+          <div>
+            <div class="care-feature-name">케어 스케줄</div>
+            <div class="care-feature-desc">양치·산책·예방접종 D-day 자동 계산</div>
+          </div>
+        </div>
+        <div class="care-feature-card">
+          <span class="care-feature-icon">🍚</span>
+          <div>
+            <div class="care-feature-name">식단 관리</div>
+            <div class="care-feature-desc">오늘 밥·물·간식 섭취량 한눈에</div>
+          </div>
+        </div>
+        <div class="care-feature-card">
+          <span class="care-feature-icon">🤖</span>
+          <div>
+            <div class="care-feature-name">AI 조언</div>
+            <div class="care-feature-desc">케어 상태 분석 후 맞춤 한마디</div>
+          </div>
+        </div>
+      </div>
+      <div class="care-landing-cta">
+        <button class="care-cta-btn" onclick="location.href='index.html'">시작하기 →</button>
+        <p class="care-landing-note">구글 · 카카오 · 네이버로 3초 로그인</p>
+      </div>
     </div>`;
     return;
   }

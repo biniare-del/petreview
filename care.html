@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
-  <title>케어 – 우쭈쭈</title>
+  <title>우쭈쭈 – 반려동물 헬스케어</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <link rel="stylesheet" href="style.css"/>
   <link rel="manifest" href="/petreview/manifest.json"/>
@@ -14,15 +14,15 @@
 </head>
 <body class="has-tabbar care-page">
 
-  <header class="care-header">
-    <div class="care-header-left">
-      <div class="logo-icon" style="font-size:18px;">🐾</div>
-      <div>
-        <h1 class="care-header-title">케어</h1>
-        <p class="care-header-sub">반려동물 건강 관리 스케줄</p>
-      </div>
+  <header class="site-header">
+    <div class="logo-area">
+      <div class="logo-icon">🐾</div>
+      <div class="logo-text"><h1>우쭈쭈</h1></div>
     </div>
-    <button class="care-history-btn" id="care-history-btn" hidden>📋 기록</button>
+    <div class="header-auth" id="header-auth">
+      <button class="care-history-btn" id="care-history-btn" hidden>📋 기록</button>
+      <button class="auth-login-btn" id="care-login-btn" hidden onclick="location.href='index.html'">로그인</button>
+    </div>
   </header>
 
   <!-- 서브탭 -->
@@ -39,7 +39,7 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1" ry="1"/><path d="M9 12l2 2 4-4"/></svg>
       <span>케어</span>
     </button>
-    <button class="tab-item" onclick="location.href='index.html'" aria-label="커뮤니티">
+    <button class="tab-item" onclick="location.href='index.html?c'" aria-label="커뮤니티">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <span>커뮤니티</span>
     </button>
