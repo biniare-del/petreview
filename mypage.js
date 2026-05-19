@@ -1550,7 +1550,7 @@
     });
 
     shareBtn.addEventListener("click", () => {
-      const text = yearLabel.textContent + " 펫 리포트 — 펫리뷰에서 확인하세요!";
+      const text = yearLabel.textContent + " 펫 리포트 — 우쭈쭈에서 확인하세요!";
       if (navigator.share) {
         navigator.share({ title: "🐾 연간 펫 리포트", text, url: "https://biniare-del.github.io/petreview/" }).catch(() => {});
       } else {

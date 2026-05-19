@@ -1688,11 +1688,11 @@ async function sharePlaceInfo(place, btn) {
     place.address ? `주소: ${place.address}` : "",
     place.phone ? `전화: ${place.phone}` : "",
     `🗺️ ${mapUrl}`,
-    `\n펫리뷰에서 실제 후기를 확인하세요 → https://biniare-del.github.io/petreview/`,
+    `\n우쭈쭈에서 실제 후기를 확인하세요 → https://biniare-del.github.io/petreview/`,
   ].filter(Boolean).join("\n");
 
   if (navigator.share) {
-    try { await navigator.share({ title: `펫리뷰 - ${place.name}`, text: lines }); } catch { /* 취소 */ }
+    try { await navigator.share({ title: `우쭈쭈 - ${place.name}`, text: lines }); } catch { /* 취소 */ }
     return true;
   }
   try {
@@ -3411,7 +3411,7 @@ init();
               <span class="pc-review-price">${(r.total_price || 0).toLocaleString()}원</span>
             </div>`).join("")}
         </div>
-        <p class="pc-data-note">* 펫리뷰 사용자가 직접 작성한 실제 데이터입니다. 병원마다 차이가 있을 수 있어요.</p>`;
+        <p class="pc-data-note">* 우쭈쭈 사용자가 직접 작성한 실제 데이터입니다. 병원마다 차이가 있을 수 있어요.</p>`;
     } catch {
       resultsEl.innerHTML = '<p class="placeholder-text">조회 중 오류가 발생했습니다.</p>';
     }

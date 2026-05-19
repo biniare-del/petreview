@@ -165,9 +165,9 @@ function bindShare(place) {
     const locationStr = [place.city, place.region].filter(Boolean).join(" ");
     const catLabel = CATEGORY_LABEL[place.category] || place.category;
     const url = location.href;
-    const text = `📍 ${place.name}\n${catLabel} · ${locationStr}\n\n펫리뷰에서 실제 후기를 확인하세요`;
+    const text = `📍 ${place.name}\n${catLabel} · ${locationStr}\n\n우쭈쭈에서 실제 후기를 확인하세요`;
     if (navigator.share) {
-      try { await navigator.share({ title: `펫리뷰 - ${place.name}`, text, url }); }
+      try { await navigator.share({ title: `우쭈쭈 - ${place.name}`, text, url }); }
       catch { /* user cancelled */ }
     } else {
       try {
@@ -190,9 +190,9 @@ async function loadHospitalPage() {
   }
 
   // 동적 타이틀/OG 업데이트
-  document.title = `${place.name} – 펫리뷰`;
+  document.title = `${place.name} – 우쭈쭈`;
   const locationStr = [place.city, place.region].filter(Boolean).join(" ");
-  document.getElementById("og-title")?.setAttribute("content", `${place.name} 후기 – 펫리뷰`);
+  document.getElementById("og-title")?.setAttribute("content", `${place.name} 후기 – 우쭈쭈`);
   document.getElementById("og-description")?.setAttribute("content", `${locationStr} ${place.name}의 실제 영수증 인증 후기`);
   document.getElementById("og-url")?.setAttribute("content", location.href);
 

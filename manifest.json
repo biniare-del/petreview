@@ -1,7 +1,7 @@
 {
-  "name": "펫리뷰",
-  "short_name": "펫리뷰",
-  "description": "영수증으로 인증된 반려동물 병원·미용샵 리뷰 플랫폼",
+  "name": "우쭈쭈",
+  "short_name": "우쭈쭈",
+  "description": "내 반려동물의 건강을 함께 관리해요",
   "start_url": "/petreview/",
   "scope": "/petreview/",
   "display": "standalone",

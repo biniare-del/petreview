@@ -58,7 +58,7 @@ self.addEventListener("fetch", (e) => {
 // 푸시 알림 수신
 self.addEventListener("push", (e) => {
   const data = e.data?.json() ?? {};
-  const title = data.title || "펫리뷰";
+  const title = data.title || "우쭈쭈";
   const options = {
     body: data.body || "",
     icon: "/petreview/icons/icon-192.svg",
