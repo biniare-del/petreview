@@ -2,7 +2,7 @@
   "name": "우쭈쭈",
   "short_name": "우쭈쭈",
   "description": "내 반려동물의 건강을 함께 관리해요",
-  "start_url": "/petreview/",
+  "start_url": "/petreview/care.html",
   "scope": "/petreview/",
   "display": "standalone",
   "orientation": "portrait",

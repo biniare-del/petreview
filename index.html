@@ -29,9 +29,9 @@
   <main class="main-container">
     <!-- 히어로 섹션 -->
     <section class="hero-section" aria-label="히어로">
-      <span class="hero-badge">🧾 영수증 인증 · 진짜 후기</span>
-      <h2 class="hero-title">우리 아이 병원비,<br>얼마가 적당할까요?</h2>
-      <p class="hero-sub">실제 영수증으로 인증된 진료비 데이터<br>믿을 수 있는 반려동물 병원 후기 플랫폼</p>
+      <span class="hero-badge">🏥 병원 찾기 · 진짜 후기</span>
+      <h2 class="hero-title">믿을 수 있는<br>동물병원 후기</h2>
+      <p class="hero-sub">영수증으로 인증된 진료비 데이터<br>근처 병원을 쉽게 찾아보세요</p>
       <button class="hero-cta-btn" onclick="document.getElementById('search-section')?.scrollIntoView({behavior:'smooth'})">🏥 근처 병원 찾기</button>
     </section>
 
@@ -581,18 +581,17 @@
 
   <!-- 하단 탭바 -->
   <nav class="bottom-tab-bar" id="bottom-tab-bar" aria-label="하단 탭 메뉴">
-    <button class="tab-item is-active" data-tab="home" aria-label="홈">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        <polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-      <span>홈</span>
-    </button>
-    <button class="tab-item" data-tab="care" aria-label="케어">
+    <button class="tab-item" onclick="location.href='care.html'" aria-label="케어">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1" ry="1"/><path d="M9 12l2 2 4-4"/>
       </svg>
       <span>케어</span>
+    </button>
+    <button class="tab-item is-active" data-tab="home" aria-label="커뮤니티">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <span>커뮤니티</span>
     </button>
     <button class="tab-item tab-item--write" data-tab="write" aria-label="후기쓰기">
       <div class="write-tab-icon">
