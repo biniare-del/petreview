@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
     "web-push": "^3.6.7"
   }
 }

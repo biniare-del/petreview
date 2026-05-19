@@ -132,9 +132,20 @@ async function loadCareForPet(pet, db, container) {
     rest.forEach(({ key, item, lastDoneAt, dday }) => { html += renderCareItem(key, item, lastDoneAt, dday); });
   }
 
+  html += `<div class="ai-advice-block" id="ai-advice-block">
+    <button class="ai-advice-btn" id="ai-advice-btn">🤖 AI 조언 받기</button>
+    <div class="ai-advice-result" id="ai-advice-result" hidden></div>
+  </div>`;
+
   container.innerHTML = html;
   container.querySelectorAll(".care-done-btn").forEach((btn) => {
     btn.addEventListener("click", () => markCareDone(pet, btn.dataset.key, btn.dataset.label, db, container));
+  });
+
+  // AI 버튼 — 케어 데이터 전달
+  container.querySelector("#ai-advice-btn")?.addEventListener("click", () => {
+    const items = careItems.map(({ item, dday }) => ({ label: item.label, dday }));
+    fetchAiAdvice(pet, items, null, null);
   });
 }
 
@@ -152,6 +163,38 @@ function renderCareItem(key, item, lastDoneAt, dday) {
       <button class="care-done-btn" data-key="${escapeHtml(key)}" data-label="${escapeHtml(item.label)}">완료</button>
     </div>
   </div>`;
+}
+
+async function fetchAiAdvice(pet, careItems, dietToday, dietSettings) {
+  const btn    = document.getElementById("ai-advice-btn");
+  const result = document.getElementById("ai-advice-result");
+  if (!btn || !result) return;
+
+  btn.disabled = true;
+  btn.textContent = "분석 중...";
+  result.hidden = true;
+
+  try {
+    const res = await fetch("/api/ai-care", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pet, careItems, dietToday, dietSettings }),
+    });
+    const data = await res.json();
+    if (data.text) {
+      result.textContent = data.text;
+      result.hidden = false;
+    } else {
+      result.textContent = "조언을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
+      result.hidden = false;
+    }
+  } catch {
+    result.textContent = "네트워크 오류가 발생했어요.";
+    result.hidden = false;
+  }
+
+  btn.disabled = false;
+  btn.textContent = btn.id === "ai-advice-btn" && _activeSubtab === "diet" ? "🤖 AI 식단 조언 받기" : "🤖 AI 조언 받기";
 }
 
 async function markCareDone(pet, careKey, label, db, container) {
@@ -249,6 +292,11 @@ function renderDietSection(container, pet, settings, logs, db) {
       ${snackListHtml}
     </div>
 
+    <div class="ai-advice-block" id="ai-advice-block">
+      <button class="ai-advice-btn" id="ai-advice-btn">🤖 AI 식단 조언 받기</button>
+      <div class="ai-advice-result" id="ai-advice-result" hidden></div>
+    </div>
+
     <details class="diet-settings-details">
       <summary class="diet-settings-toggle">⚙️ 식단 설정</summary>
       <div class="diet-settings-body">
@@ -291,6 +339,11 @@ function renderDietSection(container, pet, settings, logs, db) {
     });
   });
   container.querySelector("#diet-save-btn")?.addEventListener("click", () => saveDietSettings(pet, db, container));
+
+  // AI 버튼 — 식단 데이터 전달
+  container.querySelector("#ai-advice-btn")?.addEventListener("click", () => {
+    fetchAiAdvice(pet, null, logs, settings);
+  });
 }
 
 async function logMeal(pet, mealOrder, db) {
