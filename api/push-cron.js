@@ -23,17 +23,35 @@ module.exports = async (req, res) => {
     .lte("next_due_date", today)
     .not("next_due_date", "is", null);
 
-  if (!records?.length) return res.status(200).json({ ok: true, sent: 0 });
-
-  // user_id 기준으로 그룹핑
+  // user_id 기준으로 그룹핑 (건강기록 알림)
   const byUser = {};
-  records.forEach(r => {
+  (records || []).forEach(r => {
     if (!byUser[r.user_id]) byUser[r.user_id] = [];
     byUser[r.user_id].push(r);
   });
 
+  // 생일인 펫 조회
+  const { data: allPets } = await db
+    .from("pets")
+    .select("id, name, user_id, birth_date")
+    .not("birth_date", "is", null);
+
+  const nowKST = new Date(Date.now() + 9 * 3600 * 1000);
+  const todayM = nowKST.getUTCMonth() + 1;
+  const todayD = nowKST.getUTCDate();
+
+  (allPets || []).forEach(pet => {
+    const d = new Date(pet.birth_date);
+    if (d.getUTCMonth() + 1 === todayM && d.getUTCDate() === todayD) {
+      if (!byUser[pet.user_id]) byUser[pet.user_id] = [];
+      byUser[pet.user_id].push({ _birthday: true, name: pet.name });
+    }
+  });
+
+  if (!Object.keys(byUser).length) return res.status(200).json({ ok: true, sent: 0 });
+
   let sent = 0;
-  for (const [userId, recs] of Object.entries(byUser)) {
+  for (const [userId, items] of Object.entries(byUser)) {
     const { data: subs } = await db
       .from("push_subscriptions")
       .select("endpoint, p256dh, auth")
@@ -41,17 +59,30 @@ module.exports = async (req, res) => {
 
     if (!subs?.length) continue;
 
-    const labels = recs.map(r => `${r.record_type}${r.content ? ` (${r.content})` : ""}`);
-    const body = `기한이 됐어요: ${labels.join(", ")}`;
+    const healthItems = items.filter(i => !i._birthday);
+    const birthdayItems = items.filter(i => i._birthday);
+
+    const notifications = [];
+    if (healthItems.length) {
+      const labels = healthItems.map(r => `${r.record_type}${r.content ? ` (${r.content})` : ""}`);
+      notifications.push({ title: "🐾 우쭈쭈 건강 알림", body: `기한이 됐어요: ${labels.join(", ")}`, url: "/petreview/mypage.html#pets" });
+    }
+    if (birthdayItems.length) {
+      birthdayItems.forEach(p => {
+        notifications.push({ title: "🎂 생일 축하해요!", body: `${p.name}의 생일이에요! 오늘 특별하게 챙겨주세요 🎉`, url: "/petreview/care.html" });
+      });
+    }
 
     for (const sub of subs) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ title: "🐾 펫리뷰 건강 알림", body, url: "/petreview/mypage.html#pets" })
-        );
-        sent++;
-      } catch { /* expired subscription 무시 */ }
+      for (const notif of notifications) {
+        try {
+          await webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            JSON.stringify(notif)
+          );
+          sent++;
+        } catch { /* expired subscription 무시 */ }
+      }
     }
   }
 

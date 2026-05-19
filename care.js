@@ -13,6 +13,7 @@ const CARE_DEFAULTS = {
     deworming:      { label: "구충제",            default_days: 90, icon: "💊" },
     vaccine_dhpp:   { label: "종합백신 (DHPP)",   default_days: 1095, icon: "💉" },
     vaccine_rabies: { label: "광견병 백신",       default_days: 1095, icon: "💉" },
+    walk:           { label: "산책",              default_days: 1,    icon: "🦮" },
   },
   cat: {
     full_grooming:  { label: "전체 미용",         default_days: 60,   icon: "✂️" },
@@ -26,6 +27,7 @@ const CARE_DEFAULTS = {
     vaccine_fvrcp:  { label: "종합백신 (FVRCP)",   default_days: 1095, icon: "💉" },
     vaccine_rabies: { label: "광견병 백신",        default_days: 1095, icon: "💉" },
     vaccine_felv:   { label: "고양이백혈병 (FeLV)", default_days: 365, icon: "💉" },
+    walk:           { label: "산책",               default_days: 1,   icon: "🐾" },
   },
 };
 
