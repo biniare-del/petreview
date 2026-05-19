@@ -64,13 +64,52 @@ function calcDday(lastDoneAt, intervalDays) {
   return Math.round((nextDue - today) / 86_400_000);
 }
 
-function ddayBadge(dday) {
-  if (dday === null) return `<span class="care-dday care-dday--unknown">미기록</span>`;
-  if (dday < 0)   return `<span class="care-dday care-dday--overdue">D+${Math.abs(dday)} 지남</span>`;
-  if (dday === 0) return `<span class="care-dday care-dday--today">D-Day</span>`;
-  if (dday <= 3)  return `<span class="care-dday care-dday--urgent">D-${dday}</span>`;
-  if (dday <= 7)  return `<span class="care-dday care-dday--soon">D-${dday}</span>`;
-  return `<span class="care-dday care-dday--ok">D-${dday}</span>`;
+function isTodayKST(isoStr) {
+  if (!isoStr) return false;
+  const item = new Date(new Date(isoStr).getTime() + 9 * 3_600_000);
+  const now  = new Date(Date.now() + 9 * 3_600_000);
+  return item.getUTCFullYear() === now.getUTCFullYear() &&
+         item.getUTCMonth()    === now.getUTCMonth() &&
+         item.getUTCDate()     === now.getUTCDate();
+}
+
+// 인터벌 커스텀 (localStorage per pet)
+function getCustomIntervals(petId) {
+  try { return JSON.parse(localStorage.getItem(`care_iv_${petId}`) || "{}"); }
+  catch { return {}; }
+}
+function saveCustomInterval(petId, careKey, days) {
+  const iv = getCustomIntervals(petId);
+  iv[careKey] = days;
+  localStorage.setItem(`care_iv_${petId}`, JSON.stringify(iv));
+}
+function getIntervalDays(petId, careKey, defaultDays) {
+  return getCustomIntervals(petId)[careKey] ?? defaultDays;
+}
+
+const INTERVAL_PRESETS = [
+  { days: 1, label: "매일" }, { days: 3, label: "3일" }, { days: 7, label: "1주" },
+  { days: 14, label: "2주" }, { days: 30, label: "1달" }, { days: 90, label: "3달" },
+  { days: 180, label: "6달" }, { days: 365, label: "1년" }, { days: 1095, label: "3년" },
+];
+
+function intervalLabel(days) {
+  const found = INTERVAL_PRESETS.find(p => p.days === days);
+  if (found) return found.label;
+  if (days >= 365) return `${Math.round(days / 365)}년`;
+  return `${days}일`;
+}
+
+function ddayDesc(dday, doneToday, intervalDays) {
+  if (doneToday) return intervalDays === 1 ? "오늘 완료 · 내일 또 챙겨요" : `오늘 완료 · ${intervalLabel(intervalDays)} 후`;
+  if (dday === null) return "아직 첫 기록이 없어요";
+  if (dday < 0) return `${Math.abs(dday)}일 지남 ⚠️`;
+  if (dday === 0) return "오늘 해주세요!";
+  if (dday === 1) return "내일까지";
+  if (dday <= 7)  return `${dday}일 후`;
+  if (dday <= 30) return `${dday}일 후`;
+  if (dday >= 365) return `약 ${Math.round(dday / 365)}년 후`;
+  return `${dday}일 후`;
 }
 
 function speciesKey(species) { return species === "고양이" ? "cat" : "dog"; }
@@ -103,34 +142,58 @@ async function loadCareForPet(pet, db, container) {
   } catch { /* table may not exist */ }
 
   const careItems = Object.entries(defaults).map(([key, item]) => {
-    const lastDoneAt = lastDoneMap[key] ?? null;
-    return { key, item, lastDoneAt, dday: calcDday(lastDoneAt, item.default_days) };
-  }).sort((a, b) => {
-    if (a.dday === null && b.dday === null) return 0;
-    if (a.dday === null) return 1;
-    if (b.dday === null) return -1;
-    return a.dday - b.dday;
+    const lastDoneAt  = lastDoneMap[key] ?? null;
+    const intervalDays = getIntervalDays(pet.id, key, item.default_days);
+    const doneToday   = isTodayKST(lastDoneAt);
+    const dday        = doneToday ? 999 : (calcDday(lastDoneAt, intervalDays) ?? 999);
+    return { key, item, lastDoneAt, dday, doneToday, intervalDays };
   });
 
-  const urgent = careItems.filter(({ dday }) => dday !== null && dday <= 3);
-  const rest   = careItems.filter(({ dday }) => dday === null || dday > 3);
+  // 섹션 버킷
+  const buckets = {
+    overdue:    careItems.filter(c => !c.doneToday && c.dday < 0),
+    today:      careItems.filter(c => !c.doneToday && c.dday === 0),
+    soon:       careItems.filter(c => !c.doneToday && c.dday >= 1 && c.dday <= 7),
+    upcoming:   careItems.filter(c => !c.doneToday && c.dday > 7 && c.dday <= 30),
+    later:      careItems.filter(c => !c.doneToday && c.dday > 30 && c.dday < 999),
+    unrecorded: careItems.filter(c => !c.doneToday && c.dday === 999),
+    done:       careItems.filter(c => c.doneToday),
+  };
 
-  let html = `<div class="care-pet-summary">
-    <span class="care-pet-avatar">${pet.photo_url ? `<img src="${escapeHtml(pet.photo_url)}" alt="${escapeHtml(pet.name)}"/>` : speciesEmoji(pet.species)}</span>
-    <div>
-      <strong class="care-pet-name">${escapeHtml(pet.name)}</strong>
-      <span class="care-pet-species">${escapeHtml(pet.species ?? "")}${pet.breed ? ` · ${escapeHtml(pet.breed)}` : ""}</span>
-    </div>
+  const doneCount  = buckets.done.length;
+  const totalCount = careItems.length;
+  const pct = Math.round(doneCount / totalCount * 100);
+
+  let html = `
+  <div class="care-today-bar">
+    <div class="care-today-label">${doneCount === totalCount ? "🎉 오늘 케어 완료!" : `오늘 ${doneCount} / ${totalCount}`}</div>
+    <div class="care-today-track"><div class="care-today-fill" style="width:${pct}%"></div></div>
   </div>`;
 
-  if (urgent.length) {
-    html += `<div class="care-section-header care-section-header--urgent"><span>🚨 지금 챙겨주세요</span><span class="care-urgent-count">${urgent.length}건</span></div>`;
-    urgent.forEach(({ key, item, lastDoneAt, dday }) => { html += renderCareItem(key, item, lastDoneAt, dday); });
-  }
-  if (rest.length) {
-    html += `<div class="care-section-header">📅 케어 스케줄</div>`;
-    rest.forEach(({ key, item, lastDoneAt, dday }) => { html += renderCareItem(key, item, lastDoneAt, dday); });
-  }
+  const sections = [
+    { id: "overdue",    emoji: "🚨", label: "지금 챙겨주세요", items: buckets.overdue,    open: true  },
+    { id: "today",      emoji: "📌", label: "오늘 할 일",       items: buckets.today,      open: true  },
+    { id: "soon",       emoji: "📅", label: "이번 주",           items: buckets.soon,       open: true  },
+    { id: "upcoming",   emoji: "🗓️", label: "이번 달",          items: buckets.upcoming,   open: false },
+    { id: "later",      emoji: "📆", label: "나중에",            items: buckets.later,      open: false },
+    { id: "unrecorded", emoji: "📝", label: "기록 없음",        items: buckets.unrecorded, open: false },
+    { id: "done",       emoji: "✅", label: "오늘 완료",        items: buckets.done,       open: false },
+  ].filter(s => s.items.length);
+
+  sections.forEach(({ id, emoji, label, items, open }) => {
+    html += `
+    <div class="care-section care-section--${id}${open ? "" : " is-collapsed"}">
+      <button class="care-section-head" data-section="${id}">
+        <span class="care-sh-left"><span class="care-sh-emoji">${emoji}</span><span class="care-sh-title">${label}</span></span>
+        <span class="care-sh-right"><span class="care-sh-count">${items.length}</span>
+          <svg class="care-sh-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </button>
+      <div class="care-section-body">
+        ${items.map(c => renderCareCard(c, pet.id)).join("")}
+      </div>
+    </div>`;
+  });
 
   html += `<div class="ai-advice-block" id="ai-advice-block">
     <button class="ai-advice-btn" id="ai-advice-btn">🤖 AI 조언 받기</button>
@@ -138,29 +201,68 @@ async function loadCareForPet(pet, db, container) {
   </div>`;
 
   container.innerHTML = html;
-  container.querySelectorAll(".care-done-btn").forEach((btn) => {
+
+  // 섹션 토글
+  container.querySelectorAll(".care-section-head").forEach(btn => {
+    btn.addEventListener("click", () => btn.closest(".care-section").classList.toggle("is-collapsed"));
+  });
+
+  // 완료 버튼
+  container.querySelectorAll(".care-done-btn").forEach(btn => {
     btn.addEventListener("click", () => markCareDone(pet, btn.dataset.key, btn.dataset.label, db, container));
   });
 
-  // AI 버튼 — 케어 데이터 전달
+  // 인터벌 칩 → 프리셋 토글
+  container.querySelectorAll(".care-iv-chip").forEach(chip => {
+    chip.addEventListener("click", e => {
+      e.stopPropagation();
+      const picker = chip.closest(".care-card").querySelector(".care-iv-picker");
+      container.querySelectorAll(".care-iv-picker").forEach(p => { if (p !== picker) p.hidden = true; });
+      picker.hidden = !picker.hidden;
+    });
+  });
+
+  // 프리셋 선택
+  container.querySelectorAll(".care-iv-opt").forEach(opt => {
+    opt.addEventListener("click", e => {
+      e.stopPropagation();
+      saveCustomInterval(pet.id, opt.dataset.key, parseInt(opt.dataset.days));
+      loadCareForPet(pet, db, container);
+    });
+  });
+
+  container.addEventListener("click", () => {
+    container.querySelectorAll(".care-iv-picker").forEach(p => p.hidden = true);
+  });
+
+  // AI 버튼
   container.querySelector("#ai-advice-btn")?.addEventListener("click", () => {
-    const items = careItems.map(({ item, dday }) => ({ label: item.label, dday }));
+    const items = careItems.map(({ item, dday, doneToday }) => ({ label: item.label, dday: doneToday ? 0 : (dday === 999 ? null : dday) }));
     fetchAiAdvice(pet, items, null, null);
   });
 }
 
-function renderCareItem(key, item, lastDoneAt, dday) {
-  const isOverdue = dday !== null && dday < 0;
-  const isToday   = dday === 0;
-  return `<div class="care-item-card ${isOverdue ? "care-item--overdue" : isToday ? "care-item--today" : ""}">
-    <span class="care-item-icon">${item.icon}</span>
-    <div class="care-item-body">
-      <div class="care-item-name">${escapeHtml(item.label)}</div>
-      <div class="care-item-meta">${lastDoneAt ? `마지막: ${formatDateShort(lastDoneAt)}` : "기록 없음"}&nbsp;·&nbsp;${item.default_days >= 365 ? `${Math.round(item.default_days / 365)}년` : `${item.default_days}일`} 주기</div>
+function renderCareCard({ key, item, lastDoneAt, dday, doneToday, intervalDays }, petId) {
+  const stateClass = doneToday ? "care-card--done"
+    : dday < 0    ? "care-card--overdue"
+    : dday === 0  ? "care-card--today"
+    : "care-card--normal";
+  const desc = ddayDesc(dday === 999 ? null : dday, doneToday, intervalDays);
+  const presets = INTERVAL_PRESETS.map(p =>
+    `<button class="care-iv-opt${p.days === intervalDays ? " is-active" : ""}" data-days="${p.days}" data-key="${escapeHtml(key)}">${p.label}</button>`
+  ).join("");
+
+  return `
+  <div class="care-card ${stateClass}" data-key="${escapeHtml(key)}">
+    <div class="care-card-icon">${doneToday ? "✓" : item.icon}</div>
+    <div class="care-card-body">
+      <div class="care-card-name">${escapeHtml(item.label)}</div>
+      <div class="care-card-desc">${desc}</div>
+      <div class="care-iv-picker" hidden>${presets}</div>
     </div>
-    <div class="care-item-right">
-      ${ddayBadge(dday)}
-      <button class="care-done-btn" data-key="${escapeHtml(key)}" data-label="${escapeHtml(item.label)}">완료</button>
+    <div class="care-card-side">
+      <button class="care-iv-chip" data-key="${escapeHtml(key)}">${intervalLabel(intervalDays)} ▾</button>
+      ${!doneToday ? `<button class="care-done-btn" data-key="${escapeHtml(key)}" data-label="${escapeHtml(item.label)}">완료</button>` : ""}
     </div>
   </div>`;
 }

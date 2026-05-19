@@ -4097,60 +4097,119 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .care-pet-name { font-size: 15px; font-weight: 800; color: #1a1a1a; display: block; }
 .care-pet-species { font-size: 12px; color: #888; }
 
-/* 섹션 헤더 */
-.care-section-header {
+/* ── 오늘 진행 바 ─────────────────────────── */
+.care-today-bar {
+  padding: 12px 16px 8px;
+}
+.care-today-label {
+  font-size: 13px; font-weight: 700; color: #555; margin-bottom: 6px;
+}
+.care-today-track {
+  height: 6px; background: #f0f0f0; border-radius: 999px; overflow: hidden;
+}
+.care-today-fill {
+  height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 999px; transition: width 0.4s ease;
+}
+
+/* ── 케어 섹션 (접힘/펼침) ───────────────── */
+.care-section { margin: 0 0 4px; }
+
+.care-section-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 16px 6px;
-  font-size: 13px; font-weight: 700; color: #555;
+  width: 100%; padding: 10px 16px 10px;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit;
 }
-.care-section-header--urgent { color: #c0392b; }
-.care-urgent-count {
-  background: #c0392b; color: #fff;
-  font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 8px;
+.care-sh-left  { display: flex; align-items: center; gap: 6px; }
+.care-sh-emoji { font-size: 14px; }
+.care-sh-title { font-size: 13px; font-weight: 800; color: #444; }
+.care-sh-right { display: flex; align-items: center; gap: 6px; }
+.care-sh-count {
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: #bbb; border-radius: 999px; padding: 1px 7px; min-width: 20px; text-align: center;
+}
+.care-section--overdue .care-sh-count { background: #e74c3c; }
+.care-section--today   .care-sh-count { background: #e67e22; }
+.care-section--done    .care-sh-count { background: #22c55e; }
+.care-sh-chevron {
+  color: #bbb; transition: transform 0.2s; flex-shrink: 0;
+}
+.care-section.is-collapsed .care-sh-chevron { transform: rotate(-90deg); }
+
+.care-section-body { padding: 0 12px 4px; }
+.care-section.is-collapsed .care-section-body { display: none; }
+
+/* ── 케어 카드 ───────────────────────────── */
+.care-card {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff; border-radius: 14px; padding: 13px 12px;
+  margin-bottom: 8px;
+  border: 1.5px solid #eee;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+.care-card--overdue { border-color: #fca5a5; background: #fff8f8; }
+.care-card--today   { border-color: #fdba74; background: #fffaf6; }
+.care-card--done    { opacity: 0.55; border-color: #d1fae5; background: #f0fdf4; }
+
+.care-card-icon {
+  font-size: 22px; width: 30px; height: 30px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800;
+}
+.care-card--done .care-card-icon {
+  font-size: 17px; color: #16a34a;
+  background: #d1fae5; border-radius: 50%;
 }
 
-/* 케어 아이템 카드 */
-.care-item-card {
-  display: flex; align-items: center; gap: 12px;
-  background: #fff; margin: 0 12px 8px;
-  border-radius: 12px; padding: 12px 14px;
-  border: 1.5px solid #f0e8e2;
-  transition: border-color 0.15s;
+.care-card-body  { flex: 1; min-width: 0; padding-top: 2px; }
+.care-card-name  { font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+.care-card--done .care-card-name { color: #555; }
+.care-card-desc  { font-size: 12px; color: #999; line-height: 1.4; }
+.care-card--overdue .care-card-desc { color: #dc2626; }
+.care-card--today   .care-card-desc { color: #c2650a; }
+
+/* 인터벌 프리셋 피커 */
+.care-iv-picker {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
 }
-.care-item-card.care-item--overdue { border-left: 4px solid #e74c3c; }
-.care-item-card.care-item--today   { border-left: 4px solid #e67e22; }
+.care-iv-opt {
+  font-size: 12px; font-weight: 600; padding: 5px 12px;
+  border-radius: 999px; border: 1.5px solid #e5e7eb;
+  background: #fff; color: #555; cursor: pointer;
+  transition: all 0.12s; font-family: inherit;
+}
+.care-iv-opt:hover { border-color: var(--brand-border); color: var(--brand-dark); }
+.care-iv-opt.is-active {
+  background: var(--brand-dark); border-color: var(--brand-dark); color: #fff;
+}
 
-.care-item-icon { font-size: 22px; flex-shrink: 0; width: 28px; text-align: center; }
-.care-item-body { flex: 1; min-width: 0; }
-.care-item-name { font-size: 14px; font-weight: 700; color: #1a1a1a; }
-.care-item-meta { font-size: 11px; color: #aaa; margin-top: 2px; }
-
-.care-item-right {
+.care-card-side {
   display: flex; flex-direction: column; align-items: flex-end;
-  gap: 6px; flex-shrink: 0;
+  gap: 6px; flex-shrink: 0; padding-top: 2px;
 }
 
-/* D-day 뱃지 */
-.care-dday {
-  font-size: 11px; font-weight: 800; border-radius: 999px;
-  padding: 3px 9px; white-space: nowrap;
+/* 인터벌 칩 */
+.care-iv-chip {
+  font-size: 11px; font-weight: 700; color: #888;
+  background: #f5f5f5; border: none; border-radius: 999px;
+  padding: 4px 10px; cursor: pointer; transition: all 0.12s;
+  font-family: inherit; white-space: nowrap;
 }
-.care-dday--overdue { background: #fde8e8; color: #c0392b; }
-.care-dday--today   { background: #fdf3e7; color: #e67e22; }
-.care-dday--urgent  { background: #fdf3e7; color: #e67e22; }
-.care-dday--soon    { background: #fefce8; color: #b7791f; }
-.care-dday--ok      { background: #ecfdf5; color: #0f6e56; }
-.care-dday--unknown { background: #f4f4f4; color: #aaa; }
+.care-iv-chip:hover { background: #e8e8e8; color: #333; }
 
 /* 완료 버튼 */
 .care-done-btn {
-  font-size: 11px; font-weight: 700; color: var(--brand-dark);
-  background: var(--brand-bg); border: 1px solid var(--brand-border);
-  border-radius: 20px; padding: 4px 10px; cursor: pointer;
-  transition: background 0.15s;
+  font-size: 12px; font-weight: 700; color: var(--brand-dark);
+  background: var(--brand-bg); border: 1.5px solid var(--brand-border);
+  border-radius: 999px; padding: 5px 12px; cursor: pointer;
+  transition: all 0.12s; font-family: inherit; white-space: nowrap;
 }
 .care-done-btn:hover { background: var(--brand-border); }
-.care-done-btn:disabled { opacity: 0.5; cursor: default; }
+.care-done-btn:active { transform: scale(0.96); }
+.care-done-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
 /* 빈 상태 */
 .care-empty-state {
