@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>소셜 – 우쭈쭈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="/petreview/manifest.json" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="우쭈쭈" />
+  <link rel="apple-touch-icon" href="/petreview/icons/icon-192.svg" />
+  <style>
+    body { padding-bottom: 70px; background: #faf7f5; }
+
+    /* ── 소셜 서브탭 ── */
+    .social-subtabs {
+      position: sticky;
+      top: 57px; /* site-header height */
+      z-index: 15;
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid #f0e8e2;
+    }
+    .social-subtab {
+      flex: 1;
+      padding: 11px 0;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: #999;
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .social-subtab.is-active {
+      color: #0f6e56;
+      border-bottom-color: #0f6e56;
+    }
+
+    /* ── 자랑 탭 컨텐츠 ── */
+    .brag-feed { max-width: 600px; margin: 0 auto; padding: 12px 12px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+    .brag-card.rank-hot    { border-color: #ff9800; box-shadow: 0 0 0 2px #ff980030, 0 4px 16px rgba(255,152,0,0.15); }
+    .brag-card.rank-star   { border-color: #2196f3; box-shadow: 0 0 0 2px #2196f330, 0 4px 16px rgba(33,150,243,0.15); }
+    .brag-card.rank-legend { border-color: transparent; box-shadow: 0 0 0 2.5px #a855f7, 0 4px 24px rgba(168,85,247,0.25); background: linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg,#f59e0b,#ec4899,#a855f7) border-box; }
+
+    .brag-photos { position: relative; width: 100%; aspect-ratio: 1; background: #f5ede8; }
+    .brag-photos img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: pointer; }
+    .photo-nav-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
+    .photo-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+    .photo-dot.active { background: #fff; }
+
+    .brag-card-body { padding: 12px 14px 14px; }
+    .brag-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .brag-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 15px; overflow: hidden; flex-shrink: 0; }
+    .brag-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .brag-author-info { flex: 1; min-width: 0; }
+    .brag-author { font-size: 13px; font-weight: 600; color: #2a2520; }
+    .brag-pet-name { font-size: 11px; color: #aaa; }
+
+    .brag-badge { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; flex-shrink: 0; }
+    .badge-popular { background: #fff8e1; color: #e65100; }
+    .badge-hot     { background: #fff3e0; color: #e65100; }
+    .badge-star    { background: #e3f2fd; color: #1565c0; }
+    .badge-legend  { background: linear-gradient(135deg, #f59e0b, #ec4899); color: #fff; }
+
+    .brag-caption { font-size: 14px; color: #3a3530; line-height: 1.5; margin: 0 0 10px; word-break: break-all; }
+
+    .brag-like-row { display: flex; align-items: center; gap: 8px; }
+    .brag-like-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: none; border: 1.5px solid #e8ddd8; border-radius: 20px;
+      padding: 5px 14px; cursor: pointer; font-size: 13px; color: #888;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .brag-like-btn.liked { background: #fff0f3; border-color: #f43f5e; color: #f43f5e; }
+    .brag-like-btn .heart { font-size: 15px; }
+    .brag-time { font-size: 11px; color: #bbb; margin-left: auto; }
+    .brag-delete-btn { background: none; border: none; color: #ddd; font-size: 18px; cursor: pointer; padding: 0 4px; margin-left: 4px; }
+    .brag-delete-btn:hover { color: #e57373; }
+
+    /* 업로드 모달 */
+    .brag-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+    .brag-overlay[hidden] { display: none; }
+    .brag-modal { background: #fff; border-radius: 22px 22px 0 0; width: 100%; max-width: 600px; padding: 20px 20px 40px; max-height: 90vh; overflow-y: auto; }
+    .brag-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .brag-modal-header h3 { font-size: 17px; font-weight: 700; margin: 0; }
+    .modal-x { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; padding: 0; }
+
+    .photo-upload-area {
+      border: 2px dashed #d4c5be; border-radius: 14px; padding: 20px;
+      text-align: center; cursor: pointer; margin-bottom: 14px; transition: border-color 0.15s;
+    }
+    .photo-upload-area:hover { border-color: #16a34a; }
+    .photo-upload-area p { margin: 6px 0 0; font-size: 13px; color: #aaa; }
+    .photo-preview-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .photo-thumb { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; }
+
+    .brag-caption-input {
+      width: 100%; box-sizing: border-box; border: 1.5px solid #e0d7d2; border-radius: 12px;
+      padding: 12px; font-size: 14px; font-family: inherit; resize: vertical; min-height: 80px;
+      margin-bottom: 14px;
+    }
+    .brag-caption-input:focus { outline: none; border-color: #16a34a; }
+
+    .pet-select { width: 100%; box-sizing: border-box; border: 1.5px solid #e0d7d2; border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit; margin-bottom: 16px; background: #fff; }
+    .pet-select:focus { outline: none; border-color: #16a34a; }
+
+    .brag-submit-btn {
+      width: 100%; background: linear-gradient(135deg, #16a34a, #0f6e56);
+      color: #fff; border: none; border-radius: 14px; padding: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .brag-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .brag-msg { text-align: center; font-size: 13px; margin-top: 10px; color: #e57373; }
+
+    /* 라이트박스 */
+    .brag-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; display: flex; align-items: center; justify-content: center; }
+    .brag-lightbox[hidden] { display: none; }
+    .brag-lightbox img { max-width: 90vw; max-height: 82vh; border-radius: 8px; object-fit: contain; }
+    .lightbox-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
+    .lightbox-prev, .lightbox-next { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 32px; line-height: 1; padding: 8px 14px; border-radius: 50%; cursor: pointer; }
+    .lightbox-prev { left: 12px; }
+    .lightbox-next { right: 12px; }
+    .lightbox-prev[hidden], .lightbox-next[hidden] { display: none; }
+    .lightbox-counter { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.7); font-size: 13px; }
+
+    /* ── 커뮤니티 탭 컨텐츠 ── */
+    .community-main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    /* 태그 필터 바 */
+    .tag-filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      background: #fff;
+      border-bottom: 1px solid #f0e8e2;
+      position: sticky;
+      top: 107px; /* site-header + social-subtabs */
+      z-index: 10;
+      scrollbar-width: none;
+    }
+    .tag-filter-bar::-webkit-scrollbar { display: none; }
+
+    .tag-filter-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #e0d7d2;
+      background: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      color: #666;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .tag-filter-btn.is-active {
+      background: var(--brand-dark);
+      border-color: var(--brand-dark);
+      color: #fff;
+    }
+
+    /* 글 목록 */
+    .post-list {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tag-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* hidden 속성이 display:flex에 덮어써지지 않도록 명시 */
+    .community-modal-overlay[hidden] { display: none; }
+
+    /* 모달 오버레이 */
+    .community-modal-overlay {
+      position: fixed;
+      inset: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 500;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .community-modal {
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+    }
+
+    /* 댓글 입력창 하단 고정 */
+    #comment-form-area {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      padding: 8px 0 4px;
+    }
+
+    .community-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid #f0e8e2;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+    }
+    .community-modal-header h3 { margin: 0; font-size: 17px; }
+
+    .report-reason-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #444;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1.5px solid #f0e8e2;
+      transition: border-color 0.15s;
+    }
+    .report-reason-row:has(input:checked) {
+      border-color: #e57373;
+      background: #fff5f5;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #888;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    /* 글 상세 */
+    .post-detail-body { padding: 16px 20px; }
+
+    .detail-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 8px 0 10px;
+      color: #2a2520;
+    }
+
+    .detail-meta { font-size: 12px; color: #aaa; margin-bottom: 14px; }
+
+    .detail-content {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+
+    /* 댓글 */
+    .comment-section {
+      padding: 16px 20px 24px;
+      border-top: 1px solid #f0e8e2;
+    }
+
+    .comment-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2a2520;
+      margin: 0 0 12px;
+    }
+
+    .comment-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #f9f4f0;
+    }
+    .comment-item:last-child { border-bottom: none; }
+
+    .comment-author { font-size: 13px; font-weight: 600; color: #444; }
+    .comment-time { font-size: 11px; color: #bbb; margin-left: 8px; }
+    .comment-content { font-size: 14px; color: #333; margin-top: 4px; line-height: 1.5; }
+
+    .comment-form { display: flex; gap: 8px; margin-top: 14px; }
+
+    .comment-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #e0d7d2;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+    }
+    .comment-input:focus { border-color: #0f6e56; }
+
+    .comment-submit-btn {
+      background: #0f6e56;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* 글쓰기 폼 */
+    .write-form-body { padding: 16px 20px 24px; }
+
+    .tag-select-group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+    .tag-select-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #e0d7d2;
+      background: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tag-select-btn.is-active {
+      border-color: #0f6e56;
+      background: #e7f5f1;
+      color: #0f6e56;
+      font-weight: 600;
+    }
+
+    .write-title-input,
+    .write-content-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e0d7d2;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    .write-title-input:focus,
+    .write-content-input:focus { border-color: #0f6e56; }
+
+    .write-content-input { resize: vertical; min-height: 140px; }
+
+    .write-submit-btn {
+      width: 100%;
+      margin-top: 4px;
+      background: #0f6e56;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .write-submit-btn:disabled { opacity: 0.6; cursor: default; }
+
+    .placeholder-text {
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
+      padding: 40px 0;
+    }
+
+    .detail-edit-btn {
+      background: none;
+      border: 1px solid #e0d7d2;
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #666;
+      cursor: pointer;
+    }
+    .detail-edit-btn:hover { border-color: #0f6e56; color: #0f6e56; }
+
+    .post-like-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #e0d7d2;
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .post-like-btn.is-liked {
+      border-color: #e57373;
+      color: #e57373;
+      background: #fff5f5;
+    }
+
+    /* ── 쓰기 선택 바텀시트 ── */
+    .write-choice-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 300;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .write-choice-overlay[hidden] { display: none; }
+
+    .write-choice-sheet {
+      background: #fff;
+      border-radius: 22px 22px 0 0;
+      width: 100%;
+      max-width: 600px;
+      padding: 24px 20px 44px;
+    }
+    .write-choice-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a1a;
+      text-align: center;
+      margin: 0 0 20px;
+    }
+    .write-choice-btns {
+      display: flex;
+      gap: 12px;
+    }
+    .write-choice-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 18px 12px;
+      border: 1.5px solid #e0d7d2;
+      border-radius: 16px;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .write-choice-btn:hover {
+      border-color: #0f6e56;
+      background: #f0fdf4;
+      color: #0f6e56;
+    }
+    .write-choice-btn .choice-icon {
+      font-size: 28px;
+    }
+    .write-choice-drag-handle {
+      width: 40px;
+      height: 4px;
+      background: #e0d7d2;
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+  </style>
+</head>
+<body class="has-tabbar">
+
+  <!-- 사이트 헤더 -->
+  <header class="site-header">
+    <div class="logo-area">
+      <div class="logo-icon">🐾</div>
+      <div class="logo-text"><h1>우쭈쭈</h1></div>
+    </div>
+    <div class="header-auth" id="header-auth">
+      <button class="auth-login-btn" id="social-login-btn" hidden onclick="window.PetAuth?.signInWithGoogle()">로그인</button>
+    </div>
+  </header>
+
+  <!-- 소셜 서브탭 -->
+  <div class="social-subtabs" id="social-subtabs">
+    <button class="social-subtab is-active" data-tab="brag">📸 자랑</button>
+    <button class="social-subtab" data-tab="community">💬 커뮤니티</button>
+  </div>
+
+  <!-- ═══ 자랑 탭 ═══ -->
+  <div id="social-brag-content">
+    <div class="brag-feed" id="brag-feed">
+      <p class="placeholder-text">불러오는 중...</p>
+    </div>
+    <div id="brag-feed-sentinel" style="height:1px;margin-bottom:20px;"></div>
+  </div>
+
+  <!-- ═══ 커뮤니티 탭 ═══ -->
+  <div id="social-community-content" hidden>
+    <main class="community-main">
+      <!-- 태그 필터 -->
+      <div class="tag-filter-bar" id="tag-filter-bar">
+        <button class="tag-filter-btn is-active" data-tag="전체">전체</button>
+        <button class="tag-filter-btn" data-tag="병원추천">병원추천</button>
+        <button class="tag-filter-btn" data-tag="질문">질문</button>
+        <button class="tag-filter-btn" data-tag="자랑">자랑</button>
+        <button class="tag-filter-btn" data-tag="정보">정보</button>
+      </div>
+      <!-- 글 목록 -->
+      <div class="post-list" id="post-list">
+        <p class="placeholder-text">게시글을 불러오는 중...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══ 업로드 모달 (자랑) ═══ -->
+  <div class="brag-overlay" id="upload-overlay" hidden>
+    <div class="brag-modal">
+      <div class="brag-modal-header">
+        <h3>우리 아이 자랑하기 🐾</h3>
+        <button class="modal-x" id="upload-close-btn">✕</button>
+      </div>
+      <div class="photo-upload-area" id="photo-upload-area">
+        <div style="font-size:36px;">📸</div>
+        <p>사진을 선택하세요 (최대 3장)</p>
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none" />
+      </div>
+      <div class="photo-preview-row" id="photo-preview-row"></div>
+      <select class="pet-select" id="pet-select">
+        <option value="">우리 아이 선택 (선택사항)</option>
+      </select>
+      <textarea class="brag-caption-input" id="caption-input" placeholder="우리 아이 자랑 한마디 🐶" maxlength="200"></textarea>
+      <button class="brag-submit-btn" id="brag-submit-btn">자랑하기 🎉</button>
+      <p class="brag-msg" id="brag-msg"></p>
+    </div>
+  </div>
+
+  <!-- ═══ 라이트박스 ═══ -->
+  <div class="brag-lightbox" id="brag-lightbox" hidden>
+    <button class="lightbox-close" id="lightbox-close">✕</button>
+    <button class="lightbox-prev" id="lightbox-prev">‹</button>
+    <img id="lightbox-img" src="" alt="" />
+    <button class="lightbox-next" id="lightbox-next">›</button>
+    <div class="lightbox-counter" id="lightbox-counter"></div>
+  </div>
+
+  <!-- ═══ 글 상세 모달 (커뮤니티) ═══ -->
+  <div class="community-modal-overlay" id="post-detail-overlay" hidden>
+    <div class="community-modal">
+      <div class="community-modal-header">
+        <h3>게시글</h3>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="detail-actions"></div>
+          <button class="modal-close-btn" id="detail-close-btn">✕</button>
+        </div>
+      </div>
+      <div class="post-detail-body">
+        <span class="tag-badge" id="detail-tag"></span>
+        <p class="detail-title" id="detail-title"></p>
+        <p class="detail-meta" id="detail-meta"></p>
+        <p class="detail-content" id="detail-content"></p>
+        <div id="post-like-area" style="margin-top:16px;"></div>
+      </div>
+      <div class="comment-section">
+        <p class="comment-section-title">댓글 <span id="comment-count">0</span>개</p>
+        <div id="comment-list"></div>
+        <div id="comment-form-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 글쓰기 모달 (커뮤니티) ═══ -->
+  <div class="community-modal-overlay" id="write-modal-overlay" hidden>
+    <div class="community-modal">
+      <div class="community-modal-header">
+        <h3>글쓰기</h3>
+        <button class="modal-close-btn" id="write-close-btn">✕</button>
+      </div>
+      <div class="write-form-body">
+        <div class="tag-select-group" id="tag-select-group">
+          <button type="button" class="tag-select-btn" data-tag="병원추천">병원추천</button>
+          <button type="button" class="tag-select-btn" data-tag="질문">질문</button>
+          <button type="button" class="tag-select-btn" data-tag="자랑">자랑</button>
+          <button type="button" class="tag-select-btn" data-tag="정보">정보</button>
+        </div>
+        <input type="text" class="write-title-input" id="write-title" placeholder="제목을 입력하세요" maxlength="100" />
+        <textarea class="write-content-input" id="write-content" placeholder="내용을 입력하세요."></textarea>
+        <button class="write-submit-btn" id="write-submit-btn">등록하기</button>
+        <p id="write-result" style="text-align:center;font-size:13px;margin-top:8px;color:#e57373;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 신고 모달 ═══ -->
+  <div class="community-modal-overlay" id="report-modal-overlay" hidden>
+    <div class="community-modal" style="max-width:360px;">
+      <div class="community-modal-header">
+        <h3 id="report-modal-title">신고하기</h3>
+        <button class="modal-close-btn" id="report-modal-close-btn">✕</button>
+      </div>
+      <div style="padding:0 20px 20px;">
+        <p style="font-size:13px;color:#888;margin:0 0 14px;">신고 사유를 선택해주세요.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="허위정보" /> 허위정보</label>
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="욕설/비방" /> 욕설/비방</label>
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="광고성" /> 광고성 게시물</label>
+          <label class="report-reason-row"><input type="radio" name="comm-report-reason" value="기타" /> 기타</label>
+        </div>
+        <button class="write-submit-btn" id="report-submit-btn" style="margin-top:18px;background:linear-gradient(135deg,#e57373,#ef5350);">신고 접수</button>
+        <p id="report-result" style="font-size:12px;color:#888;text-align:center;margin-top:8px;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 쓰기 선택 바텀시트 ═══ -->
+  <div class="write-choice-overlay" id="write-choice-overlay" hidden>
+    <div class="write-choice-sheet">
+      <div class="write-choice-drag-handle"></div>
+      <p class="write-choice-title">무엇을 올릴까요?</p>
+      <div class="write-choice-btns">
+        <button class="write-choice-btn" id="choice-brag-btn">
+          <span class="choice-icon">📸</span>
+          <span>사진 자랑하기</span>
+        </button>
+        <button class="write-choice-btn" id="choice-community-btn">
+          <span class="choice-icon">💬</span>
+          <span>커뮤니티 글 쓰기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 하단 탭바 ═══ -->
+  <nav class="bottom-tab-bar" aria-label="하단 탭 메뉴">
+    <button class="tab-item" onclick="location.href='care.html'" aria-label="케어">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1" ry="1"/><path d="M9 12l2 2 4-4"/></svg>
+      <span>케어</span>
+    </button>
+    <button class="tab-item is-active" aria-label="소셜">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>소셜</span>
+    </button>
+    <button class="tab-item tab-item--write" id="global-write-btn" aria-label="쓰기">
+      <div class="write-tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+      <span>쓰기</span>
+    </button>
+    <button class="tab-item" onclick="location.href='mypage.html'" aria-label="마이">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>마이</span>
+    </button>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="auth.js"></script>
+  <script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/petreview/sw.js").catch(() => {}); }</script>
+  <script src="social.js" defer></script>
+</body>
+</html>
