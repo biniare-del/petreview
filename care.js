@@ -277,7 +277,7 @@ async function fetchAiAdvice(pet, careItems, dietToday, dietSettings) {
   result.hidden = true;
 
   try {
-    const res = await fetch("/api/ai-care", {
+    const res = await fetch("https://petreview.vercel.app/api/ai-care", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pet, careItems, dietToday, dietSettings }),
