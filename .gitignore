@@ -3,3 +3,4 @@ config.local.js
 secrets.js
 
 .pat
+node_modules/
