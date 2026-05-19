@@ -419,15 +419,11 @@ async function init() {
   _db = window.supabaseClient;
   const content = document.getElementById("care-content");
 
-  const user = await new Promise(resolve => {
-    let tries = 0;
-    const check = () => {
-      const u = window.PetAuth?.currentUser;
-      if (u !== undefined || tries >= 10) { resolve(u ?? null); return; }
-      tries++; setTimeout(check, 200);
-    };
-    check();
+  await window.PetAuth?.init((event) => {
+    if (event === "SIGNED_OUT") window.location.href = "index.html";
   });
+
+  const user = window.PetAuth?.currentUser ?? null;
 
   if (!user) {
     content.innerHTML = `<div class="care-empty-state">
