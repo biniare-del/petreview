@@ -4036,3 +4036,142 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   background: var(--brand-bg); border: 1px solid var(--brand-border);
   border-radius: 20px; padding: 4px 10px;
 }
+
+/* =====================================================
+   케어 페이지 (care.html)
+   ===================================================== */
+
+.care-page { background: #faf7f5; }
+
+.care-header {
+  position: sticky; top: 0; z-index: 20;
+  background: #fff; border-bottom: 1px solid #f0e8e2;
+  padding: 12px 16px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.care-header-left { display: flex; align-items: center; gap: 10px; }
+.care-header-title { font-size: 18px; font-weight: 800; color: #1a1a1a; margin: 0; }
+.care-header-sub { font-size: 11px; color: #aaa; margin: 0; }
+
+.care-history-btn {
+  font-size: 12px; font-weight: 600; color: var(--brand-dark);
+  background: var(--brand-bg); border: 1px solid var(--brand-border);
+  border-radius: 20px; padding: 5px 12px; cursor: pointer;
+}
+
+.care-content { max-width: 600px; margin: 0 auto; padding: 0 0 24px; }
+
+/* 펫 탭 */
+.care-pet-tabs {
+  display: flex; gap: 8px; padding: 12px 16px 8px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.care-pet-tabs::-webkit-scrollbar { display: none; }
+
+.care-pet-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: #888;
+  background: #f4f0ec; border: 1.5px solid transparent;
+  cursor: pointer; white-space: nowrap; transition: all 0.15s;
+}
+.care-pet-tab.is-active {
+  background: var(--brand-bg); color: var(--brand-dark);
+  border-color: var(--brand-border);
+}
+.care-pet-tab-img {
+  width: 22px; height: 22px; border-radius: 50%; object-fit: cover;
+}
+
+/* 펫 요약 헤더 */
+.care-pet-summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 8px;
+}
+.care-pet-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+  background: #f4f0ec; font-size: 20px;
+}
+.care-pet-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.care-pet-name { font-size: 15px; font-weight: 800; color: #1a1a1a; display: block; }
+.care-pet-species { font-size: 12px; color: #888; }
+
+/* 섹션 헤더 */
+.care-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 6px;
+  font-size: 13px; font-weight: 700; color: #555;
+}
+.care-section-header--urgent { color: #c0392b; }
+.care-urgent-count {
+  background: #c0392b; color: #fff;
+  font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 8px;
+}
+
+/* 케어 아이템 카드 */
+.care-item-card {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; margin: 0 12px 8px;
+  border-radius: 12px; padding: 12px 14px;
+  border: 1.5px solid #f0e8e2;
+  transition: border-color 0.15s;
+}
+.care-item-card.care-item--overdue { border-left: 4px solid #e74c3c; }
+.care-item-card.care-item--today   { border-left: 4px solid #e67e22; }
+
+.care-item-icon { font-size: 22px; flex-shrink: 0; width: 28px; text-align: center; }
+.care-item-body { flex: 1; min-width: 0; }
+.care-item-name { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+.care-item-meta { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+.care-item-right {
+  display: flex; flex-direction: column; align-items: flex-end;
+  gap: 6px; flex-shrink: 0;
+}
+
+/* D-day 뱃지 */
+.care-dday {
+  font-size: 11px; font-weight: 800; border-radius: 999px;
+  padding: 3px 9px; white-space: nowrap;
+}
+.care-dday--overdue { background: #fde8e8; color: #c0392b; }
+.care-dday--today   { background: #fdf3e7; color: #e67e22; }
+.care-dday--urgent  { background: #fdf3e7; color: #e67e22; }
+.care-dday--soon    { background: #fefce8; color: #b7791f; }
+.care-dday--ok      { background: #ecfdf5; color: #0f6e56; }
+.care-dday--unknown { background: #f4f4f4; color: #aaa; }
+
+/* 완료 버튼 */
+.care-done-btn {
+  font-size: 11px; font-weight: 700; color: var(--brand-dark);
+  background: var(--brand-bg); border: 1px solid var(--brand-border);
+  border-radius: 20px; padding: 4px 10px; cursor: pointer;
+  transition: background 0.15s;
+}
+.care-done-btn:hover { background: var(--brand-border); }
+.care-done-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* 빈 상태 */
+.care-empty-state {
+  text-align: center; padding: 48px 24px;
+}
+.care-empty-icon { font-size: 48px; margin-bottom: 12px; }
+.care-empty-title { font-size: 16px; font-weight: 800; color: #1a1a1a; margin: 0 0 8px; }
+.care-empty-desc { font-size: 13px; color: #888; margin: 0 0 20px; }
+.care-login-btn {
+  display: inline-block; background: var(--brand-dark); color: #fff;
+  font-size: 14px; font-weight: 700; border: none; border-radius: 999px;
+  padding: 10px 24px; cursor: pointer; text-decoration: none;
+}
+
+/* 로딩 */
+.care-loading { text-align: center; padding: 32px; color: #aaa; font-size: 13px; }
+
+/* 기록 히스토리 */
+.care-history-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+  font-size: 13px; color: #333;
+}
+.care-history-date { color: #aaa; font-size: 12px; }

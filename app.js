@@ -1262,10 +1262,8 @@ function bindTabBar() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  document.querySelector('.tab-item[data-tab="search"]')?.addEventListener("click", () => {
-    setActive("search");
-    hideReviewForm();
-    scrollToEl(document.getElementById("search-section"));
+  document.querySelector('.tab-item[data-tab="care"]')?.addEventListener("click", () => {
+    window.location.href = "care.html";
   });
 
   document.querySelector('.tab-item[data-tab="write"]')?.addEventListener("click", () => {
@@ -1291,7 +1289,7 @@ function bindTabBar() {
   const sections = [
     { el: document.getElementById("review-list-section"), tab: "reviews" },
     { el: document.getElementById("review-form-section"), tab: "write" },
-    { el: document.getElementById("search-section"), tab: "search" },
+    { el: document.getElementById("search-section"), tab: "home" },
   ];
   sections.forEach(({ el, tab }) => {
     if (!el) return;
