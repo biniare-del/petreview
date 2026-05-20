@@ -136,13 +136,44 @@ async function renderActiveArea() {
 // [관리] 탭
 // ──────────────────────────────────────────────────────────────
 async function renderManageTab(pet, container) {
+  const realPets = _pets.filter(p => p.id !== "demo");
+  const multiPet = realPets.length > 1;
   const items = CARE_ITEMS[speciesKey(pet.species)] ?? CARE_ITEMS.dog;
+
+  // 현재 펫 케어 로그
   let lastDoneMap = {};
   try {
     const { data: logs } = await _db.from("pet_care_logs").select("care_key, done_at")
       .eq("pet_id", pet.id).order("done_at", { ascending: false });
     (logs ?? []).forEach(l => { if (!lastDoneMap[l.care_key]) lastDoneMap[l.care_key] = l.done_at; });
   } catch { /* table may not exist */ }
+
+  // 복수 펫 전체 현황 데이터
+  let allSummary = null;
+  if (multiPet) {
+    try {
+      const results = await Promise.all(
+        realPets.map(p => _db.from("pet_care_logs").select("care_key, done_at").eq("pet_id", p.id).order("done_at", { ascending: false }))
+      );
+      allSummary = realPets.map((p, i) => {
+        const logMap = {};
+        (results[i].data ?? []).forEach(l => { if (!logMap[l.care_key]) logMap[l.care_key] = l.done_at; });
+        const petItems = CARE_ITEMS[speciesKey(p.species)] ?? CARE_ITEMS.dog;
+        const done = petItems.filter(it => isTodayKST(logMap[it.key])).length;
+        const urgent = petItems
+          .map(it => {
+            const last = logMap[it.key] ?? null;
+            const doneToday = isTodayKST(last);
+            const iv = getIntervalDays(p.id, it.key, it.default_days);
+            const dday = doneToday ? null : calcDday(last, iv);
+            return { it, dday, doneToday };
+          })
+          .filter(({ dday, doneToday }) => !doneToday && dday !== null && dday <= 1)
+          .sort((a, b) => a.dday - b.dday);
+        return { pet: p, done, total: petItems.length, urgent };
+      });
+    } catch { /* ignore */ }
+  }
 
   const cards = items.map(item => {
     const lastDoneAt   = lastDoneMap[item.key] ?? null;
@@ -156,7 +187,33 @@ async function renderManageTab(pet, container) {
   const totalCount = cards.length;
   const pct = Math.round(doneCount / totalCount * 100);
 
-  let html = `
+  // 복수 펫 전체 현황 배너
+  const allUrgent = allSummary ? allSummary.flatMap(s => s.urgent.map(u => ({ ...u, petName: s.pet.name }))) : [];
+  const summaryHtml = allSummary ? `
+  <div class="manage-all-summary">
+    <div class="manage-all-summary-title">🐾 오늘의 케어 현황</div>
+    ${allSummary.map(s => `
+      <div class="manage-all-pet-row">
+        <span class="manage-all-pet-name">${escapeHtml(s.pet.name)}</span>
+        <div class="manage-all-progress-track">
+          <div class="manage-all-progress-fill" style="width:${Math.round(s.done/s.total*100)}%"></div>
+        </div>
+        <span class="manage-all-pet-count">${s.done}/${s.total}</span>
+      </div>`).join("")}
+    ${allUrgent.length ? `
+    <div class="manage-urgent-list">
+      <div class="manage-urgent-title">⚡ 지금 필요한 케어</div>
+      ${allUrgent.slice(0, 4).map(({ it, dday, petName }) => `
+        <div class="manage-urgent-item">
+          <span class="manage-urgent-who">${escapeHtml(petName)} · ${it.icon} ${escapeHtml(it.label)}</span>
+          <span class="${dday < 0 ? "manage-urgent-badge-overdue" : dday === 0 ? "manage-urgent-badge-today" : "manage-urgent-badge-soon"}">
+            ${dday < 0 ? `${Math.abs(dday)}일 지남` : dday === 0 ? "오늘!" : `D-${dday}`}
+          </span>
+        </div>`).join("")}
+    </div>` : ""}
+  </div>` : "";
+
+  let html = summaryHtml + `
   <div class="manage-progress">
     <div class="manage-progress-text">${doneCount === totalCount ? "🎉 오늘 케어 완료!" : `오늘 ${doneCount} / ${totalCount} 완료`}</div>
     <div class="manage-progress-track"><div class="manage-progress-fill" style="width:${pct}%"></div></div>
@@ -497,33 +554,76 @@ async function saveDietSettings(pet, container) {
 // [기록] 탭
 // ──────────────────────────────────────────────────────────────
 async function renderRecordsTab(pet, container) {
-  let records = [], weights = [];
+  const realPets = _pets.filter(p => p.id !== "demo");
+  const multiPet = realPets.length > 1;
+
+  let weights = [], allRecords = [];
   try {
-    const [rr, wr] = await Promise.all([
-      _db.from("pet_health_records").select("id, record_type, content, record_date").eq("pet_id", pet.id).order("record_date", { ascending: false }).limit(50),
+    const queries = [
       _db.from("pet_weights").select("id, weight, recorded_at").eq("pet_id", pet.id).order("recorded_at", { ascending: false }).limit(20),
-    ]);
-    records = rr.data ?? [];
+      ...realPets.map(p => _db.from("pet_health_records").select("id, pet_id, record_type, content, record_date").eq("pet_id", p.id).order("record_date", { ascending: false }).limit(50)),
+    ];
+    const [wr, ...rrs] = await Promise.all(queries);
     weights = wr.data ?? [];
+    allRecords = rrs.flatMap((r, i) => (r.data ?? []).map(rec => ({ ...rec, petName: realPets[i].name })));
+    allRecords.sort((a, b) => (b.record_date ?? "").localeCompare(a.record_date ?? ""));
   } catch { /* tables may not exist */ }
 
   const latestWeight = weights[0];
-  const weightTrend  = weights.length >= 2
-    ? (weights[0].weight - weights[1].weight).toFixed(1)
-    : null;
+  const weightTrend  = weights.length >= 2 ? (weights[0].weight - weights[1].weight).toFixed(1) : null;
+
+  let activeFilter = "all";
+  let confirmDeleteRecordId = null;
+
+  function renderRecordList() {
+    const filtered = activeFilter === "all" ? allRecords : allRecords.filter(r => r.pet_id === activeFilter);
+    const listEl = container.querySelector("#health-record-list");
+    if (!listEl) return;
+    listEl.innerHTML = filtered.length
+      ? filtered.map(r => {
+          const showBadge = multiPet && activeFilter === "all";
+          const isConfirm = confirmDeleteRecordId === r.id;
+          return `<div class="records-item" data-id="${escapeHtml(r.id)}">
+            <div class="records-item-type">${escapeHtml(r.record_type ?? "기록")}${showBadge ? ` <span class="expense-pet-badge">${escapeHtml(r.petName)}</span>` : ""}</div>
+            <div class="records-item-content">${escapeHtml(r.content ?? "")}</div>
+            <div class="records-item-meta">${formatDate(r.record_date)}</div>
+            ${isConfirm
+              ? `<div class="expense-delete-confirm" style="border-radius:0 12px 12px 0;">
+                   <button class="expense-delete-cancel" data-id="${escapeHtml(r.id)}">취소</button>
+                   <button class="expense-delete-ok" data-id="${escapeHtml(r.id)}">삭제</button>
+                 </div>`
+              : `<button class="records-item-delete" data-id="${escapeHtml(r.id)}">✕</button>`}
+          </div>`;
+        }).join("")
+      : `<p class="records-empty">건강 기록이 없어요.<br>진료·투약·처방 내용을 기록해보세요.</p>`;
+
+    listEl.querySelectorAll(".records-item-delete").forEach(btn => {
+      btn.addEventListener("click", () => { confirmDeleteRecordId = btn.dataset.id; renderRecordList(); });
+    });
+    listEl.querySelectorAll(".expense-delete-cancel").forEach(btn => {
+      btn.addEventListener("click", () => { confirmDeleteRecordId = null; renderRecordList(); });
+    });
+    listEl.querySelectorAll(".expense-delete-ok").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await _db.from("pet_health_records").delete().eq("id", btn.dataset.id);
+        allRecords = allRecords.filter(r => r.id !== btn.dataset.id);
+        confirmDeleteRecordId = null;
+        renderRecordList();
+      });
+    });
+  }
 
   container.innerHTML = `
     <div class="records-section">
       <div class="records-section-header">
-        <span class="records-section-title">⚖️ 체중</span>
+        <span class="records-section-title">⚖️ 체중 (${escapeHtml(pet.name)})</span>
         <button class="records-add-btn" id="weight-add-btn">+ 기록</button>
       </div>
       <div class="records-weight-summary">
         ${latestWeight
           ? `<span class="records-weight-val">${latestWeight.weight} kg</span>
              <span class="records-weight-date">${formatDate(latestWeight.recorded_at)}</span>
-             ${weightTrend !== null ? `<span class="records-weight-trend ${parseFloat(weightTrend) > 0 ? "up" : parseFloat(weightTrend) < 0 ? "down" : "same"}">${parseFloat(weightTrend) > 0 ? "▲" : parseFloat(weightTrend) < 0 ? "▼" : "→"} ${Math.abs(weightTrend)}kg</span>` : ""}
-             `
+             ${weightTrend !== null ? `<span class="records-weight-trend ${parseFloat(weightTrend) > 0 ? "up" : parseFloat(weightTrend) < 0 ? "down" : "same"}">${parseFloat(weightTrend) > 0 ? "▲" : parseFloat(weightTrend) < 0 ? "▼" : "→"} ${Math.abs(weightTrend)}kg</span>` : ""}`
           : `<span class="records-weight-empty">체중 기록이 없어요</span>`}
       </div>
       ${weights.length ? `<div class="records-weight-list">${weights.slice(0,5).map(w => `<div class="records-weight-row"><span>${formatDate(w.recorded_at)}</span><strong>${w.weight} kg</strong></div>`).join("")}</div>` : ""}
@@ -534,31 +634,27 @@ async function renderRecordsTab(pet, container) {
         <span class="records-section-title">📋 진료·건강 기록</span>
         <button class="records-add-btn" id="health-add-btn">+ 기록</button>
       </div>
-      <div id="health-record-list">
-        ${records.length
-          ? records.map(r => `
-            <div class="records-item" data-id="${r.id}">
-              <div class="records-item-type">${escapeHtml(r.record_type ?? "기록")}</div>
-              <div class="records-item-content">${escapeHtml(r.content ?? "")}</div>
-              <div class="records-item-meta">${formatDate(r.record_date)}</div>
-              <button class="records-item-delete" data-id="${r.id}">✕</button>
-            </div>`).join("")
-          : `<p class="records-empty">아직 건강 기록이 없어요.<br>진료·투약·처방 내용을 기록해보세요.</p>`}
-      </div>
+      ${multiPet ? `
+      <div class="expense-filter-bar" style="padding:0 0 10px;">
+        <button class="expense-filter-btn is-active" data-filter="all">전체</button>
+        ${realPets.map(p => `<button class="expense-filter-btn" data-filter="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join("")}
+      </div>` : ""}
+      <div id="health-record-list"></div>
     </div>`;
 
-  // 체중 추가
   container.querySelector("#weight-add-btn")?.addEventListener("click", () => showWeightModal(pet));
-  // 기록 추가
   container.querySelector("#health-add-btn")?.addEventListener("click", () => showHealthRecordModal(pet));
-  // 삭제
-  container.querySelectorAll(".records-item-delete").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("이 기록을 삭제할까요?")) return;
-      await _db.from("pet_health_records").delete().eq("id", btn.dataset.id);
-      await renderActiveArea();
+
+  container.querySelectorAll(".expense-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeFilter = btn.dataset.filter;
+      container.querySelectorAll(".expense-filter-btn").forEach(b => b.classList.toggle("is-active", b === btn));
+      confirmDeleteRecordId = null;
+      renderRecordList();
     });
   });
+
+  renderRecordList();
 }
 
 function showWeightModal(pet) {
