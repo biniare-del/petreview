@@ -1235,70 +1235,6 @@ function bindReviewPhotosPreview() {
   });
 }
 
-function bindTabBar() {
-  const tabs = document.querySelectorAll(".tab-item[data-tab]");
-  if (!tabs.length) return;
-
-  function setActive(tabName) {
-    tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === tabName));
-  }
-
-  function scrollToEl(el) {
-    if (!el) return;
-    const headerH = document.querySelector(".site-header")?.offsetHeight || 50;
-    const catTabH = document.querySelector(".top-category-tabs")?.offsetHeight || 0;
-    const top = el.getBoundingClientRect().top + window.scrollY - headerH - catTabH - 8;
-    window.scrollTo({ top, behavior: "smooth" });
-  }
-
-  function hideReviewForm() {
-    const formSec = document.getElementById("review-form-section");
-    if (formSec) formSec.hidden = true;
-  }
-
-  document.querySelector('.tab-item[data-tab="home"]')?.addEventListener("click", () => {
-    setActive("home");
-    hideReviewForm();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  document.querySelector('.tab-item[data-tab="care"]')?.addEventListener("click", () => {
-    window.location.href = "care.html";
-  });
-
-  document.querySelector('.tab-item[data-tab="write"]')?.addEventListener("click", () => {
-    setActive("write");
-    const userId = window.PetAuth?.currentUser?.id;
-    if (!userId) { openLoginModal(); return; }
-    const formSec = document.getElementById("review-form-section");
-    if (formSec) {
-      formSec.hidden = false;
-      scrollToEl(formSec);
-    }
-  });
-
-  document.querySelector('.tab-item[data-tab="brag"]')?.addEventListener("click", () => {
-    window.location.href = "brag.html";
-  });
-
-  document.querySelector('.tab-item[data-tab="mypage"]')?.addEventListener("click", () => {
-    window.location.href = "mypage.html";
-  });
-
-  // 스크롤 위치에 따라 탭 자동 전환
-  const sections = [
-    { el: document.getElementById("review-list-section"), tab: "reviews" },
-    { el: document.getElementById("review-form-section"), tab: "write" },
-    { el: document.getElementById("search-section"), tab: "home" },
-  ];
-  sections.forEach(({ el, tab }) => {
-    if (!el) return;
-    new IntersectionObserver(
-      (entries) => { if (entries[0].isIntersecting) setActive(tab); },
-      { threshold: 0.3 }
-    ).observe(el);
-  });
-}
 
 function bindStarSelects() {
   document.querySelectorAll(".star-select").forEach((group) => {
@@ -1936,8 +1872,8 @@ async function _renderPetCareCard(wrapper, pets, activeIdx, db) {
             <span class="care-stat-label">이번달 지출</span>
             <div class="care-stat-right">
               ${stats.monthlyExpense > 0
-                ? `<a href="mypage.html?tab=expense" class="care-stat-value ok" style="text-decoration:none;">${stats.monthlyExpense.toLocaleString()}원</a>`
-                : `<a href="mypage.html?tab=expense" class="care-stat-add">+ 기록하기</a>`}
+                ? `<a href="mypage.html?tab=mypet" class="care-stat-value ok" style="text-decoration:none;">${stats.monthlyExpense.toLocaleString()}원</a>`
+                : `<a href="mypage.html?tab=mypet" class="care-stat-add">+ 기록하기</a>`}
             </div>
           </div>
         </div>
@@ -3049,7 +2985,6 @@ function init() {
   bindSearch();
   bindViewToggle();
   bindSortToggle();
-  bindTabBar();
   bindReceiptPreview();
   bindPetPhotoPreview();
   bindReviewPhotosPreview();
