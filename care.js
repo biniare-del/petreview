@@ -1186,11 +1186,35 @@ async function init() {
   _pets = pets ?? [];
 
   if (!_pets.length) {
-    content.innerHTML = `<div class="care-empty-state">
-      <div class="care-empty-icon">🐾</div>
-      <p class="care-empty-title">반려동물을 등록해주세요</p>
-      <p class="care-empty-desc">마이페이지에서 등록하면 케어·식단·기록이 자동 설정돼요.</p>
-      <a class="care-login-btn" href="mypage.html?tab=pets">반려동물 등록하기 →</a>
+    content.innerHTML = `<div class="care-onboarding">
+      <div class="care-onboarding-steps">
+        <div class="care-onboarding-step is-done">
+          <div class="care-onboarding-step-circle">✓</div>
+          <div class="care-onboarding-step-label">로그인</div>
+        </div>
+        <div class="care-onboarding-step-line"></div>
+        <div class="care-onboarding-step is-current">
+          <div class="care-onboarding-step-circle">2</div>
+          <div class="care-onboarding-step-label">반려동물 등록</div>
+        </div>
+        <div class="care-onboarding-step-line"></div>
+        <div class="care-onboarding-step">
+          <div class="care-onboarding-step-circle">3</div>
+          <div class="care-onboarding-step-label">케어 시작</div>
+        </div>
+      </div>
+      <div class="care-onboarding-card">
+        <div class="care-onboarding-icon">🐾</div>
+        <h2 class="care-onboarding-title">반려동물을 등록해주세요</h2>
+        <p class="care-onboarding-desc">등록하면 바로 시작할 수 있어요</p>
+        <div class="care-onboarding-features">
+          <div class="care-onboarding-feature">🐾 케어루틴 · 목욕·접종·산책 주기 알림</div>
+          <div class="care-onboarding-feature">📋 건강기록 · 체중 추적 · 진료 이력</div>
+          <div class="care-onboarding-feature">🍚 식습관 · 식사·수분 섭취 체크</div>
+          <div class="care-onboarding-feature">💰 집사영수증 · 월별 지출 관리</div>
+        </div>
+        <a class="care-onboarding-btn" href="mypage.html?tab=pets">+ 반려동물 등록하기</a>
+      </div>
     </div>`;
     return;
   }
