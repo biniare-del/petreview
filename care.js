@@ -772,6 +772,24 @@ async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings) {
 }
 
 // ──────────────────────────────────────────────────────────────
+// 로그인 유도 모달
+function promptLogin(featureName) {
+  const existing = document.getElementById("care-login-prompt");
+  if (existing) existing.remove();
+  const overlay = document.createElement("div");
+  overlay.id = "care-login-prompt";
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal" style="text-align:center;padding:32px 24px;">
+    <div style="font-size:48px;margin-bottom:12px;">🐾</div>
+    <h3 style="font-size:18px;font-weight:900;margin:0 0 8px;">${featureName ? escapeHtml(featureName) + " 시작하기" : "로그인"}</h3>
+    <p style="font-size:14px;color:#888;margin:0 0 24px;line-height:1.6;">로그인하면 우리 아이 케어를<br>바로 시작할 수 있어요.</p>
+    <button onclick="window.PetAuth?.signInWithGoogle()" style="width:100%;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">구글로 로그인</button>
+    <button onclick="document.getElementById('care-login-prompt').remove()" style="width:100%;padding:12px;background:none;border:1.5px solid #e5e7eb;border-radius:14px;font-size:14px;color:#888;cursor:pointer;">나중에</button>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+}
+
 // 초기화
 // ──────────────────────────────────────────────────────────────
 async function init() {
@@ -788,7 +806,12 @@ async function init() {
   if (hospitalLink) hospitalLink.hidden = !user;
 
   if (!user) {
-    document.getElementById("care-subtabs").hidden = true;
+    // 서브탭 보이되 클릭 시 로그인 유도
+    document.getElementById("care-subtabs").hidden = false;
+    document.querySelectorAll(".care-subtab").forEach(btn => {
+      btn.addEventListener("click", () => promptLogin(btn.textContent.trim()));
+    });
+
     content.innerHTML = `
     <div class="care-landing">
       <div class="care-landing-hero">
@@ -797,16 +820,21 @@ async function init() {
         <p class="care-landing-sub">우리 아이 건강, 놓치지 않게</p>
       </div>
       <div class="care-landing-features">
-        <div class="care-feature-card"><span class="care-feature-icon">🐾</span><div><div class="care-feature-name">케어 관리</div><div class="care-feature-desc">목욕·예방접종·양치 D-day 알림</div></div></div>
-        <div class="care-feature-card"><span class="care-feature-icon">🍚</span><div><div class="care-feature-name">식단 기록</div><div class="care-feature-desc">밥·물·간식 섭취량 한눈에</div></div></div>
-        <div class="care-feature-card"><span class="care-feature-icon">📋</span><div><div class="care-feature-name">건강 기록</div><div class="care-feature-desc">진료·체중·처방 기록 관리</div></div></div>
-        <div class="care-feature-card"><span class="care-feature-icon">💰</span><div><div class="care-feature-name">지출 관리</div><div class="care-feature-desc">월별 펫 지출 통계</div></div></div>
+        <div class="care-feature-card" data-feature="케어 관리"><span class="care-feature-icon">🐾</span><div><div class="care-feature-name">케어 관리</div><div class="care-feature-desc">목욕·예방접종·양치 D-day 알림</div></div></div>
+        <div class="care-feature-card" data-feature="식단 기록"><span class="care-feature-icon">🍚</span><div><div class="care-feature-name">식단 기록</div><div class="care-feature-desc">밥·물·간식 섭취량 한눈에</div></div></div>
+        <div class="care-feature-card" data-feature="건강 기록"><span class="care-feature-icon">📋</span><div><div class="care-feature-name">건강 기록</div><div class="care-feature-desc">진료·체중·처방 기록 관리</div></div></div>
+        <div class="care-feature-card" data-feature="지출 관리"><span class="care-feature-icon">💰</span><div><div class="care-feature-name">지출 관리</div><div class="care-feature-desc">월별 펫 지출 통계</div></div></div>
       </div>
       <div class="care-landing-cta">
-        <button class="care-cta-btn" onclick="window.PetAuth?.signInWithGoogle()">구글로 시작하기</button>
+        <button class="care-cta-btn" id="care-cta-main">시작하기 →</button>
         <p class="care-landing-note">구글 · 카카오 · 네이버로 3초 로그인</p>
       </div>
     </div>`;
+
+    content.querySelector("#care-cta-main").addEventListener("click", () => promptLogin());
+    content.querySelectorAll(".care-feature-card").forEach(card => {
+      card.addEventListener("click", () => promptLogin(card.dataset.feature));
+    });
     return;
   }
 

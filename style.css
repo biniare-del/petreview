@@ -4257,8 +4257,9 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .care-feature-card {
   display: flex; align-items: center; gap: 14px;
   background: #fff; border-radius: 16px; padding: 16px;
-  border: 1.5px solid #f0ede8;
+  border: 1.5px solid #f0ede8; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
 }
+.care-feature-card:hover { border-color: #bbf7d0; box-shadow: 0 2px 12px rgba(22,163,74,0.08); }
 .care-feature-icon { font-size: 28px; flex-shrink: 0; }
 .care-feature-name { font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 2px; }
 .care-feature-desc { font-size: 12px; color: #999; }
