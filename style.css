@@ -2777,32 +2777,6 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .tab-item:hover { color: #1d9e75; }
 .tab-item.is-active { color: #1d9e75; }
 
-/* 후기쓰기 중앙 버튼 강조 */
-.tab-item--write {
-  color: var(--brand);
-}
-.tab-item--write .write-tab-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #22c55e, var(--brand));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 10px rgba(22,163,74,0.35);
-  margin-bottom: 2px;
-}
-.tab-item--write .write-tab-icon svg {
-  stroke: #fff !important;
-  color: #fff !important;
-}
-.tab-item--write span {
-  font-weight: 700;
-  color: var(--brand);
-}
-.tab-item--write.is-active .write-tab-icon {
-  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
-}
 /* ===== 리뷰 상세 모달 ===== */
 .review-detail-modal {
   max-width: 520px;
