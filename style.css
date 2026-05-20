@@ -4686,11 +4686,65 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .expense-item-amt { font-size: 15px; font-weight: 800; color: #1a1a1a; }
 .expense-item-date { font-size: 11px; color: #aaa; }
 .expense-item-delete {
-  position: absolute; right: 10px; top: 12px;
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   width: 22px; height: 22px;
   background: #f0ebe6; border: none; border-radius: 50%;
   font-size: 11px; cursor: pointer; color: #888;
   display: flex; align-items: center; justify-content: center;
+}
+.expense-delete-confirm {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  display: flex; align-items: center; gap: 6px; padding: 0 10px;
+  background: linear-gradient(to left, #fff 70%, transparent);
+  border-radius: 0 12px 12px 0;
+}
+.expense-delete-cancel {
+  padding: 4px 10px; border-radius: 20px; border: 1.5px solid #ddd;
+  background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: #666;
+}
+.expense-delete-ok {
+  padding: 4px 10px; border-radius: 20px; border: none;
+  background: #ef5350; font-size: 12px; font-weight: 700; cursor: pointer; color: #fff;
+}
+.expense-pet-summary {
+  display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.expense-pet-card {
+  flex: 1; min-width: 80px; background: rgba(255,255,255,0.5);
+  border-radius: 12px; padding: 10px 12px; text-align: center;
+  border: 1.5px solid rgba(255,255,255,0.8);
+}
+.expense-pet-card-name { font-size: 12px; color: rgba(255,255,255,0.85); margin-bottom: 2px; }
+.expense-pet-card-amt { font-size: 15px; font-weight: 800; color: #fff; }
+.expense-filter-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px 6px; flex-wrap: wrap;
+}
+.expense-filter-btn {
+  padding: 5px 14px; border-radius: 20px; border: 1.5px solid #e0d7d2;
+  background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: #666;
+  transition: all 0.15s; font-family: inherit;
+}
+.expense-filter-btn.is-active {
+  background: var(--brand-dark); border-color: var(--brand-dark); color: #fff;
+}
+.expense-add-btn { margin-left: auto; }
+.expense-pet-badge {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  background: #e7f5f1; color: var(--brand-dark);
+  border-radius: 8px; padding: 1px 6px; margin-left: 4px;
+  vertical-align: middle;
+}
+.expense-pet-btns {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.expense-pet-select-btn {
+  padding: 6px 16px; border-radius: 20px; border: 1.5px solid #e0d7d2;
+  background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: #666;
+  transition: all 0.15s; font-family: inherit;
+}
+.expense-pet-select-btn.is-active {
+  background: var(--brand-dark); border-color: var(--brand-dark); color: #fff;
 }
 
 /* =====================================================

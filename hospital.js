@@ -127,20 +127,27 @@ async function saveHospital() {
   const memo     = document.getElementById("h-memo").value.trim();
   const errEl    = document.getElementById("hospital-form-error");
   if (!name) { errEl.textContent = "병원 이름을 입력해주세요."; return; }
+  errEl.textContent = "";
 
   const btn = document.getElementById("hospital-form-save");
   btn.disabled = true; btn.textContent = "저장 중...";
 
-  if (editingId) {
-    await db.from("favorites").update({ place_name: name, category, address: address||null, phone: phone||null, memo: memo||null }).eq("id", editingId).eq("user_id", userId);
-  } else {
-    await db.from("favorites").insert({ user_id: userId, place_name: name, category, address: address||null, phone: phone||null, memo: memo||null });
+  try {
+    if (editingId) {
+      const { error } = await db.from("favorites").update({ place_name: name, category, address: address||null, phone: phone||null, memo: memo||null }).eq("id", editingId).eq("user_id", userId);
+      if (error) throw error;
+    } else {
+      const { error } = await db.from("favorites").insert({ user_id: userId, place_name: name, category, address: address||null, phone: phone||null, memo: memo||null });
+      if (error) throw error;
+    }
+    document.getElementById("hospital-form-overlay").hidden = true;
+    document.body.style.overflow = "";
+    await loadHospitals();
+  } catch (err) {
+    errEl.textContent = `저장 실패: ${err.message || "다시 시도해주세요."}`;
+  } finally {
+    btn.disabled = false; btn.textContent = "저장";
   }
-
-  btn.disabled = false; btn.textContent = "저장";
-  document.getElementById("hospital-form-overlay").hidden = true;
-  document.body.style.overflow = "";
-  await loadHospitals();
 }
 
 // ── 방문 기록 폼 ──────────────────────────────────────────────

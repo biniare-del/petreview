@@ -129,7 +129,7 @@ async function renderActiveArea() {
   if      (_activeSubtab === "manage")  await renderManageTab(pet, mainArea);
   else if (_activeSubtab === "diet")    await renderDietTab(pet, mainArea);
   else if (_activeSubtab === "records") await renderRecordsTab(pet, mainArea);
-  else if (_activeSubtab === "expense") await renderExpenseTab(pet, mainArea);
+  else if (_activeSubtab === "expense") await renderExpenseTab(mainArea);
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -632,85 +632,162 @@ function showHealthRecordModal(pet) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// [지출] 탭
+// [집사영수증] 탭
 // ──────────────────────────────────────────────────────────────
-async function renderExpenseTab(pet, container) {
+async function renderExpenseTab(container) {
   const now   = new Date();
   const year  = now.getFullYear();
   const month = now.getMonth() + 1;
   const from  = `${year}-${String(month).padStart(2,"0")}-01`;
   const to    = `${year}-${String(month).padStart(2,"0")}-${String(new Date(year, month, 0).getDate()).padStart(2,"0")}`;
 
-  let expenses = [], total = 0;
+  const realPets = _pets.filter(p => p.id !== "demo");
+  let allExpenses = [];
   try {
-    const { data } = await _db.from("pet_expenses").select("id, category, amount, expense_date, memo")
-      .eq("pet_id", pet.id).gte("expense_date", from).lte("expense_date", to)
-      .order("expense_date", { ascending: false });
-    expenses = data ?? [];
-    total = expenses.reduce((s, r) => s + (r.amount || 0), 0);
-  } catch { /* table may not exist */ }
+    if (realPets.length) {
+      const { data } = await _db.from("pet_expenses")
+        .select("id, pet_id, category, amount, expense_date, memo")
+        .in("pet_id", realPets.map(p => p.id))
+        .gte("expense_date", from).lte("expense_date", to)
+        .order("expense_date", { ascending: false });
+      allExpenses = data ?? [];
+    }
+  } catch { /* table may not exist yet */ }
 
-  const catTotals = {};
-  expenses.forEach(r => { catTotals[r.category] = (catTotals[r.category] || 0) + r.amount; });
-  const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+  const petById = {};
+  const petTotals = {};
+  realPets.forEach(p => { petById[p.id] = p; petTotals[p.id] = 0; });
+  allExpenses.forEach(r => { petTotals[r.pet_id] = (petTotals[r.pet_id] || 0) + (r.amount || 0); });
 
-  container.innerHTML = `
-    <div class="expense-header">
-      <div class="expense-month">${month}월 지출</div>
-      <div class="expense-total">${total.toLocaleString()}원</div>
-      <button class="records-add-btn" id="expense-add-btn" style="margin-top:8px;">+ 지출 추가</button>
-    </div>
+  const grandTotal = allExpenses.reduce((s, r) => s + (r.amount || 0), 0);
+  const multiPet = realPets.length > 1;
+  let activeFilter = "all";
+  let confirmDeleteId = null;
 
-    ${catEntries.length ? `
-    <div class="expense-cats">
-      ${catEntries.map(([cat, amt]) => `
-        <div class="expense-cat-row">
-          <span class="expense-cat-name">${escapeHtml(cat)}</span>
-          <span class="expense-cat-bar-wrap">
-            <span class="expense-cat-bar" style="width:${Math.round(amt/total*100)}%"></span>
-          </span>
-          <span class="expense-cat-amt">${amt.toLocaleString()}원</span>
-        </div>`).join("")}
-    </div>` : ""}
+  function renderList() {
+    const filtered = activeFilter === "all" ? allExpenses : allExpenses.filter(r => r.pet_id === activeFilter);
+    const filterTotal = filtered.reduce((s, r) => s + (r.amount || 0), 0);
+    const catTotals = {};
+    filtered.forEach(r => { catTotals[r.category] = (catTotals[r.category] || 0) + r.amount; });
+    const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+    const listEl = container.querySelector("#expense-list-area");
+    if (!listEl) return;
 
-    <div class="expense-list">
-      ${expenses.length
-        ? expenses.map(r => `
-          <div class="expense-item">
+    listEl.innerHTML = `
+      ${catEntries.length && filterTotal ? `
+      <div class="expense-cats">
+        ${catEntries.map(([cat, amt]) => `
+          <div class="expense-cat-row">
+            <span class="expense-cat-name">${escapeHtml(cat)}</span>
+            <span class="expense-cat-bar-wrap"><span class="expense-cat-bar" style="width:${Math.round(amt/filterTotal*100)}%"></span></span>
+            <span class="expense-cat-amt">${amt.toLocaleString()}원</span>
+          </div>`).join("")}
+      </div>` : ""}
+      <div class="expense-list">
+        ${filtered.length ? filtered.map(r => {
+          const petName = multiPet && activeFilter === "all" ? (petById[r.pet_id]?.name ?? "") : "";
+          const isConfirm = confirmDeleteId === r.id;
+          return `<div class="expense-item" data-id="${escapeHtml(r.id)}">
             <div class="expense-item-left">
-              <span class="expense-item-cat">${escapeHtml(r.category)}</span>
+              <span class="expense-item-cat">${escapeHtml(r.category)}${petName ? ` <span class="expense-pet-badge">${escapeHtml(petName)}</span>` : ""}</span>
               <span class="expense-item-memo">${r.memo ? escapeHtml(r.memo) : ""}</span>
             </div>
             <div class="expense-item-right">
               <span class="expense-item-amt">${r.amount.toLocaleString()}원</span>
               <span class="expense-item-date">${formatDate(r.expense_date)}</span>
             </div>
-            <button class="expense-item-delete" data-id="${r.id}">✕</button>
-          </div>`).join("")
-        : `<p class="records-empty">이번달 지출 내역이 없어요.</p>`}
-    </div>`;
+            ${isConfirm
+              ? `<div class="expense-delete-confirm">
+                   <button class="expense-delete-cancel" data-id="${escapeHtml(r.id)}">취소</button>
+                   <button class="expense-delete-ok" data-id="${escapeHtml(r.id)}">삭제</button>
+                 </div>`
+              : `<button class="expense-item-delete" data-id="${escapeHtml(r.id)}">✕</button>`}
+          </div>`;
+        }).join("") : `<p class="records-empty">지출 내역이 없어요.</p>`}
+      </div>`;
 
-  container.querySelector("#expense-add-btn")?.addEventListener("click", () => showExpenseModal(pet));
-  container.querySelectorAll(".expense-item-delete").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (!confirm("삭제할까요?")) return;
-      await _db.from("pet_expenses").delete().eq("id", btn.dataset.id);
-      await renderActiveArea();
+    listEl.querySelectorAll(".expense-item-delete").forEach(btn => {
+      btn.addEventListener("click", () => { confirmDeleteId = btn.dataset.id; renderList(); });
+    });
+    listEl.querySelectorAll(".expense-delete-cancel").forEach(btn => {
+      btn.addEventListener("click", () => { confirmDeleteId = null; renderList(); });
+    });
+    listEl.querySelectorAll(".expense-delete-ok").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        await _db.from("pet_expenses").delete().eq("id", id);
+        allExpenses = allExpenses.filter(r => r.id !== id);
+        realPets.forEach(p => { petTotals[p.id] = 0; });
+        allExpenses.forEach(r => { petTotals[r.pet_id] = (petTotals[r.pet_id] || 0) + (r.amount || 0); });
+        const newGrand = allExpenses.reduce((s, r) => s + (r.amount || 0), 0);
+        const totalEl = container.querySelector(".expense-total");
+        if (totalEl) totalEl.textContent = newGrand.toLocaleString() + "원";
+        container.querySelectorAll(".expense-pet-card").forEach(el => {
+          const petId = el.dataset.petId;
+          if (petId) el.querySelector(".expense-pet-card-amt").textContent = (petTotals[petId] || 0).toLocaleString() + "원";
+        });
+        confirmDeleteId = null;
+        renderList();
+      });
+    });
+  }
+
+  container.innerHTML = `
+    <div class="expense-header">
+      <div class="expense-month">${month}월 전체 지출</div>
+      <div class="expense-total">${grandTotal.toLocaleString()}원</div>
+      ${multiPet ? `
+      <div class="expense-pet-summary">
+        ${realPets.map(p => `
+          <div class="expense-pet-card" data-pet-id="${escapeHtml(p.id)}">
+            <div class="expense-pet-card-name">${escapeHtml(p.name)}</div>
+            <div class="expense-pet-card-amt">${(petTotals[p.id] || 0).toLocaleString()}원</div>
+          </div>`).join("")}
+      </div>` : ""}
+    </div>
+    <div class="expense-filter-bar">
+      ${multiPet ? `
+        <button class="expense-filter-btn is-active" data-filter="all">전체</button>
+        ${realPets.map(p => `<button class="expense-filter-btn" data-filter="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join("")}
+      ` : ""}
+      <button class="records-add-btn expense-add-btn" id="expense-add-btn">+ 지출 추가</button>
+    </div>
+    <div id="expense-list-area"></div>`;
+
+  container.querySelectorAll(".expense-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeFilter = btn.dataset.filter;
+      container.querySelectorAll(".expense-filter-btn").forEach(b => b.classList.toggle("is-active", b === btn));
+      confirmDeleteId = null;
+      renderList();
     });
   });
+  container.querySelector("#expense-add-btn")?.addEventListener("click", () => showExpenseModal(realPets, activeFilter));
+  renderList();
 }
 
-function showExpenseModal(pet) {
-  const cats = EXPENSE_CATEGORIES[pet.species] ?? EXPENSE_CATEGORIES.default;
+function showExpenseModal(pets, activeFilter = "all") {
+  const initPetId = (activeFilter !== "all" && pets.find(p => p.id === activeFilter)) ? activeFilter : (pets[0]?.id ?? null);
+  const allCats = EXPENSE_CATEGORIES[pets[0]?.species] ?? EXPENSE_CATEGORIES.default;
+
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `<div class="modal">
     <button class="modal-close" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
     <h3 class="modal-title">💰 지출 추가</h3>
+    ${pets.length > 1 ? `
+    <div class="modal-field">
+      <label>반려동물</label>
+      <div class="expense-pet-btns" id="exp-pet-btns">
+        ${pets.map(p => `<button type="button" class="expense-pet-select-btn${p.id === initPetId ? " is-active" : ""}" data-pet-id="${escapeHtml(p.id)}">${escapeHtml(p.name)}</button>`).join("")}
+        <button type="button" class="expense-pet-select-btn" data-pet-id="shared">공유 🔗</button>
+      </div>
+    </div>
+    <p id="exp-split-note" style="font-size:12px;color:#888;text-align:center;margin:-8px 0 8px;min-height:18px;"></p>` : ""}
     <div class="modal-field">
       <label>항목</label>
       <select id="exp-cat" class="diet-input" style="width:100%;">
-        ${cats.map(c => `<option value="${c}">${c}</option>`).join("")}
+        ${allCats.map(c => `<option value="${c}">${c}</option>`).join("")}
       </select>
     </div>
     <div class="modal-field">
@@ -726,10 +803,25 @@ function showExpenseModal(pet) {
       <input type="date" id="exp-date" class="diet-input" value="${todayIso()}" style="width:100%;"/>
     </div>
     <button class="care-sheet-done-btn" id="exp-save" style="margin-top:12px;">저장</button>
+    <p id="exp-error" style="color:#e57373;font-size:12px;text-align:center;margin-top:6px;"></p>
   </div>`;
   document.body.appendChild(overlay);
+
+  let selectedPetId = initPetId;
+
+  overlay.querySelectorAll(".expense-pet-select-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedPetId = btn.dataset.petId;
+      overlay.querySelectorAll(".expense-pet-select-btn").forEach(b => b.classList.toggle("is-active", b === btn));
+      const splitNote = overlay.querySelector("#exp-split-note");
+      if (splitNote) splitNote.textContent = selectedPetId === "shared"
+        ? `💡 입력한 금액을 ${pets.length}마리에게 균등 분배해서 기록해요.` : "";
+    });
+  });
+
   overlay.querySelector(".modal-close").addEventListener("click", () => overlay.remove());
   overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+
   overlay.querySelector("#exp-save")?.addEventListener("click", async () => {
     const userId = window.PetAuth?.currentUser?.id;
     if (!userId) return;
@@ -737,10 +829,28 @@ function showExpenseModal(pet) {
     const amount   = parseFloat(overlay.querySelector("#exp-amount")?.value);
     const memo     = overlay.querySelector("#exp-memo")?.value.trim() || null;
     const date     = overlay.querySelector("#exp-date")?.value;
-    if (!amount || amount <= 0) { alert("금액을 입력해주세요."); return; }
-    await _db.from("pet_expenses").insert({ user_id: userId, pet_id: pet.id, category, amount, memo, expense_date: date, source: "manual" });
-    overlay.remove();
-    await renderActiveArea();
+    const errEl    = overlay.querySelector("#exp-error");
+    if (!amount || amount <= 0) { errEl.textContent = "금액을 입력해주세요."; return; }
+
+    const saveBtn = overlay.querySelector("#exp-save");
+    saveBtn.disabled = true; saveBtn.textContent = "저장 중...";
+    errEl.textContent = "";
+
+    try {
+      if (selectedPetId === "shared" && pets.length > 1) {
+        const perAmount = Math.round(amount / pets.length);
+        await Promise.all(pets.map(p =>
+          _db.from("pet_expenses").insert({ user_id: userId, pet_id: p.id, category, amount: perAmount, memo: memo ? `[공유] ${memo}` : "[공유]", expense_date: date, source: "manual" })
+        ));
+      } else {
+        await _db.from("pet_expenses").insert({ user_id: userId, pet_id: selectedPetId ?? pets[0]?.id, category, amount, memo, expense_date: date, source: "manual" });
+      }
+      overlay.remove();
+      await renderActiveArea();
+    } catch (err) {
+      errEl.textContent = err.message || "저장 실패. 다시 시도해주세요.";
+      saveBtn.disabled = false; saveBtn.textContent = "저장";
+    }
   });
 }
 
@@ -904,8 +1014,6 @@ async function init() {
 
   const user = window.PetAuth?.currentUser ?? null;
   document.getElementById("care-login-btn").hidden = !!user;
-  const hospitalLink = document.getElementById("care-hospital-link");
-  if (hospitalLink) hospitalLink.hidden = !user;
 
   if (!user) {
     // 데모 펫으로 실제 UI 미리보기 (기록 시도 시만 로그인 유도)
