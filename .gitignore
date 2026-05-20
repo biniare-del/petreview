@@ -4,3 +4,4 @@ secrets.js
 
 .pat
 node_modules/
+supabase/.temp/
