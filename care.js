@@ -403,18 +403,29 @@ async function renderDietTab(pet, container) {
   renderDietSection(container, pet, settings, logs);
 }
 
+const WATER_LEVELS = [
+  { key: "good", label: "잘 마심",   icon: "💧💧💧" },
+  { key: "ok",   label: "보통",      icon: "💧💧" },
+  { key: "low",  label: "조금 마심", icon: "💧" },
+];
+
+function getMealLabels(n) {
+  if (n === 1) return ["오늘"];
+  if (n === 2) return ["아침", "저녁"];
+  return ["아침", "점심", "저녁"];
+}
+
 function renderDietSection(container, pet, settings, logs) {
   const mealsPerDay = settings?.meals_per_day ?? 2;
-  const waterTarget = settings?.water_target_ml ?? 300;
   const foodAmountG = settings?.food_amount_g ?? null;
   const foodName    = settings?.food_name ?? "";
 
   const mealsLogged = new Set(logs.filter(l => l.log_type === "meal").map(l => l.meal_order));
-  const waterTotal  = logs.filter(l => l.log_type === "water").reduce((s, l) => s + (l.water_ml || 0), 0);
   const snacks      = logs.filter(l => l.log_type === "snack");
-  const waterPct    = Math.min(100, waterTarget > 0 ? Math.round(waterTotal / waterTarget * 100) : 0);
+  const waterLog    = logs.find(l => l.log_type === "water" && WATER_LEVELS.some(w => w.key === l.note));
+  const waterLevel  = waterLog ? WATER_LEVELS.find(w => w.key === waterLog.note) : null;
 
-  const mealLabels = ["아침", "점심", "저녁"];
+  const mealLabels = getMealLabels(mealsPerDay);
   const mealsHtml = Array.from({ length: mealsPerDay }, (_, i) => {
     const n = i + 1, done = mealsLogged.has(n), label = mealLabels[i] ?? `${n}번째`;
     return `<button class="diet-meal-btn${done ? " is-done" : ""}" data-meal="${n}"${done ? " disabled" : ""}>
@@ -424,9 +435,37 @@ function renderDietSection(container, pet, settings, logs) {
     </button>`;
   }).join("");
 
-  const waterLevelClass = waterPct >= 80 ? "good" : waterPct >= 40 ? "mid" : "low";
+  const settingsSummary = [
+    `${mealsPerDay}식`,
+    foodName ? escapeHtml(foodName) : "",
+    foodAmountG ? `${foodAmountG}g` : "",
+  ].filter(Boolean).join(" · ");
 
   container.innerHTML = `
+    <details class="diet-settings-details">
+      <summary class="diet-settings-toggle">
+        <span>⚙️ 식단 설정</span>
+        ${settingsSummary ? `<span class="diet-settings-summary-text">${settingsSummary}</span>` : `<span class="diet-settings-summary-hint">탭해서 설정</span>`}
+      </summary>
+      <div class="diet-settings-body">
+        <div class="diet-settings-row">
+          <label>하루 식사 횟수</label>
+          <div class="diet-meals-picker">
+            ${[1,2,3].map(n => `<button class="diet-pick-btn${mealsPerDay===n?" is-active":""}" data-n="${n}">${n}식</button>`).join("")}
+          </div>
+        </div>
+        <div class="diet-settings-row">
+          <label>사료 이름</label>
+          <input type="text" class="diet-input" id="ds-food-name" value="${escapeHtml(foodName)}" placeholder="예: 로얄캐닌 어덜트"/>
+        </div>
+        <div class="diet-settings-row">
+          <label>1회 급여량</label>
+          <div class="diet-input-unit"><input type="number" class="diet-input" id="ds-amount" value="${foodAmountG??""}" placeholder="80" min="0" step="5"/><span>g</span></div>
+        </div>
+        <button class="diet-save-btn" id="diet-save-btn">저장</button>
+      </div>
+    </details>
+
     <div class="diet-block">
       <div class="diet-block-header">
         <span class="diet-block-title">🍚 오늘 식사</span>
@@ -438,17 +477,21 @@ function renderDietSection(container, pet, settings, logs) {
     <div class="diet-block">
       <div class="diet-block-header">
         <span class="diet-block-title">💧 수분 섭취</span>
-        <span class="diet-block-sub diet-water-stat">${waterTotal}ml / ${waterTarget}ml</span>
+        ${waterLevel ? `<button class="diet-water-reset" id="diet-water-reset">초기화</button>` : ""}
       </div>
-      <div class="diet-water-bar-wrap">
-        <div class="diet-water-bar diet-water-bar--${waterLevelClass}" style="width:${waterPct}%"></div>
-      </div>
-      <div class="diet-water-btns">
-        <button class="diet-water-btn" data-ml="50">+50ml</button>
-        <button class="diet-water-btn" data-ml="100">+100ml</button>
-        <button class="diet-water-btn" data-ml="200">+200ml</button>
-        <button class="diet-water-btn" data-ml="250">+250ml</button>
-      </div>
+      ${waterLevel
+        ? `<div class="diet-water-selected">
+             <span class="diet-water-selected-icon">${waterLevel.icon}</span>
+             <span class="diet-water-selected-label">${waterLevel.label}</span>
+             <span class="diet-water-selected-check">✓ 오늘 기록됨</span>
+           </div>`
+        : `<div class="diet-water-level-btns">
+             ${WATER_LEVELS.map(w => `
+               <button class="diet-water-level-btn" data-level="${w.key}">
+                 <span class="diet-water-level-icon">${w.icon}</span>
+                 <span class="diet-water-level-label">${w.label}</span>
+               </button>`).join("")}
+           </div>`}
     </div>
 
     <div class="diet-block">
@@ -466,38 +509,19 @@ function renderDietSection(container, pet, settings, logs) {
     <div class="ai-advice-block" id="ai-advice-block">
       <button class="ai-advice-btn" id="ai-advice-btn">🤖 AI 식단 조언</button>
       <div class="ai-advice-result" id="ai-advice-result" hidden></div>
-    </div>
-
-    <details class="diet-settings-details">
-      <summary class="diet-settings-toggle">⚙️ 식단 설정</summary>
-      <div class="diet-settings-body">
-        <div class="diet-settings-row">
-          <label>하루 식사 횟수</label>
-          <div class="diet-meals-picker">
-            ${[1,2,3].map(n => `<button class="diet-pick-btn${mealsPerDay===n?" is-active":""}" data-n="${n}">${n}식</button>`).join("")}
-          </div>
-        </div>
-        <div class="diet-settings-row">
-          <label>사료 이름</label>
-          <input type="text" class="diet-input" id="ds-food-name" value="${escapeHtml(foodName)}" placeholder="예: 로얄캐닌 어덜트"/>
-        </div>
-        <div class="diet-settings-row">
-          <label>1회 급여량</label>
-          <div class="diet-input-unit"><input type="number" class="diet-input" id="ds-amount" value="${foodAmountG??""}" placeholder="80" min="0" step="5"/><span>g</span></div>
-        </div>
-        <div class="diet-settings-row">
-          <label>하루 목표 급수량</label>
-          <div class="diet-input-unit"><input type="number" class="diet-input" id="ds-water" value="${waterTarget}" placeholder="300" min="0" step="50"/><span>ml</span></div>
-        </div>
-        <button class="diet-save-btn" id="diet-save-btn">저장</button>
-      </div>
-    </details>`;
+    </div>`;
 
   container.querySelectorAll(".diet-meal-btn:not([disabled])").forEach(btn => {
     btn.addEventListener("click", () => logDiet("meal", pet, parseInt(btn.dataset.meal)));
   });
-  container.querySelectorAll(".diet-water-btn").forEach(btn => {
-    btn.addEventListener("click", () => logDiet("water", pet, null, parseInt(btn.dataset.ml)));
+  container.querySelectorAll(".diet-water-level-btn").forEach(btn => {
+    btn.addEventListener("click", () => logDiet("water", pet, null, null, btn.dataset.level));
+  });
+  container.querySelector("#diet-water-reset")?.addEventListener("click", async () => {
+    const userId = window.PetAuth?.currentUser?.id;
+    if (!userId) return;
+    await _db.from("pet_diet_logs").delete().eq("pet_id", pet.id).eq("log_type", "water").gte("logged_at", getTodayKST());
+    await renderActiveArea();
   });
   container.querySelector("#diet-snack-btn")?.addEventListener("click", () => {
     const note = container.querySelector("#diet-snack-input")?.value.trim();
@@ -533,13 +557,12 @@ async function saveDietSettings(pet, container) {
   const btn = container.querySelector("#diet-save-btn");
   if (btn) { btn.disabled = true; btn.textContent = "저장 중..."; }
 
-  const mealsPerDay   = parseInt(container.querySelector(".diet-pick-btn.is-active")?.dataset.n ?? "2");
-  const foodName      = container.querySelector("#ds-food-name")?.value.trim() || null;
-  const foodAmountG   = parseFloat(container.querySelector("#ds-amount")?.value) || null;
-  const waterTargetMl = parseFloat(container.querySelector("#ds-water")?.value) || 300;
+  const mealsPerDay = parseInt(container.querySelector(".diet-pick-btn.is-active")?.dataset.n ?? "2");
+  const foodName    = container.querySelector("#ds-food-name")?.value.trim() || null;
+  const foodAmountG = parseFloat(container.querySelector("#ds-amount")?.value) || null;
 
   const { error } = await _db.from("pet_diet_settings").upsert(
-    { user_id: userId, pet_id: pet.id, meals_per_day: mealsPerDay, food_name: foodName, food_amount_g: foodAmountG, water_target_ml: waterTargetMl, updated_at: new Date().toISOString() },
+    { user_id: userId, pet_id: pet.id, meals_per_day: mealsPerDay, food_name: foodName, food_amount_g: foodAmountG, updated_at: new Date().toISOString() },
     { onConflict: "pet_id" }
   );
   if (error) {

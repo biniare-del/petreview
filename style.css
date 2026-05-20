@@ -4382,14 +4382,43 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   border-radius: 999px; padding: 3px 10px;
 }
 
+/* 수분 섭취 3단계 */
+.diet-water-level-btns { display: flex; gap: 8px; }
+.diet-water-level-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 6px; border-radius: 14px;
+  background: #f0f9ff; border: 1.5px solid #bae6fd;
+  cursor: pointer; transition: all 0.18s;
+}
+.diet-water-level-btn:active { transform: scale(0.95); }
+.diet-water-level-icon { font-size: 18px; line-height: 1; }
+.diet-water-level-label { font-size: 11px; font-weight: 700; color: #0ea5e9; }
+.diet-water-selected {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; background: #f0f9ff; border-radius: 12px;
+}
+.diet-water-selected-icon { font-size: 22px; }
+.diet-water-selected-label { font-size: 15px; font-weight: 800; color: #0284c7; flex: 1; }
+.diet-water-selected-check { font-size: 11px; color: #38bdf8; }
+.diet-water-reset {
+  padding: 3px 10px; border-radius: 20px; border: 1.5px solid #e0e0e0;
+  background: #fff; font-size: 11px; font-weight: 600; color: #999; cursor: pointer;
+}
+
 /* 설정 */
-.diet-settings-details { margin: 8px 12px 16px; }
+.diet-settings-details { margin: 8px 12px 4px; }
 .diet-settings-toggle {
-  font-size: 13px; font-weight: 700; color: #666; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: 13px; font-weight: 700; color: #444; cursor: pointer;
   padding: 12px 16px; background: #fff; border-radius: 12px;
   border: 1.5px solid #f0e8e2; list-style: none;
 }
 .diet-settings-toggle::-webkit-details-marker { display: none; }
+.diet-settings-summary-text {
+  font-size: 12px; font-weight: 600; color: #16a34a;
+  background: #e7f5ef; border-radius: 20px; padding: 2px 10px;
+}
+.diet-settings-summary-hint { font-size: 12px; color: #bbb; }
 .diet-settings-body {
   background: #fff; border: 1.5px solid #f0e8e2; border-top: none;
   border-radius: 0 0 12px 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px;
