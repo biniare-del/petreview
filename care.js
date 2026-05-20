@@ -823,8 +823,17 @@ async function init() {
     return;
   }
 
+  // URL 해시로 초기 서브탭 결정 (#expense, #diet, #records)
+  const hashTab = location.hash.replace("#", "");
+  if (["manage","diet","records","expense"].includes(hashTab)) {
+    _activeSubtab = hashTab;
+  }
+
   // 서브탭 표시
   document.getElementById("care-subtabs").hidden = false;
+  document.querySelectorAll(".care-subtab").forEach(b => {
+    b.classList.toggle("is-active", b.dataset.subtab === _activeSubtab);
+  });
 
   // 펫 탭 + 메인 영역
   const tabsHtml = `<div class="care-pet-tabs" id="care-pet-tabs">${_pets.map((pet, i) =>
