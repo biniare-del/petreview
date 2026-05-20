@@ -803,7 +803,7 @@ async function init() {
         <div class="care-feature-card"><span class="care-feature-icon">💰</span><div><div class="care-feature-name">지출 관리</div><div class="care-feature-desc">월별 펫 지출 통계</div></div></div>
       </div>
       <div class="care-landing-cta">
-        <button class="care-cta-btn" onclick="location.href='index.html'">시작하기 →</button>
+        <button class="care-cta-btn" onclick="window.PetAuth?.signInWithGoogle()">구글로 시작하기</button>
         <p class="care-landing-note">구글 · 카카오 · 네이버로 3초 로그인</p>
       </div>
     </div>`;
