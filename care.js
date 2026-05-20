@@ -772,6 +772,108 @@ async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings) {
 }
 
 // ──────────────────────────────────────────────────────────────
+// 비로그인 데모 렌더
+async function renderDemoArea(demoPet, container) {
+  if (!container) return;
+  const demoLogs = {
+    bath: "2025-05-05", heartworm: "2025-04-01", vaccine: "2025-01-10",
+    grooming: "2025-05-12", teeth: null, ear: "2025-04-20",
+    nail: "2025-04-28", deworming: "2025-02-15", checkup: "2024-12-01",
+  };
+  if (_activeSubtab === "manage") {
+    const items = CARE_ITEMS.dog;
+    const cards = items.map(item => {
+      const lastDoneAt = demoLogs[item.key] ?? null;
+      const intervalDays = item.default_days;
+      const doneToday = isTodayKST(lastDoneAt);
+      const dday = doneToday ? null : calcDday(lastDoneAt, intervalDays);
+      let stateClass = "manage-card--unset", badgeText = "기록 없음";
+      if (doneToday)                           { stateClass = "manage-card--done";    badgeText = "✓ 오늘 완료"; }
+      else if (!lastDoneAt)                    { stateClass = "manage-card--unset";   badgeText = "기록 없음"; }
+      else if (dday !== null && dday < 0)      { stateClass = "manage-card--overdue"; badgeText = `${Math.abs(dday)}일 지남 ⚠️`; }
+      else if (dday === 0)                     { stateClass = "manage-card--today";   badgeText = "오늘!"; }
+      else if (dday !== null && dday <= 7)     { stateClass = "manage-card--soon";    badgeText = `D-${dday}`; }
+      else                                     { stateClass = "manage-card--ok";      badgeText = dday !== null ? `D-${dday}` : "설정됨"; }
+      return `<button class="manage-card ${stateClass} demo-card">
+        <div class="manage-card-icon">${item.icon}</div>
+        <div class="manage-card-name">${item.label}</div>
+        <div class="manage-card-badge">${badgeText}</div>
+      </button>`;
+    });
+    const doneCount = cards.filter((_, i) => isTodayKST(demoLogs[items[i].key])).length;
+    const pct = Math.round(doneCount / items.length * 100);
+    container.innerHTML = `
+      <div class="manage-progress">
+        <div class="manage-progress-text">오늘 ${doneCount} / ${items.length} 완료</div>
+        <div class="manage-progress-track"><div class="manage-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="manage-grid">${cards.join("")}</div>`;
+    container.querySelectorAll(".demo-card").forEach(card => {
+      card.addEventListener("click", () => promptLogin());
+    });
+  } else if (_activeSubtab === "diet") {
+    container.innerHTML = `
+      <div class="diet-block">
+        <div class="diet-block-header"><span class="diet-block-title">🍚 오늘 식사</span><span class="diet-block-sub">0/2끼</span></div>
+        <div class="diet-meals-grid">
+          <button class="diet-meal-btn demo-card"><span class="diet-meal-icon">🍚</span><span class="diet-meal-label">아침</span></button>
+          <button class="diet-meal-btn demo-card"><span class="diet-meal-icon">🍚</span><span class="diet-meal-label">저녁</span></button>
+        </div>
+      </div>
+      <div class="diet-block">
+        <div class="diet-block-header"><span class="diet-block-title">💧 수분 섭취</span><span class="diet-block-sub diet-water-stat">0ml / 300ml</span></div>
+        <div class="diet-water-bar-wrap"><div class="diet-water-bar diet-water-bar--low" style="width:0%"></div></div>
+        <div class="diet-water-btns">
+          <button class="diet-water-btn demo-card">+50ml</button>
+          <button class="diet-water-btn demo-card">+100ml</button>
+          <button class="diet-water-btn demo-card">+200ml</button>
+          <button class="diet-water-btn demo-card">+250ml</button>
+        </div>
+      </div>
+      <div class="diet-block">
+        <div class="diet-block-header"><span class="diet-block-title">🍪 간식</span></div>
+        <div class="diet-snack-input-row">
+          <input type="text" class="diet-snack-input" placeholder="간식 이름 (선택)" maxlength="20"/>
+          <button class="diet-snack-btn demo-card">기록</button>
+        </div>
+      </div>`;
+    container.querySelectorAll(".demo-card").forEach(el => {
+      el.addEventListener("click", () => promptLogin());
+    });
+  } else if (_activeSubtab === "records") {
+    container.innerHTML = `
+      <div class="records-section">
+        <div class="records-section-header">
+          <span class="records-section-title">⚖️ 체중</span>
+          <button class="records-add-btn demo-card">+ 기록</button>
+        </div>
+        <div class="records-weight-summary"><span class="records-weight-empty">로그인 후 체중을 기록해보세요</span></div>
+      </div>
+      <div class="records-section">
+        <div class="records-section-header">
+          <span class="records-section-title">📋 진료·건강 기록</span>
+          <button class="records-add-btn demo-card">+ 기록</button>
+        </div>
+        <p class="records-empty">진료·투약·처방 내용을 기록해보세요.</p>
+      </div>`;
+    container.querySelectorAll(".demo-card").forEach(el => {
+      el.addEventListener("click", () => promptLogin());
+    });
+  } else if (_activeSubtab === "expense") {
+    const now = new Date();
+    container.innerHTML = `
+      <div class="expense-header">
+        <div class="expense-month">${now.getMonth()+1}월 지출</div>
+        <div class="expense-total">0원</div>
+        <button class="records-add-btn demo-card" style="margin-top:8px;">+ 지출 추가</button>
+      </div>
+      <p class="records-empty" style="margin-top:24px;">로그인하면 반려동물 지출을 월별로 관리할 수 있어요.</p>`;
+    container.querySelectorAll(".demo-card").forEach(el => {
+      el.addEventListener("click", () => promptLogin());
+    });
+  }
+}
+
 // 로그인 유도 모달
 function promptLogin(featureName) {
   const existing = document.getElementById("care-login-prompt");
@@ -806,34 +908,30 @@ async function init() {
   if (hospitalLink) hospitalLink.hidden = !user;
 
   if (!user) {
-    // 서브탭 보이되 클릭 시 로그인 유도
+    // 데모 펫으로 실제 UI 미리보기 (기록 시도 시만 로그인 유도)
+    const demoPet = { id: "demo", name: "초코", species: "강아지", breed: "말티즈" };
+    _pets = [demoPet];
+    _activePetIdx = 0;
+
     document.getElementById("care-subtabs").hidden = false;
+
+    const tabsHtml = `
+      <div class="care-pet-tabs" id="care-pet-tabs">
+        <button class="care-pet-tab is-active">🐶 <span>초코 (데모)</span></button>
+      </div>
+      <div class="care-demo-banner">로그인하면 우리 아이 데이터로 바로 시작할 수 있어요 — <button class="care-demo-login-btn" id="demo-login-btn">로그인</button></div>
+      <div id="care-main-area"></div>`;
+    content.innerHTML = tabsHtml;
+    document.getElementById("demo-login-btn")?.addEventListener("click", () => promptLogin());
+
+    await renderDemoArea(demoPet, document.getElementById("care-main-area"));
+
     document.querySelectorAll(".care-subtab").forEach(btn => {
-      btn.addEventListener("click", () => promptLogin(btn.textContent.trim()));
-    });
-
-    content.innerHTML = `
-    <div class="care-landing">
-      <div class="care-landing-hero">
-        <div class="care-landing-logo">🐾</div>
-        <h2 class="care-landing-title">우쭈쭈</h2>
-        <p class="care-landing-sub">우리 아이 건강, 놓치지 않게</p>
-      </div>
-      <div class="care-landing-features">
-        <div class="care-feature-card" data-feature="케어 관리"><span class="care-feature-icon">🐾</span><div><div class="care-feature-name">케어 관리</div><div class="care-feature-desc">목욕·예방접종·양치 D-day 알림</div></div></div>
-        <div class="care-feature-card" data-feature="식단 기록"><span class="care-feature-icon">🍚</span><div><div class="care-feature-name">식단 기록</div><div class="care-feature-desc">밥·물·간식 섭취량 한눈에</div></div></div>
-        <div class="care-feature-card" data-feature="건강 기록"><span class="care-feature-icon">📋</span><div><div class="care-feature-name">건강 기록</div><div class="care-feature-desc">진료·체중·처방 기록 관리</div></div></div>
-        <div class="care-feature-card" data-feature="지출 관리"><span class="care-feature-icon">💰</span><div><div class="care-feature-name">지출 관리</div><div class="care-feature-desc">월별 펫 지출 통계</div></div></div>
-      </div>
-      <div class="care-landing-cta">
-        <button class="care-cta-btn" id="care-cta-main">시작하기 →</button>
-        <p class="care-landing-note">구글 · 카카오 · 네이버로 3초 로그인</p>
-      </div>
-    </div>`;
-
-    content.querySelector("#care-cta-main").addEventListener("click", () => promptLogin());
-    content.querySelectorAll(".care-feature-card").forEach(card => {
-      card.addEventListener("click", () => promptLogin(card.dataset.feature));
+      btn.addEventListener("click", async () => {
+        _activeSubtab = btn.dataset.subtab;
+        document.querySelectorAll(".care-subtab").forEach(b => b.classList.toggle("is-active", b === btn));
+        await renderDemoArea(demoPet, document.getElementById("care-main-area"));
+      });
     });
     return;
   }
