@@ -4420,3 +4420,300 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   font-size: 13px; line-height: 1.7; color: #3730a3;
   white-space: pre-wrap;
 }
+
+/* =====================================================
+   관리 그리드 (9-button care grid)
+   ===================================================== */
+.manage-progress {
+  padding: 14px 16px 6px;
+}
+.manage-progress-text {
+  font-size: 13px; font-weight: 700; color: #444; margin-bottom: 6px;
+}
+.manage-progress-track {
+  height: 6px; background: #f0ebe6; border-radius: 999px; overflow: hidden;
+}
+.manage-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--brand), #4ade80);
+  border-radius: 999px; transition: width 0.4s ease;
+}
+
+.manage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px 12px 4px;
+}
+.manage-card {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 16px 8px;
+  background: #fff; border-radius: 16px;
+  border: 2px solid #f0e8e2;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-align: center; outline: none;
+}
+.manage-card:active { transform: scale(0.94); }
+.manage-card-icon { font-size: 28px; line-height: 1; }
+.manage-card-name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.manage-card-badge {
+  font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+}
+
+/* card states */
+.manage-card--overdue { border-color: #fca5a5; background: #fff8f8; }
+.manage-card--overdue .manage-card-badge { background: #fee2e2; color: #dc2626; }
+.manage-card--today   { border-color: #fdba74; background: #fffaf6; }
+.manage-card--today   .manage-card-badge { background: #fed7aa; color: #c2410c; }
+.manage-card--soon    { border-color: #fde68a; background: #fffdf0; }
+.manage-card--soon    .manage-card-badge { background: #fef9c3; color: #854d0e; }
+.manage-card--ok      { border-color: #bbf7d0; background: #f0fdf4; }
+.manage-card--ok      .manage-card-badge { background: #dcfce7; color: #166534; }
+.manage-card--unset   { border-color: #e5e7eb; background: #fafafa; }
+.manage-card--unset   .manage-card-badge { background: #f3f4f6; color: #9ca3af; }
+.manage-card--done    { border-color: #bbf7d0; background: #f0fdf4; opacity: 0.72; }
+.manage-card--done    .manage-card-badge { background: #dcfce7; color: #16a34a; }
+
+/* =====================================================
+   케어 하단 시트 (bottom sheet)
+   ===================================================== */
+.care-sheet-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 500;
+  display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.care-sheet-overlay.is-open {
+  opacity: 1; pointer-events: auto;
+}
+.care-sheet {
+  background: #fff;
+  border-radius: 22px 22px 0 0;
+  width: 100%; max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  max-height: 88vh; overflow-y: auto;
+}
+.care-sheet-overlay.is-open .care-sheet {
+  transform: translateY(0);
+}
+.care-sheet-handle {
+  width: 40px; height: 4px;
+  background: #e0e0e0; border-radius: 999px;
+  margin: 10px auto 0;
+}
+.care-sheet-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 0;
+}
+.care-sheet-title-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.care-sheet-icon { font-size: 28px; }
+.care-sheet-title { font-size: 20px; font-weight: 800; color: #1a1a1a; }
+.care-sheet-close {
+  width: 30px; height: 30px;
+  background: #f4f4f4; border: none; border-radius: 50%;
+  font-size: 14px; cursor: pointer; color: #666;
+  display: flex; align-items: center; justify-content: center;
+}
+.care-sheet-body {
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.care-sheet-section { display: flex; flex-direction: column; gap: 8px; }
+.care-sheet-section--row {
+  flex-direction: row; align-items: center; justify-content: space-between;
+}
+.care-sheet-label {
+  font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.care-sheet-last-date { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+
+/* 주기 프리셋 */
+.care-iv-presets { display: flex; flex-wrap: wrap; gap: 7px; }
+.care-iv-opt {
+  padding: 6px 14px; font-size: 13px; font-weight: 600;
+  color: #666; background: #f4f0ec;
+  border: 1.5px solid transparent; border-radius: 999px; cursor: pointer;
+  transition: all 0.15s;
+}
+.care-iv-opt.is-active {
+  color: var(--brand-dark); background: var(--brand-bg); border-color: var(--brand-border);
+}
+
+/* 토글 스위치 */
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: #ccc; border-radius: 999px; cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider:before {
+  content: ""; position: absolute;
+  width: 18px; height: 18px; left: 3px; bottom: 3px;
+  background: #fff; border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--brand); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+/* 시트 푸터 */
+.care-sheet-footer { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+.care-done-date-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: #f8f4f0; border-radius: 12px;
+}
+.care-done-date-label { font-size: 13px; font-weight: 600; color: #666; }
+.care-done-date-input {
+  flex: 1; border: none; background: none; font-size: 14px; font-weight: 700; color: #1a1a1a;
+  outline: none; cursor: pointer;
+}
+.care-sheet-done-btn {
+  width: 100%; padding: 15px;
+  background: var(--brand); color: #fff;
+  border: none; border-radius: 14px;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  transition: background 0.15s;
+}
+.care-sheet-done-btn:active { background: var(--brand-dark); }
+.care-sheet-history-btn {
+  width: 100%; padding: 11px;
+  background: #f8f4f0; color: #666;
+  border: none; border-radius: 14px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+
+/* 항목 기록 모달 */
+.care-hist-header {
+  font-size: 16px; font-weight: 800; color: #1a1a1a;
+  padding: 4px 4px 14px;
+}
+.care-hist-list { display: flex; flex-direction: column; gap: 8px; }
+.care-hist-row {
+  padding: 10px 14px; background: #f8f4f0; border-radius: 10px;
+  font-size: 14px; font-weight: 600; color: #333;
+}
+.care-hist-empty { font-size: 13px; color: #aaa; padding: 16px 0; }
+
+/* =====================================================
+   식단 탭 업데이트
+   ===================================================== */
+.diet-block-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+}
+.diet-block-sub {
+  font-size: 12px; font-weight: 600; color: var(--brand-dark);
+  background: var(--brand-bg); border-radius: 20px; padding: 2px 8px;
+}
+.diet-meal-icon { font-size: 18px; }
+.diet-water-bar--good { background: linear-gradient(90deg, #38bdf8, #0ea5e9); }
+.diet-water-bar--mid  { background: linear-gradient(90deg, #fde68a, #facc15); }
+.diet-water-bar--low  { background: linear-gradient(90deg, #fca5a5, #f87171); }
+
+/* =====================================================
+   기록 탭
+   ===================================================== */
+.records-section {
+  background: #fff; margin: 8px 12px; border-radius: 14px;
+  padding: 14px 16px; border: 1.5px solid #f0e8e2;
+}
+.records-section-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.records-section-title { font-size: 15px; font-weight: 800; color: #1a1a1a; }
+.records-add-btn {
+  padding: 6px 14px; font-size: 12px; font-weight: 700;
+  color: var(--brand-dark); background: var(--brand-bg);
+  border: 1.5px solid var(--brand-border); border-radius: 20px; cursor: pointer;
+}
+
+/* 체중 */
+.records-weight-summary { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.records-weight-val { font-size: 24px; font-weight: 900; color: #1a1a1a; }
+.records-weight-date { font-size: 12px; color: #aaa; }
+.records-weight-trend { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.records-weight-trend.up   { background: #fee2e2; color: #dc2626; }
+.records-weight-trend.down { background: #dcfce7; color: #166534; }
+.records-weight-trend.same { background: #f3f4f6; color: #666; }
+.records-weight-empty { font-size: 13px; color: #aaa; }
+.records-weight-list { display: flex; flex-direction: column; gap: 6px; }
+.records-weight-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; color: #666; padding: 6px 0;
+  border-bottom: 1px solid #f4f0ec;
+}
+.records-weight-row:last-child { border-bottom: none; }
+.records-weight-row strong { font-weight: 700; color: #1a1a1a; }
+
+/* 진료 기록 */
+.records-item {
+  position: relative; padding: 10px 36px 10px 12px;
+  background: #faf7f5; border-radius: 10px; margin-bottom: 8px;
+}
+.records-item-type { font-size: 11px; font-weight: 700; color: var(--brand-dark); margin-bottom: 3px; }
+.records-item-content { font-size: 14px; color: #1a1a1a; line-height: 1.4; }
+.records-item-meta { font-size: 11px; color: #aaa; margin-top: 4px; }
+.records-item-delete {
+  position: absolute; right: 10px; top: 10px;
+  width: 22px; height: 22px;
+  background: #e8e0dc; border: none; border-radius: 50%;
+  font-size: 11px; cursor: pointer; color: #888;
+  display: flex; align-items: center; justify-content: center;
+}
+.records-empty { font-size: 13px; color: #aaa; padding: 12px 0; text-align: center; line-height: 1.6; }
+
+/* 모달 필드 */
+.modal-field { margin-bottom: 12px; }
+.modal-field label {
+  display: block; font-size: 12px; font-weight: 700; color: #666; margin-bottom: 5px;
+}
+
+/* =====================================================
+   지출 탭
+   ===================================================== */
+.expense-header {
+  background: linear-gradient(135deg, var(--brand), #4ade80);
+  margin: 0 12px 8px; border-radius: 16px;
+  padding: 20px; text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+}
+.expense-month { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
+.expense-total { font-size: 28px; font-weight: 900; color: #fff; }
+
+.expense-cats {
+  background: #fff; margin: 0 12px 8px; border-radius: 14px;
+  padding: 14px 16px; border: 1.5px solid #f0e8e2;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.expense-cat-row { display: flex; align-items: center; gap: 8px; }
+.expense-cat-name { font-size: 12px; font-weight: 600; color: #444; width: 60px; flex-shrink: 0; }
+.expense-cat-bar-wrap { flex: 1; height: 6px; background: #f0ebe6; border-radius: 999px; overflow: hidden; }
+.expense-cat-bar { display: block; height: 100%; background: var(--brand); border-radius: 999px; }
+.expense-cat-amt { font-size: 12px; font-weight: 700; color: #1a1a1a; white-space: nowrap; min-width: 60px; text-align: right; }
+
+.expense-list { padding: 0 12px 80px; display: flex; flex-direction: column; gap: 8px; }
+.expense-item {
+  background: #fff; border-radius: 12px; padding: 12px 40px 12px 14px;
+  border: 1.5px solid #f0e8e2; display: flex; justify-content: space-between; align-items: flex-start;
+  position: relative;
+}
+.expense-item-left { display: flex; flex-direction: column; gap: 2px; }
+.expense-item-cat { font-size: 12px; font-weight: 700; color: var(--brand-dark); }
+.expense-item-memo { font-size: 13px; color: #444; }
+.expense-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.expense-item-amt { font-size: 15px; font-weight: 800; color: #1a1a1a; }
+.expense-item-date { font-size: 11px; color: #aaa; }
+.expense-item-delete {
+  position: absolute; right: 10px; top: 12px;
+  width: 22px; height: 22px;
+  background: #f0ebe6; border: none; border-radius: 50%;
+  font-size: 11px; cursor: pointer; color: #888;
+  display: flex; align-items: center; justify-content: center;
+}

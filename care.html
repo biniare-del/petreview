@@ -20,18 +20,58 @@
       <div class="logo-text"><h1>우쭈쭈</h1></div>
     </div>
     <div class="header-auth" id="header-auth">
-      <button class="care-history-btn" id="care-history-btn" hidden>📋 기록</button>
       <button class="auth-login-btn" id="care-login-btn" hidden onclick="location.href='index.html'">로그인</button>
     </div>
   </header>
 
   <!-- 서브탭 -->
-  <div class="care-subtabs" id="care-subtabs">
-    <button class="care-subtab is-active" data-subtab="care">🩺 케어</button>
+  <div class="care-subtabs" id="care-subtabs" hidden>
+    <button class="care-subtab is-active" data-subtab="manage">🐾 관리</button>
     <button class="care-subtab" data-subtab="diet">🍚 식단</button>
+    <button class="care-subtab" data-subtab="records">📋 기록</button>
+    <button class="care-subtab" data-subtab="expense">💰 지출</button>
   </div>
 
   <div id="care-content" class="care-content"></div>
+
+  <!-- 케어 항목 하단 시트 -->
+  <div class="care-sheet-overlay" id="care-sheet-overlay">
+    <div class="care-sheet" id="care-sheet">
+      <div class="care-sheet-handle"></div>
+      <div class="care-sheet-header">
+        <div class="care-sheet-title-row">
+          <span class="care-sheet-icon" id="care-sheet-icon"></span>
+          <span class="care-sheet-title" id="care-sheet-title"></span>
+        </div>
+        <button class="care-sheet-close" id="care-sheet-close">✕</button>
+      </div>
+      <div class="care-sheet-body">
+        <div class="care-sheet-section">
+          <div class="care-sheet-label">마지막 관리일</div>
+          <div class="care-sheet-last-date" id="care-sheet-last-date">기록 없음</div>
+        </div>
+        <div class="care-sheet-section">
+          <div class="care-sheet-label">관리 주기</div>
+          <div class="care-iv-presets" id="care-iv-presets"></div>
+        </div>
+        <div class="care-sheet-section care-sheet-section--row">
+          <div class="care-sheet-label">📲 푸시 알림</div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="care-sheet-notify"/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="care-sheet-footer">
+        <div class="care-done-date-row">
+          <span class="care-done-date-label">완료 날짜</span>
+          <input type="date" class="care-done-date-input" id="care-done-date"/>
+        </div>
+        <button class="care-sheet-done-btn" id="care-sheet-done-btn">✓ 완료 기록</button>
+        <button class="care-sheet-history-btn" id="care-sheet-history-btn">📋 이 항목의 기록 보기</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 하단 탭바 -->
   <nav class="bottom-tab-bar" aria-label="하단 탭 메뉴">
