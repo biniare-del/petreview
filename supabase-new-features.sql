@@ -89,6 +89,14 @@ CREATE TABLE IF NOT EXISTS pet_health_records (
   created_at  TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE pet_health_records ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "hr_owner_select" ON pet_health_records FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "hr_owner_insert" ON pet_health_records FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY IF NOT EXISTS "hr_owner_delete" ON pet_health_records FOR DELETE USING (auth.uid() = user_id);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'hr_owner_select' AND tablename = 'pet_health_records') THEN
+    CREATE POLICY "hr_owner_select" ON pet_health_records FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'hr_owner_insert' AND tablename = 'pet_health_records') THEN
+    CREATE POLICY "hr_owner_insert" ON pet_health_records FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'hr_owner_delete' AND tablename = 'pet_health_records') THEN
+    CREATE POLICY "hr_owner_delete" ON pet_health_records FOR DELETE USING (auth.uid() = user_id);
+  END IF;
+END $$;
