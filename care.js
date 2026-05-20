@@ -784,6 +784,8 @@ async function init() {
 
   const user = window.PetAuth?.currentUser ?? null;
   document.getElementById("care-login-btn").hidden = !!user;
+  const hospitalLink = document.getElementById("care-hospital-link");
+  if (hospitalLink) hospitalLink.hidden = !user;
 
   if (!user) {
     document.getElementById("care-subtabs").hidden = true;

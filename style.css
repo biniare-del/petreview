@@ -4982,3 +4982,12 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .hospital-action-btn--outline {
   background: #fff; color: #16a34a; border: 1.5px solid #16a34a;
 }
+
+/* 케어 헤더 단골병원 링크 */
+.care-hospital-link {
+  font-size: 12px; font-weight: 700;
+  color: #16a34a; text-decoration: none;
+  padding: 5px 12px; background: #e7f5f1;
+  border-radius: 20px; white-space: nowrap;
+  border: 1.5px solid #bbf7d0;
+}
