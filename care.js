@@ -1128,14 +1128,13 @@ async function init() {
   const content = document.getElementById("care-content");
 
   await window.PetAuth?.init((event) => {
-    if (event === "SIGNED_OUT") window.location.href = "index.html";
+    if (event === "SIGNED_OUT") window.location.href = "care.html";
   });
 
   const user = window.PetAuth?.currentUser ?? null;
   document.getElementById("care-login-btn").hidden = !!user;
 
   if (!user) {
-    // 데모 펫으로 실제 UI 미리보기 (기록 시도 시만 로그인 유도)
     const demoPet = { id: "demo", name: "초코", species: "강아지", breed: "말티즈" };
     _pets = [demoPet];
     _activePetIdx = 0;
@@ -1143,13 +1142,33 @@ async function init() {
     document.getElementById("care-subtabs").hidden = false;
 
     const tabsHtml = `
+      <div class="care-welcome-card">
+        <div class="care-welcome-hero">
+          <div class="care-welcome-logo">🐾</div>
+          <div>
+            <div class="care-welcome-title">우쭈쭈</div>
+            <div class="care-welcome-sub">우리 아이 케어 매니저</div>
+          </div>
+        </div>
+        <div class="care-welcome-features">
+          <div class="care-welcome-feature"><span>🐾</span> 케어루틴 · 목욕·접종·산책 주기 관리</div>
+          <div class="care-welcome-feature"><span>📋</span> 건강기록 · 체중 추적 · 진료 이력</div>
+          <div class="care-welcome-feature"><span>🍚</span> 식습관 · 식사·수분 섭취 체크</div>
+          <div class="care-welcome-feature"><span>💰</span> 집사영수증 · 월별 지출 관리</div>
+        </div>
+        <button class="care-welcome-login-btn" id="demo-login-btn">
+          <svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
+          구글로 시작하기
+        </button>
+        <a class="care-welcome-hospital-link" href="index.html">🏥 동물병원 찾기 · 후기 보기</a>
+      </div>
+      <div class="care-demo-label">아래는 데모 미리보기</div>
       <div class="care-pet-tabs" id="care-pet-tabs">
         <button class="care-pet-tab is-active">🐶 <span>초코 (데모)</span></button>
       </div>
-      <div class="care-demo-banner">로그인하면 우리 아이 데이터로 바로 시작할 수 있어요 — <button class="care-demo-login-btn" id="demo-login-btn">로그인</button></div>
       <div id="care-main-area"></div>`;
     content.innerHTML = tabsHtml;
-    document.getElementById("demo-login-btn")?.addEventListener("click", () => promptLogin());
+    document.getElementById("demo-login-btn")?.addEventListener("click", () => window.PetAuth?.signInWithGoogle());
 
     await renderDemoArea(demoPet, document.getElementById("care-main-area"));
 
