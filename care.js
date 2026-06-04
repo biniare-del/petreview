@@ -317,6 +317,22 @@ async function renderManageTab(pet, container) {
   <div class="ai-advice-block" id="ai-advice-block">
     <button class="ai-advice-btn" id="ai-advice-btn">🤖 AI 케어 조언</button>
     <div class="ai-advice-result" id="ai-advice-result" hidden></div>
+  </div>
+  <div class="care-hospital-shortcuts">
+    <a class="care-shortcut-card" href="index.html">
+      <span class="care-shortcut-icon">🏥</span>
+      <div>
+        <div class="care-shortcut-title">동물병원 찾기</div>
+        <div class="care-shortcut-sub">후기 · 가격 비교</div>
+      </div>
+    </a>
+    <a class="care-shortcut-card" href="hospital.html">
+      <span class="care-shortcut-icon">⭐</span>
+      <div>
+        <div class="care-shortcut-title">단골병원 관리</div>
+        <div class="care-shortcut-sub">즐겨찾기 · 예약 메모</div>
+      </div>
+    </a>
   </div>`;
 
   container.innerHTML = html;

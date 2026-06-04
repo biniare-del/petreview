@@ -5339,7 +5339,28 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   padding: 5px 12px; background: #e7f5f1;
   border-radius: 20px; white-space: nowrap;
   border: 1.5px solid #bbf7d0;
+  transition: background 0.15s, border-color 0.15s;
 }
+.care-hospital-link:hover { background: #d1fae5; border-color: #6ee7b7; }
+
+/* 루틴탭 병원 바로가기 카드 */
+.care-hospital-shortcuts {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin: 14px 0 4px;
+}
+.care-shortcut-card {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border: 1.5px solid #e8f5e9;
+  border-radius: 16px; padding: 14px 14px;
+  text-decoration: none; color: inherit;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.18s, border-color 0.18s, transform 0.18s;
+}
+.care-shortcut-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.09); border-color: #a7f3d0; transform: translateY(-1px); }
+.care-shortcut-card:active { transform: scale(0.97); }
+.care-shortcut-icon { font-size: 28px; flex-shrink: 0; }
+.care-shortcut-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+.care-shortcut-sub { font-size: 11px; color: #aaa; }
 
 /* 비로그인 데모 배너 */
 .care-demo-banner {
