@@ -53,9 +53,11 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.05);
 }
 
 .logo-area {
@@ -2749,9 +2751,12 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
-  background: #fff;
-  border-top: 0.5px solid #e8e0da;
+  height: 58px;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 0.5px solid rgba(0,0,0,0.07);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
   display: flex;
   align-items: stretch;
   z-index: 1000;
@@ -2778,11 +2783,26 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 
 .tab-item svg {
-  transition: stroke 0.15s;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.15s;
 }
 
 .tab-item:hover { color: #1d9e75; }
-.tab-item.is-active { color: #1d9e75; }
+.tab-item.is-active {
+  color: #1d9e75;
+}
+.tab-item.is-active svg {
+  transform: scale(1.15) translateY(-1px);
+}
+.tab-item span {
+  position: relative;
+}
+.tab-item.is-active span::after {
+  content: '';
+  display: block; position: absolute;
+  bottom: -3px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%;
+  background: #1d9e75;
+}
 
 /* ===== 리뷰 상세 모달 ===== */
 .review-detail-modal {
@@ -4088,9 +4108,10 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 
 /* 케어루틴 전체 현황 배너 */
 .manage-all-summary {
-  margin: 0 16px 12px; padding: 14px 16px;
-  background: linear-gradient(135deg, #f0f9f4, #e7f5ef);
-  border-radius: 16px; border: 1.5px solid #c8e6d4;
+  margin: 10px 12px 0; padding: 14px 16px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-radius: 16px; border: 1.5px solid #bbf7d0;
+  box-shadow: 0 1px 4px rgba(22,163,74,0.07);
 }
 .manage-all-summary-title {
   font-size: 12px; font-weight: 700; color: #16a34a;
@@ -4365,16 +4386,25 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
    ===================================================== */
 
 .care-subtabs {
-  display: flex; gap: 0;
-  background: #fff; border-bottom: 1px solid #f0e8e2;
-  padding: 0 16px;
+  display: flex; gap: 6px;
+  background: #f4faf7; border-bottom: 1px solid #e2f0ea;
+  padding: 8px 12px;
+  overflow-x: auto; scrollbar-width: none;
 }
+.care-subtabs::-webkit-scrollbar { display: none; }
 .care-subtab {
-  flex: 1; padding: 10px 0; font-size: 14px; font-weight: 700;
-  color: #aaa; background: none; border: none; border-bottom: 2px solid transparent;
-  cursor: pointer; transition: all 0.15s;
+  flex-shrink: 0; padding: 7px 14px; font-size: 13px; font-weight: 700;
+  color: #888; background: #fff; border: 1.5px solid #e0d9d3;
+  border-radius: 999px; cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap; font-family: inherit;
 }
-.care-subtab.is-active { color: var(--brand-dark); border-bottom-color: var(--brand-dark); }
+.care-subtab.is-active {
+  color: #fff; background: var(--brand-dark);
+  border-color: var(--brand-dark);
+  box-shadow: 0 2px 8px rgba(15,110,86,0.25);
+  transform: scale(1.03);
+}
 
 .diet-pet-summary {
   display: flex; align-items: center; gap: 10px; padding: 14px 16px 8px;
@@ -4382,12 +4412,13 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .diet-pet-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
 
 .diet-block {
-  background: #fff; margin: 8px 12px; border-radius: 14px;
+  background: #fff; margin: 8px 12px; border-radius: 16px;
   padding: 14px 16px; border: 1.5px solid #f0e8e2;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .diet-block-title {
-  font-size: 13px; font-weight: 700; color: #333;
-  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+  font-size: 15px; font-weight: 800; color: #1a1a1a;
+  display: flex; align-items: center; gap: 6px;
 }
 .diet-meals-done, .diet-water-stat {
   font-size: 12px; font-weight: 600; color: var(--brand-dark);
@@ -4402,18 +4433,22 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .diet-meals-grid { display: flex; gap: 8px; }
 .diet-meal-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 3px; padding: 10px 8px; border-radius: 12px;
+  gap: 5px; padding: 14px 8px 12px; border-radius: 16px;
   background: #f8f4f0; border: 1.5px solid #e8ddd6;
-  cursor: pointer; transition: all 0.15s;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
+.diet-meal-btn:active { transform: scale(0.94); }
 .diet-meal-btn.is-done {
   background: var(--brand-bg); border-color: var(--brand-border);
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
 }
 .diet-meal-btn:disabled { cursor: default; }
 .diet-meal-label { font-size: 13px; font-weight: 700; color: #333; }
 .diet-meal-state { font-size: 11px; color: #aaa; }
 .diet-meal-btn.is-done .diet-meal-state { color: var(--brand-dark); font-weight: 700; }
-.diet-meal-amount { font-size: 10px; color: #bbb; }
+.diet-meal-amount { font-size: 10px; color: #bbb; font-weight: 600; }
 
 /* 물 섭취 */
 .diet-water-bar-wrap {
@@ -4446,13 +4481,15 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 /* 수분 섭취 3단계 */
 .diet-water-level-btns { display: flex; gap: 8px; }
 .diet-water-level-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 12px 6px; border-radius: 14px;
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 14px 6px 12px; border-radius: 16px;
   background: #f0f9ff; border: 1.5px solid #bae6fd;
-  cursor: pointer; transition: all 0.18s;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 1px 3px rgba(14,165,233,0.08);
 }
-.diet-water-level-btn:active { transform: scale(0.95); }
-.diet-water-level-icon { font-size: 18px; line-height: 1; }
+.diet-water-level-btn:active { transform: scale(0.93); }
+.diet-water-level-icon { font-size: 20px; line-height: 1; }
 .diet-water-level-label { font-size: 11px; font-weight: 700; color: #0ea5e9; }
 .diet-water-selected {
   display: flex; align-items: center; gap: 10px;
@@ -4530,54 +4567,74 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
    관리 그리드 (9-button care grid)
    ===================================================== */
 .manage-progress {
-  padding: 14px 16px 6px;
+  margin: 10px 12px 4px;
+  padding: 14px 16px 12px;
+  background: #fff; border-radius: 16px;
+  border: 1.5px solid #e2f0ea;
+  box-shadow: 0 1px 4px rgba(22,163,74,0.06);
 }
 .manage-progress-text {
-  font-size: 13px; font-weight: 700; color: #444; margin-bottom: 6px;
+  font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.manage-progress-pct {
+  font-size: 13px; font-weight: 700; color: var(--brand);
 }
 .manage-progress-track {
-  height: 6px; background: #f0ebe6; border-radius: 999px; overflow: hidden;
+  height: 8px; background: #f0ebe6; border-radius: 999px; overflow: hidden;
 }
 .manage-progress-fill {
   height: 100%; background: linear-gradient(90deg, var(--brand), #4ade80);
-  border-radius: 999px; transition: width 0.4s ease;
+  border-radius: 999px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .manage-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  padding: 10px 12px 4px;
+  padding: 8px 12px 4px;
 }
 .manage-card {
   display: flex; flex-direction: column; align-items: center;
-  gap: 6px; padding: 16px 8px;
-  background: #fff; border-radius: 16px;
-  border: 2px solid #f0e8e2;
+  gap: 8px; padding: 16px 8px 12px;
+  background: #fff; border-radius: 18px;
+  border: 1.5px solid #f0e8e2;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s;
   text-align: center; outline: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-.manage-card:active { transform: scale(0.94); }
-.manage-card-icon { font-size: 28px; line-height: 1; }
+.manage-card:active { transform: scale(0.91); }
+.manage-card-icon {
+  font-size: 26px; line-height: 1;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: #f4f0ec;
+  display: flex; align-items: center; justify-content: center;
+}
 .manage-card-name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
 .manage-card-badge {
-  font-size: 11px; font-weight: 600;
-  padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 20px; white-space: nowrap;
 }
 
 /* card states */
 .manage-card--overdue { border-color: #fca5a5; background: #fff8f8; }
+.manage-card--overdue .manage-card-icon { background: #fee2e2; }
 .manage-card--overdue .manage-card-badge { background: #fee2e2; color: #dc2626; }
 .manage-card--today   { border-color: #fdba74; background: #fffaf6; }
+.manage-card--today   .manage-card-icon { background: #fed7aa; }
 .manage-card--today   .manage-card-badge { background: #fed7aa; color: #c2410c; }
 .manage-card--soon    { border-color: #fde68a; background: #fffdf0; }
+.manage-card--soon    .manage-card-icon { background: #fef9c3; }
 .manage-card--soon    .manage-card-badge { background: #fef9c3; color: #854d0e; }
 .manage-card--ok      { border-color: #bbf7d0; background: #f0fdf4; }
+.manage-card--ok      .manage-card-icon { background: #d1fae5; }
 .manage-card--ok      .manage-card-badge { background: #dcfce7; color: #166534; }
 .manage-card--unset   { border-color: #e5e7eb; background: #fafafa; }
+.manage-card--unset   .manage-card-icon { background: #f3f4f6; }
 .manage-card--unset   .manage-card-badge { background: #f3f4f6; color: #9ca3af; }
-.manage-card--done    { border-color: #bbf7d0; background: #f0fdf4; opacity: 0.72; }
+.manage-card--done    { border-color: #bbf7d0; background: #f0fdf4; opacity: 0.75; }
+.manage-card--done    .manage-card-icon { background: #d1fae5; }
 .manage-card--done    .manage-card-badge { background: #dcfce7; color: #16a34a; }
 
 /* =====================================================
@@ -4711,13 +4768,13 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
    식단 탭 업데이트
    ===================================================== */
 .diet-block-header {
-  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
 }
 .diet-block-sub {
-  font-size: 12px; font-weight: 600; color: var(--brand-dark);
-  background: var(--brand-bg); border-radius: 20px; padding: 2px 8px;
+  font-size: 12px; font-weight: 700; color: var(--brand-dark);
+  background: var(--brand-bg); border-radius: 20px; padding: 3px 10px;
 }
-.diet-meal-icon { font-size: 18px; }
+.diet-meal-icon { font-size: 22px; }
 .diet-water-bar--good { background: linear-gradient(90deg, #38bdf8, #0ea5e9); }
 .diet-water-bar--mid  { background: linear-gradient(90deg, #fde68a, #facc15); }
 .diet-water-bar--low  { background: linear-gradient(90deg, #fca5a5, #f87171); }
@@ -4726,8 +4783,9 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
    기록 탭
    ===================================================== */
 .records-section {
-  background: #fff; margin: 8px 12px; border-radius: 14px;
+  background: #fff; margin: 8px 12px; border-radius: 16px;
   padding: 14px 16px; border: 1.5px solid #f0e8e2;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .records-section-header {
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
@@ -4784,18 +4842,28 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
    지출 탭
    ===================================================== */
 .expense-header {
-  background: linear-gradient(135deg, var(--brand), #4ade80);
-  margin: 0 12px 8px; border-radius: 16px;
-  padding: 20px; text-align: center;
+  background: linear-gradient(135deg, #0f6e56 0%, #16a34a 60%, #22c55e 100%);
+  margin: 8px 12px; border-radius: 20px;
+  padding: 22px 20px 18px; text-align: center;
   display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 4px 16px rgba(15,110,86,0.25);
+  position: relative; overflow: hidden;
 }
-.expense-month { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
-.expense-total { font-size: 28px; font-weight: 900; color: #fff; }
+.expense-header::before {
+  content: '';
+  position: absolute; top: -20px; right: -20px;
+  width: 100px; height: 100px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 50%;
+}
+.expense-month { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.75); margin-bottom: 2px; }
+.expense-total { font-size: 32px; font-weight: 900; color: #fff; letter-spacing: -1px; }
 
 .expense-cats {
-  background: #fff; margin: 0 12px 8px; border-radius: 14px;
+  background: #fff; margin: 0 12px 8px; border-radius: 16px;
   padding: 14px 16px; border: 1.5px solid #f0e8e2;
   display: flex; flex-direction: column; gap: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .expense-cat-row { display: flex; align-items: center; gap: 8px; }
 .expense-cat-name { font-size: 12px; font-weight: 600; color: #444; width: 60px; flex-shrink: 0; }
@@ -4805,9 +4873,11 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 
 .expense-list { padding: 0 12px 80px; display: flex; flex-direction: column; gap: 8px; }
 .expense-item {
-  background: #fff; border-radius: 12px; padding: 12px 40px 12px 14px;
+  background: #fff; border-radius: 14px; padding: 12px 40px 12px 14px;
   border: 1.5px solid #f0e8e2; display: flex; justify-content: space-between; align-items: flex-start;
   position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: transform 0.15s;
 }
 .expense-item-left { display: flex; flex-direction: column; gap: 2px; }
 .expense-item-cat { font-size: 12px; font-weight: 700; color: var(--brand-dark); }

@@ -215,7 +215,10 @@ async function renderManageTab(pet, container) {
 
   let html = summaryHtml + `
   <div class="manage-progress">
-    <div class="manage-progress-text">${doneCount === totalCount ? "🎉 오늘 케어 완료!" : `오늘 ${doneCount} / ${totalCount} 완료`}</div>
+    <div class="manage-progress-text">
+      <span>${doneCount === totalCount ? "🎉 오늘 케어 완료!" : `오늘 ${doneCount} / ${totalCount} 완료`}</span>
+      <span class="manage-progress-pct">${pct}%</span>
+    </div>
     <div class="manage-progress-track"><div class="manage-progress-fill" style="width:${pct}%"></div></div>
   </div>
   <div class="manage-grid">`;
