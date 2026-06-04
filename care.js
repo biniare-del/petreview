@@ -542,11 +542,19 @@ function calcDER(weightKg, species, neutered) {
   return Math.round(rer * factor);
 }
 function getCalSettings(petId) {
+  // localStorage 폴백 (DB 컬럼 추가 전 구버전 데이터)
   try { return JSON.parse(localStorage.getItem(`cal_${petId}`) || "{}"); }
   catch { return {}; }
 }
-function saveCalSettings(petId, obj) {
-  localStorage.setItem(`cal_${petId}`, JSON.stringify(obj));
+function migrateCalSettingsFromStorage(petId) {
+  // localStorage에 남은 구버전 데이터 반환 후 삭제
+  try {
+    const raw = localStorage.getItem(`cal_${petId}`);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    localStorage.removeItem(`cal_${petId}`);
+    return obj;
+  } catch { return null; }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -583,7 +591,10 @@ function renderDietSection(container, pet, settings, logs, latestWeight) {
   const mealsPerDay = settings?.meals_per_day ?? 2;
   const foodAmountG = settings?.food_amount_g ?? null;
   const foodName    = settings?.food_name ?? "";
-  const calCfg      = getCalSettings(pet.id);
+  // DB 컬럼 우선, 없으면 localStorage 폴백
+  const calCfg      = (settings?.weight_kg != null || settings?.kcal_per_100g != null)
+    ? settings
+    : getCalSettings(pet.id);
   const neutered    = calCfg.neutered ?? true;
   const kcalPer100g = calCfg.kcal_per_100g ?? 350;
   const weightKg    = calCfg.weight_kg ?? latestWeight ?? null;
@@ -781,15 +792,20 @@ async function saveDietSettings(pet, container) {
   const foodName    = container.querySelector("#ds-food-name")?.value.trim() || null;
   const foodAmountG = parseFloat(container.querySelector("#ds-amount")?.value) || null;
 
-  // 칼로리 설정 localStorage 저장
   const weightKg    = parseFloat(container.querySelector("#ds-weight")?.value) || null;
   const neuteredBtn = container.querySelector("[data-neutered].is-active");
   const neutered    = neuteredBtn ? neuteredBtn.dataset.neutered === "true" : true;
   const kcalPer100g = parseFloat(container.querySelector("#ds-kcal")?.value) || 350;
-  saveCalSettings(pet.id, { weight_kg: weightKg, neutered, kcal_per_100g: kcalPer100g });
+  // localStorage 구버전 데이터 정리
+  migrateCalSettingsFromStorage(pet.id);
 
   const { error } = await _db.from("pet_diet_settings").upsert(
-    { user_id: userId, pet_id: pet.id, meals_per_day: mealsPerDay, food_name: foodName, food_amount_g: foodAmountG, updated_at: new Date().toISOString() },
+    {
+      user_id: userId, pet_id: pet.id,
+      meals_per_day: mealsPerDay, food_name: foodName, food_amount_g: foodAmountG,
+      weight_kg: weightKg, neutered, kcal_per_100g: kcalPer100g,
+      updated_at: new Date().toISOString()
+    },
     { onConflict: "pet_id" }
   );
   if (error) {

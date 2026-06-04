@@ -47,7 +47,7 @@
 ```
 pets               — id, user_id, name, species, breed, photo_url, created_at
 pet_care_logs      — id, user_id, pet_id, care_key, done_at
-pet_diet_settings  — id, user_id, pet_id, meals_per_day, food_name, food_amount_g
+pet_diet_settings  — id, user_id, pet_id, meals_per_day, food_name, food_amount_g, weight_kg, neutered, kcal_per_100g
 pet_diet_logs      — id, user_id, pet_id, log_type(meal/water/snack), meal_order, water_ml, note, logged_at
 pet_weights        — id, user_id, pet_id, weight, recorded_at
 pet_health_records — id, user_id, pet_id, record_type, content, record_date
@@ -64,7 +64,8 @@ push_subscriptions — id, user_id, subscription(JSON)
 ## 칼로리 계산
 
 RER = 70 × 체중^0.75 / DER = RER × 계수(강아지 중성화 1.6·미중성화 1.8, 고양이 1.2·1.4)
-칼로리 설정은 localStorage(`cal_${petId}`)에 저장: weight_kg, neutered, kcal_per_100g
+칼로리 설정은 pet_diet_settings 컬럼(weight_kg, neutered, kcal_per_100g)에 저장.
+DB 컬럼 추가 SQL: supabase/add_cal_settings.sql 참고.
 
 ## git/배포 워크플로
 
@@ -108,12 +109,13 @@ RER = 70 × 체중^0.75 / DER = RER × 계수(강아지 중성화 1.6·미중성
 - [x] AI 조언 고도화: 체중 추이(증감 트렌드) + 건강기록 프롬프트 반영
 - [x] PWA 아이콘: 이모지 텍스트 → 벡터 발바닥 경로(ellipse 5개), sw v8
 - [x] 오프라인 UX: online/offline 이벤트 토스트, auth.js 공통 등록
+- [x] 소셜 이미지 업로드 개선: Canvas 압축(1280px/82%), 진행률 3단계 표시
+- [x] 건강기록 체중 차트: Canvas 라인차트, DPR 대응, 증감 ▲/▼ 표시
+- [x] 식단 칼로리 DB 저장: pet_diet_settings에 weight_kg·neutered·kcal_per_100g 컬럼 추가, localStorage 마이그레이션
 
 ## 남은 작업 (우선순위순)
 
-1. **소셜 이미지 업로드 개선** — 업로드 진행률 표시, 압축 전처리
-2. **건강기록 차트 고도화** — 체중 그래프 라인차트 시각화 (Canvas API)
-3. **식단 칼로리 Supabase 저장** — 현재 localStorage → DB 마이그레이션
+> 계획된 주요 작업 완료. 신규 기능 추가 시 여기에 기록.
 
 ## 주의사항
 
