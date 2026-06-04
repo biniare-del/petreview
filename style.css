@@ -5039,68 +5039,106 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 .social-tag-bar::-webkit-scrollbar { display: none; }
 .social-tag-btn {
-  padding: 6px 14px; border-radius: 20px;
-  border: 1.5px solid #e0d7d2; background: #fff;
+  padding: 7px 15px; border-radius: 20px;
+  border: 1.5px solid #e8ddd8; background: #faf7f5;
   font-size: 13px; font-family: inherit; cursor: pointer;
-  white-space: nowrap; color: #666; flex-shrink: 0;
-  transition: all 0.15s;
+  white-space: nowrap; color: #777; flex-shrink: 0;
+  transition: all 0.18s; font-weight: 500;
 }
-.social-tag-btn.is-active {
-  background: var(--brand-dark); border-color: var(--brand-dark); color: #fff;
-}
+.social-tag-btn:hover { border-color: #c8bdb8; background: #f4eeeb; }
+.social-tag-btn.is-active { color: #fff; border-color: transparent; font-weight: 700; }
+/* 전체 */
+.social-tag-btn[data-tag="전체"].is-active  { background: var(--brand-dark); }
+/* 태그별 컬러 */
+.social-tag-btn[data-tag="사진자랑"].is-active { background: #7C3AED; }
+.social-tag-btn[data-tag="병원추천"].is-active  { background: #0C5BAA; }
+.social-tag-btn[data-tag="질문"].is-active      { background: #C27E1A; }
+.social-tag-btn[data-tag="정보"].is-active       { background: #27500A; }
+.social-tag-btn[data-tag="일상"].is-active       { background: #4B5563; }
 
 /* 피드 */
 .social-feed {
   max-width: 600px; margin: 0 auto;
-  padding: 10px 12px 90px;
+  padding: 12px 12px 96px;
   display: flex; flex-direction: column; gap: 10px;
 }
+.social-empty-state {
+  text-align: center; padding: 60px 20px 40px;
+  color: #aaa; font-size: 15px; line-height: 1.6;
+}
+.social-empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.5; }
 
 /* 포스트 카드 */
 .post-card {
-  background: #fff; border-radius: 14px;
+  background: #fff; border-radius: 16px;
   border: 1.5px solid #f0e8e2; overflow: hidden;
-  cursor: pointer; transition: box-shadow 0.15s;
+  cursor: pointer;
+  transition: box-shadow 0.18s, border-color 0.18s, transform 0.18s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
-.post-card:active { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.post-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.09); border-color: #ddd0c8; }
+.post-card:active { transform: scale(0.99); box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
 
-.post-card-photos { position: relative; aspect-ratio: 16/9; overflow: hidden; background: #f5ede8; }
-.post-card-photo  { width: 100%; height: 100%; object-fit: cover; display: block; }
+.post-card-photos { position: relative; aspect-ratio: 4/3; overflow: hidden; background: #f5ede8; }
+.post-card-photo  { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s; }
+.post-card:hover .post-card-photo { transform: scale(1.03); }
 .post-card-photo-count {
-  position: absolute; right: 8px; bottom: 8px;
-  background: rgba(0,0,0,0.5); color: #fff;
-  font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+  position: absolute; right: 10px; bottom: 10px;
+  background: rgba(0,0,0,0.55); color: #fff;
+  font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+  backdrop-filter: blur(4px);
 }
 
-.post-card-body { padding: 12px 14px 10px; }
+.post-card-body { padding: 13px 15px 11px; }
 .post-card-top {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 7px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
 }
 .post-card-avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: #e8f5e9; display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; overflow: hidden; flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #bbf7d0, #86efac);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; overflow: hidden; flex-shrink: 0;
+  color: #15803d;
 }
 .post-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.post-card-author { font-size: 13px; font-weight: 600; color: #2a2520; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.post-card-time { font-size: 11px; color: #bbb; white-space: nowrap; }
+.post-card-author { font-size: 13px; font-weight: 700; color: #2a2520; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post-card-time { font-size: 11px; color: #c0b8b2; white-space: nowrap; }
 
 .social-tag-badge {
-  font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; flex-shrink: 0;
+  font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; flex-shrink: 0;
 }
 .post-card-title {
-  font-size: 14px; font-weight: 700; color: #1a1a1a; margin: 0 0 8px; line-height: 1.4;
+  font-size: 15px; font-weight: 700; color: #1a1a1a; margin: 0 0 5px; line-height: 1.4;
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.post-card-preview {
+  font-size: 13px; color: #999; line-height: 1.45; margin: 0 0 9px;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
 }
 .post-card-footer { display: flex; align-items: center; gap: 10px; }
 .post-like-chip {
   display: inline-flex; align-items: center; gap: 4px;
-  background: #f8f4f0; border: 1px solid #e8ddd8;
-  border-radius: 20px; padding: 4px 10px; font-size: 12px; color: #888;
+  background: #faf6f4; border: 1px solid #ede5e0;
+  border-radius: 20px; padding: 5px 11px; font-size: 12px; color: #999;
   cursor: pointer; font-family: inherit; transition: all 0.15s;
 }
-.post-like-chip.is-liked { background: #fff0f3; border-color: #f43f5e; color: #f43f5e; }
-.post-card-comments { font-size: 12px; color: #aaa; }
+.post-like-chip:active { transform: scale(0.93); }
+.post-like-chip.is-liked { background: #fff0f3; border-color: #fba4b4; color: #f43f5e; }
+.post-card-comments { font-size: 12px; color: #bbb; }
+
+/* 글쓰기 FAB */
+.social-fab {
+  position: fixed; right: 18px; bottom: 74px;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a 0%, #0f6e56 100%);
+  color: #fff; font-size: 22px; border: none; cursor: pointer;
+  box-shadow: 0 4px 18px rgba(15,110,86,0.42);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s;
+  z-index: 100;
+}
+.social-fab:hover { box-shadow: 0 6px 24px rgba(15,110,86,0.55); transform: scale(1.06); }
+.social-fab:active { transform: scale(0.92); }
 
 /* 소셜 모달 */
 .social-modal-overlay {
@@ -5110,10 +5148,15 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 .social-modal-overlay[hidden] { display: none; }
 .social-modal {
-  background: #fff; border-radius: 20px 20px 0 0;
+  background: #fff; border-radius: 22px 22px 0 0;
   width: 100%; max-width: 600px;
   max-height: 90vh; overflow-y: auto;
   -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+}
+.social-modal::before {
+  content: ''; display: block;
+  width: 38px; height: 4px; border-radius: 2px;
+  background: #e0d7d2; margin: 10px auto 2px;
 }
 .social-modal-header {
   display: flex; align-items: center; justify-content: space-between;

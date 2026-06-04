@@ -108,7 +108,8 @@
     const filtered = currentTag === "전체" ? allPosts : allPosts.filter(p => p.tag === currentTag);
 
     if (!filtered.length) {
-      listEl.innerHTML = '<p class="placeholder-text" style="padding:48px 0;">아직 게시글이 없어요.<br>첫 글을 남겨보세요!</p>';
+      const tagLabel = currentTag === "전체" ? "" : ` [${currentTag}]`;
+      listEl.innerHTML = `<div class="social-empty-state"><div class="social-empty-icon">🐾</div><p>아직 게시글이 없어요${escH(tagLabel)}</p><p style="font-size:13px;color:#bbb;margin-top:4px;">첫 글을 남겨보세요!</p></div>`;
       return;
     }
 
@@ -127,17 +128,22 @@
           </div>`
         : "";
 
+      const preview = (post.content || "").trim().replace(/\n+/g, " ");
+      const previewHtml = preview
+        ? `<p class="post-card-preview">${escH(preview)}</p>` : "";
+
       return `
       <div class="post-card" data-post-id="${escH(post.id)}">
         ${photosHtml}
         <div class="post-card-body">
           <div class="post-card-top">
-            <div class="post-card-avatar">${avatar ? `<img src="${escH(avatar)}" alt=""/>` : nick[0]||"?"}</div>
+            <div class="post-card-avatar">${avatar ? `<img src="${escH(avatar)}" alt=""/>` : escH(nick[0]||"?")}</div>
             <div class="post-card-author">${escH(nick)}</div>
             ${tagBadgeHtml(post.tag)}
             <span class="post-card-time">${timeAgo(post.created_at)}</span>
           </div>
           <p class="post-card-title">${escH(post.title)}</p>
+          ${previewHtml}
           <div class="post-card-footer">
             <button class="post-like-chip${liked?" is-liked":""}" data-post-id="${escH(post.id)}">❤️ ${likeCount}</button>
             <span class="post-card-comments">💬 ${commentCount}</span>
