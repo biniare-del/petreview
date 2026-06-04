@@ -798,7 +798,7 @@
     const db = window.supabaseClient;
     const container = document.getElementById("weight-log-list");
     const { data, error } = await db
-      .from("pet_weight_logs")
+      .from("pet_weights")
       .select("*")
       .eq("pet_id", petId)
       .order("recorded_at", { ascending: false })
@@ -846,7 +846,7 @@
 
     container.querySelectorAll(".btn-delete[data-log-id]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        await db.from("pet_weight_logs").delete().eq("id", btn.dataset.logId);
+        await db.from("pet_weights").delete().eq("id", btn.dataset.logId);
         loadWeightLogs(petId);
       });
     });
@@ -991,7 +991,7 @@
 
       const btn = document.getElementById("weight-add-btn");
       btn.disabled = true;
-      const { error } = await db.from("pet_weight_logs").insert([{
+      const { error } = await db.from("pet_weights").insert([{
         pet_id: currentHealthPet.id,
         user_id: userId,
         weight,
