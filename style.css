@@ -4718,6 +4718,44 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   color: var(--brand-dark); background: var(--brand-bg); border-color: var(--brand-border);
 }
 
+/* 품종 추천 힌트 (시트 내) */
+.care-breed-hint {
+  display: flex; align-items: center; gap: 8px;
+  margin: -4px 0 0; padding: 8px 12px;
+  background: #fffbeb; border: 1.5px solid #fde68a;
+  border-radius: 10px; animation: fadeSlideIn 0.2s ease;
+}
+.care-breed-hint-text { flex: 1; font-size: 12px; font-weight: 600; color: #92400e; }
+.care-breed-hint-apply {
+  padding: 4px 12px; background: #f59e0b; color: #fff;
+  border: none; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: inherit;
+}
+
+/* 품종 맞춤 배너 (관리 탭 상단) */
+.breed-hint-banner {
+  display: flex; align-items: center; gap: 8px;
+  margin: 8px 12px 0; padding: 11px 14px;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1.5px solid #fde68a; border-radius: 14px;
+  animation: fadeSlideIn 0.25s ease;
+}
+.breed-hint-banner-text { flex: 1; font-size: 13px; font-weight: 600; color: #92400e; }
+.breed-hint-banner-btn {
+  padding: 5px 14px; background: #f59e0b; color: #fff;
+  border: none; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: inherit; flex-shrink: 0;
+}
+.breed-hint-banner-close {
+  width: 22px; height: 22px; background: none; border: none;
+  font-size: 12px; color: #b45309; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* 토글 스위치 */
 .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }

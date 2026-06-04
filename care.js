@@ -26,6 +26,52 @@ const CARE_ITEMS = {
   ],
 };
 
+// ─── 품종별 맞춤 케어 주기 (기본값과 다른 항목만 정의) ──────────
+const BREED_INTERVALS = {
+  dog: {
+    "말티즈":      { bath: 7,  grooming: 30, nail: 14 },
+    "시츄":        { bath: 7,  grooming: 30 },
+    "요크셔":      { bath: 7,  grooming: 28, nail: 14 },
+    "페키니즈":    { bath: 7,  grooming: 28, nail: 14 },
+    "푸들":        { grooming: 28 },
+    "비숑":        { grooming: 28 },
+    "포메":        { grooming: 30 },
+    "치와와":      { grooming: 14, nail: 14 },
+    "불독":        { bath: 7,  nail: 14 },
+    "웰시":        { grooming: 30 },
+    "닥스":        { grooming: 30 },
+    "진도":        { grooming: 60 },
+    "스피츠":      { grooming: 42 },
+    "골든":        { grooming: 60 },
+    "리트리버":    { grooming: 60 },
+    "래브라도":    { grooming: 60 },
+    "허스키":      { grooming: 90 },
+    "보더콜리":    { grooming: 42 },
+    "셔틀랜드":    { grooming: 42 },
+  },
+  cat: {
+    "페르시안":    { bath: 14, grooming: 14, nail: 14 },
+    "메인쿤":      { bath: 14, grooming: 21, nail: 14 },
+    "앙고라":      { bath: 21, grooming: 14, nail: 14 },
+    "스코티시":    { grooming: 21, nail: 14 },
+    "브리티시":    { grooming: 21, nail: 14 },
+    "러시안":      { grooming: 14, nail: 14 },
+    "아비시니안":  { grooming: 21, nail: 14 },
+    "노르웨이":    { bath: 21, grooming: 14, nail: 14 },
+    "렉돌":        { bath: 21, grooming: 14 },
+  },
+};
+
+function getBreedIntervals(species, breed) {
+  if (!breed) return {};
+  const lower = breed.toLowerCase();
+  const table = BREED_INTERVALS[speciesKey(species)] ?? {};
+  for (const [key, intervals] of Object.entries(table)) {
+    if (lower.includes(key.toLowerCase())) return intervals;
+  }
+  return {};
+}
+
 const INTERVAL_PRESETS = [
   { days: 1, label: "매일" }, { days: 3, label: "3일" }, { days: 7, label: "1주" },
   { days: 14, label: "2주" }, { days: 30, label: "1달" }, { days: 90, label: "3달" },
@@ -254,13 +300,38 @@ async function renderManageTab(pet, container) {
     </button>`;
   });
 
+  // 품종 맞춤 주기 일괄 배너 (저장된 커스텀 설정 없을 때만)
+  const breedIvsAll = getBreedIntervals(pet.species, pet.breed);
+  const hasBreedData = Object.keys(breedIvsAll).length > 0;
+  const dismissed    = !!localStorage.getItem(`care_iv_dismissed_${pet.id}`);
+  const hasCustom    = Object.keys(getCustomIntervals(pet.id)).length > 0 || dismissed;
+  const breedBanner  = hasBreedData && !hasCustom ? `
+  <div class="breed-hint-banner" id="breed-hint-banner">
+    <span class="breed-hint-banner-text">🐾 ${escapeHtml(pet.breed ?? pet.species)} 맞춤 케어 주기가 있어요</span>
+    <button class="breed-hint-banner-btn" id="breed-hint-apply-all">자동 설정</button>
+    <button class="breed-hint-banner-close" id="breed-hint-close">✕</button>
+  </div>` : "";
+
   html += `</div>
+  ${breedBanner}
   <div class="ai-advice-block" id="ai-advice-block">
     <button class="ai-advice-btn" id="ai-advice-btn">🤖 AI 케어 조언</button>
     <div class="ai-advice-result" id="ai-advice-result" hidden></div>
   </div>`;
 
   container.innerHTML = html;
+
+  // 품종 맞춤 주기 일괄 적용
+  container.querySelector("#breed-hint-apply-all")?.addEventListener("click", () => {
+    Object.entries(breedIvsAll).forEach(([key, days]) => saveCustomInterval(pet.id, key, days));
+    container.querySelector("#breed-hint-banner")?.remove();
+    renderActiveArea();
+  });
+  container.querySelector("#breed-hint-close")?.addEventListener("click", () => {
+    // 닫기 시 빈 객체라도 저장해서 다시 안 뜨게
+    localStorage.setItem(`care_iv_dismissed_${pet.id}`, "1");
+    container.querySelector("#breed-hint-banner")?.remove();
+  });
 
   // 카드 클릭 → 시트 열기
   container.querySelectorAll(".manage-card").forEach(card => {
@@ -303,8 +374,33 @@ function openManageSheet(pet, item, lastDoneAt, intervalDays) {
       saveCustomInterval(pet.id, item.key, days);
       presetsEl.querySelectorAll(".care-iv-opt").forEach(b => b.classList.toggle("is-active", b === btn));
       _sheetItem.intervalDays = days;
+      updateBreedHint(days);
     });
   });
+
+  // 품종 맞춤 주기 힌트
+  const breedIvs = getBreedIntervals(pet.species, pet.breed);
+  const breedDays = breedIvs[item.key] ?? null;
+  const hintEl  = document.getElementById("care-breed-hint");
+  const hintTxt = document.getElementById("care-breed-hint-text");
+  const hintBtn = document.getElementById("care-breed-hint-apply");
+
+  function updateBreedHint(currentDays) {
+    if (breedDays && breedDays !== currentDays) {
+      hintTxt.textContent = `${pet.breed ?? pet.species} 추천: ${intervalLabel(breedDays)}`;
+      hintEl.hidden = false;
+    } else {
+      hintEl.hidden = true;
+    }
+  }
+  updateBreedHint(intervalDays);
+
+  hintBtn.onclick = () => {
+    saveCustomInterval(pet.id, item.key, breedDays);
+    _sheetItem.intervalDays = breedDays;
+    presetsEl.querySelectorAll(".care-iv-opt").forEach(b => b.classList.toggle("is-active", parseInt(b.dataset.days) === breedDays));
+    updateBreedHint(breedDays);
+  };
 
   // 알림 토글
   const notifyPrefs = getNotifyPrefs(pet.id);
