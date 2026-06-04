@@ -984,20 +984,30 @@ async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings) {
   const result = document.getElementById("ai-advice-result");
   if (!btn || !result) return;
   btn.disabled = true;
-  btn.textContent = "분석 중...";
-  result.hidden = true;
+  btn.textContent = "✨ 분석 중...";
+  result.textContent = "";
+  result.hidden = false;
+
   try {
     const res = await fetch("https://petreview.vercel.app/api/ai-care", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pet, careItems, dietToday: dietLogs, dietSettings }),
     });
-    const data = await res.json();
-    result.textContent = data.text || "조언을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
-    result.hidden = false;
+
+    if (!res.ok || !res.body) {
+      result.textContent = "조언을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
+    } else {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result.textContent += decoder.decode(value, { stream: true });
+      }
+    }
   } catch {
     result.textContent = "네트워크 오류가 발생했어요.";
-    result.hidden = false;
   }
   btn.disabled = false;
   btn.textContent = _activeSubtab === "diet" ? "🤖 AI 식단 조언" : "🤖 AI 케어 조언";
