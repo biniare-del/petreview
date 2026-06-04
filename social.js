@@ -329,6 +329,25 @@
     if (post) { if (!post.comments) post.comments = []; post.comments.push({ id: "t" }); }
   }
 
+  // ── 이미지 압축 (Canvas API) ─────────────────────────
+  function compressImage(file, maxPx = 1280, quality = 0.82) {
+    return new Promise(resolve => {
+      const img = new Image();
+      const blobUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(blobUrl);
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => resolve(blob ?? file), "image/jpeg", quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(file); };
+      img.src = blobUrl;
+    });
+  }
+
   // ── 글쓰기 ────────────────────────────────────────────
   function openWriteModal() {
     if (!window.PetAuth?.isLoggedIn()) { window.PetAuth?.signInWithGoogle(); return; }
@@ -385,20 +404,25 @@
     btn.disabled = true;
     btn.textContent = editingPostId ? "수정 중..." : "등록 중...";
 
-    // 사진 업로드
+    // 사진 압축 + 업로드
     let photoUrls = [];
     if (selectedFiles.length && !editingPostId) {
-      resultEl.textContent = "사진 업로드 중...";
-      for (const file of selectedFiles) {
-        const ext  = file.name.split(".").pop() || "jpg";
-        const path = `community/${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: upErr } = await db.storage.from("pet-photos").upload(path, file, { contentType: file.type });
+      const total = selectedFiles.length;
+      for (let i = 0; i < total; i++) {
+        const file = selectedFiles[i];
+        resultEl.style.color = "#aaa";
+        resultEl.textContent = `🗜️ 사진 압축 중... (${i + 1}/${total})`;
+        const compressed = await compressImage(file);
+        resultEl.textContent = `📤 업로드 중... (${i + 1}/${total})`;
+        const path = `community/${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+        const { error: upErr } = await db.storage.from("pet-photos").upload(path, compressed, { contentType: "image/jpeg" });
         if (!upErr) {
           const { data: u } = db.storage.from("pet-photos").getPublicUrl(path);
           photoUrls.push(u.publicUrl);
         }
       }
       resultEl.textContent = "";
+      resultEl.style.color = "";
     }
 
     try {
@@ -475,11 +499,24 @@
     document.getElementById("write-photo-input").click();
   });
   document.getElementById("write-photo-input")?.addEventListener("change", e => {
-    selectedFiles = Array.from(e.target.files).slice(0, 3);
+    const raw = Array.from(e.target.files).slice(0, 3);
+    const oversize = raw.filter(f => f.size > 20 * 1024 * 1024);
+    if (oversize.length) {
+      document.getElementById("write-result").textContent = `파일이 너무 커요 (최대 20MB). 더 작은 사진을 선택해주세요.`;
+      document.getElementById("write-result").style.color = "#e57373";
+      e.target.value = "";
+      return;
+    }
+    selectedFiles = raw;
     const previews = document.getElementById("write-photo-previews");
     const placeholder = document.getElementById("write-photo-placeholder");
     if (selectedFiles.length) {
-      previews.innerHTML = selectedFiles.map(f => `<img class="write-photo-thumb" src="${URL.createObjectURL(f)}" alt=""/>`).join("") +
+      const fmtSize = b => b < 1024*1024 ? `${(b/1024).toFixed(0)}KB` : `${(b/1024/1024).toFixed(1)}MB`;
+      previews.innerHTML = selectedFiles.map(f => `
+        <div class="write-photo-item">
+          <img class="write-photo-thumb" src="${URL.createObjectURL(f)}" alt=""/>
+          <span class="write-photo-size">${fmtSize(f.size)}</span>
+        </div>`).join("") +
         `<button type="button" class="write-photo-clear" id="write-photo-clear">✕ 제거</button>`;
       previews.hidden = false;
       placeholder.hidden = true;

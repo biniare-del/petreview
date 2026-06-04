@@ -5237,7 +5237,9 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 .write-photo-placeholder:hover { border-color: #16a34a; }
 .write-photo-previews { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+.write-photo-item { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 3px; }
 .write-photo-thumb { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; }
+.write-photo-size { font-size: 10px; color: #bbb; font-weight: 500; }
 .write-photo-clear {
   padding: 6px 12px; font-size: 12px; font-weight: 600; color: #888;
   background: #f4f0ec; border: none; border-radius: 20px; cursor: pointer; align-self: center;
