@@ -1025,7 +1025,22 @@
     }
 
     const greetingEl = document.getElementById("mypage-greeting");
-    if (greetingEl) greetingEl.textContent = `안녕하세요, ${name}님!`;
+    if (greetingEl) {
+      const parts = [];
+      if (petCount) parts.push(`반려동물 ${petCount}마리`);
+      if (reviewCount) parts.push(`리뷰 ${reviewCount}개`);
+      greetingEl.textContent = parts.length ? parts.join(" · ") : "반갑습니다 🐾";
+    }
+
+    // 히어로 카드
+    const heroAvatar = document.getElementById("mypage-hero-avatar");
+    if (heroAvatar) {
+      heroAvatar.innerHTML = avatar
+        ? `<img src="${escapeHtml(avatar)}" alt="프로필" />`
+        : escapeHtml(name[0] || "?");
+    }
+    const heroName = document.getElementById("mypage-hero-name");
+    if (heroName) heroName.textContent = name;
 
     const badgeEl = document.getElementById("profile-review-count-badge");
     if (badgeEl) {
