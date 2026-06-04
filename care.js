@@ -361,12 +361,13 @@ async function renderManageTab(pet, container) {
   });
 
   // AI 버튼
-  container.querySelector("#ai-advice-btn")?.addEventListener("click", () => {
+  container.querySelector("#ai-advice-btn")?.addEventListener("click", async () => {
     const careItems = cards.map(({ item, dday, doneToday }) => ({
       label: item.label,
       dday: doneToday ? 0 : dday,
     }));
-    fetchAiAdvice(pet, careItems, null, null);
+    const healthData = await fetchPetHealthData(pet.id);
+    fetchAiAdvice(pet, careItems, null, null, healthData);
   });
 }
 
@@ -751,8 +752,9 @@ function renderDietSection(container, pet, settings, logs, latestWeight) {
     });
   });
   container.querySelector("#diet-save-btn")?.addEventListener("click", () => saveDietSettings(pet, container));
-  container.querySelector("#ai-advice-btn")?.addEventListener("click", () => {
-    fetchAiAdvice(pet, null, logs, settings);
+  container.querySelector("#ai-advice-btn")?.addEventListener("click", async () => {
+    const healthData = await fetchPetHealthData(pet.id);
+    fetchAiAdvice(pet, null, logs, settings, healthData);
   });
 }
 
@@ -1201,7 +1203,21 @@ function showExpenseModal(pets, activeFilter = "all") {
 // ──────────────────────────────────────────────────────────────
 // AI 조언
 // ──────────────────────────────────────────────────────────────
-async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings) {
+async function fetchPetHealthData(petId) {
+  if (!_db || !petId || petId === "demo") return null;
+  const [weightsRes, healthRes] = await Promise.all([
+    _db.from("pet_weights").select("weight, recorded_at")
+      .eq("pet_id", petId).order("recorded_at", { ascending: false }).limit(6),
+    _db.from("pet_health_records").select("record_type, content, record_date")
+      .eq("pet_id", petId).order("record_date", { ascending: false }).limit(6),
+  ]);
+  return {
+    weights: weightsRes.data ?? [],
+    healthRecords: healthRes.data ?? [],
+  };
+}
+
+async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings, healthData) {
   const btn    = document.getElementById("ai-advice-btn");
   const result = document.getElementById("ai-advice-result");
   if (!btn || !result) return;
@@ -1214,7 +1230,7 @@ async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings) {
     const res = await fetch("https://petreview.vercel.app/api/ai-care", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pet, careItems, dietToday: dietLogs, dietSettings }),
+      body: JSON.stringify({ pet, careItems, dietToday: dietLogs, dietSettings, healthData }),
     });
 
     if (!res.ok || !res.body) {

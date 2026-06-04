@@ -3,12 +3,14 @@ const Anthropic = require("@anthropic-ai/sdk");
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SYSTEM_PROMPT = `당신은 반려동물 전문 AI 건강 파트너입니다.
-집사가 입력한 오늘의 케어·식단 데이터를 분석해서 가장 중요한 조언을 드립니다.
+집사가 입력한 오늘의 케어·식단·체중·건강기록 데이터를 분석해서 가장 중요한 조언을 드립니다.
 
 답변 규칙:
 - 인사말·서론 없이 바로 핵심 조언으로 시작
 - 4~6줄 이내, 따뜻하고 실용적인 말투
 - 기간 초과·오늘 해야 할 항목이 있으면 그것부터 먼저
+- 체중 추이가 있으면 증감 패턴에 맞게 식단·운동 조언 포함
+- 최근 건강기록(진료·투약)이 있으면 연속성 있는 관리 조언
 - 반려동물 이름을 자연스럽게 사용
 - 구체적이고 실행 가능한 내용만`;
 
@@ -20,7 +22,7 @@ module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: "API key missing" });
 
-  const { pet, careItems, dietToday, dietSettings } = req.body ?? {};
+  const { pet, careItems, dietToday, dietSettings, healthData } = req.body ?? {};
   if (!pet) return res.status(400).json({ error: "pet required" });
 
   // 케어 현황 — 급한 순서로 정렬
@@ -63,7 +65,31 @@ module.exports = async (req, res) => {
     ? `\n곧 필요한 것: ${soon.map(c => c.label).join(", ")}`
     : "";
 
-  const userPrompt = `${pet.name} (${pet.species}${pet.breed ? `, ${pet.breed}` : ""}) 오늘 현황:${urgencyNote}
+  // 체중 추이
+  const weights = healthData?.weights ?? [];
+  let weightSection = "";
+  if (weights.length >= 2) {
+    const latest = weights[0];
+    const oldest = weights[weights.length - 1];
+    const diff   = (latest.weight - oldest.weight).toFixed(1);
+    const trend  = diff > 0 ? `+${diff}kg 증가 추세` : diff < 0 ? `${diff}kg 감소 추세` : "체중 변화 없음";
+    const history = weights.slice(0, 4).map(w => `${w.weight}kg`).join(" → ");
+    weightSection = `\n체중 추이: ${history} [${trend}]`;
+  } else if (weights.length === 1) {
+    weightSection = `\n최근 체중: ${weights[0].weight}kg`;
+  }
+
+  // 최근 건강기록 (5개 이내)
+  const records = healthData?.healthRecords ?? [];
+  let healthSection = "";
+  if (records.length) {
+    const lines = records.slice(0, 5).map(r =>
+      `- [${r.record_type}] ${r.content}${r.record_date ? ` (${r.record_date.slice(0,10)})` : ""}`
+    ).join("\n");
+    healthSection = `\n최근 건강기록:\n${lines}`;
+  }
+
+  const userPrompt = `${pet.name} (${pet.species}${pet.breed ? `, ${pet.breed}` : ""}) 오늘 현황:${urgencyNote}${weightSection}${healthSection}
 
 케어 상태:
 ${careLines || "- 케어 데이터 없음"}
