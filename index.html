@@ -6,6 +6,8 @@
   <title>우쭈쭈 – 반려동물 케어 매니저</title>
   <script>location.replace("care.html");</script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+  <link rel="preconnect" href="https://hguzornmqxayylmagook.supabase.co"/>
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="/petreview/manifest.json" />
   <meta name="theme-color" content="#16a34a" />
@@ -594,11 +596,11 @@
   <!-- 카카오 지도 SDK (JavaScript 키 필요: Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키) -->
   <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9e5930005d619cae98c2d710200b768f&autoload=false"></script>
   <!-- Supabase JS SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
   <!-- Supabase 클라이언트 설정 (supabase-client.js 에서 URL/Key 입력) -->
-  <script src="supabase-client.js"></script>
+  <script src="supabase-client.js" defer></script>
   <!-- 인증 모듈 -->
-  <script src="auth.js"></script>
+  <script src="auth.js" defer></script>
   <script>
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/petreview/sw.js").then((reg) => {

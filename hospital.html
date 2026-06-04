@@ -4,6 +4,8 @@
   <meta charset="UTF-8"/>
   <title>단골병원 관리 – 우쭈쭈</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+  <link rel="preconnect" href="https://hguzornmqxayylmagook.supabase.co"/>
   <link rel="stylesheet" href="style.css"/>
   <link rel="manifest" href="/petreview/manifest.json"/>
   <meta name="theme-color" content="#16a34a"/>
@@ -103,9 +105,9 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="supabase-client.js"></script>
-  <script src="auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+  <script src="supabase-client.js" defer></script>
+  <script src="auth.js" defer></script>
   <script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("/petreview/sw.js").catch(() => {}); }</script>
   <script src="hospital.js" defer></script>
 </body>
