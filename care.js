@@ -403,16 +403,41 @@ function openManageSheet(pet, item, lastDoneAt, intervalDays) {
   };
 
   // 알림 토글
+  const VAPID_PUB = "BDVblzZO_JDFguJ0SzmNtUwyLCg2zxyYbPsdjmv0hamJLD5GY0z0rWBogIUWHPVyXRmfOmjCrcBbqOfYmCvoD8c";
   const notifyPrefs = getNotifyPrefs(pet.id);
   const notifyEl = document.getElementById("care-sheet-notify");
   notifyEl.checked = notifyPrefs[item.key] ?? false;
-  notifyEl.onchange = () => {
-    if (notifyEl.checked && Notification.permission !== "granted") {
-      Notification.requestPermission().then(p => {
-        if (p !== "granted") notifyEl.checked = false;
-      });
+
+  notifyEl.onchange = async () => {
+    if (!notifyEl.checked) {
+      saveNotifyPref(pet.id, item.key, false);
+      return;
     }
-    saveNotifyPref(pet.id, item.key, notifyEl.checked);
+    // 권한 요청
+    const perm = Notification.permission === "granted"
+      ? "granted"
+      : await Notification.requestPermission();
+    if (perm !== "granted") { notifyEl.checked = false; return; }
+
+    // 구독 등록 (없을 때만)
+    try {
+      const sw = await navigator.serviceWorker.ready;
+      let sub = await sw.pushManager.getSubscription();
+      if (!sub) {
+        const key = Uint8Array.from(atob(VAPID_PUB.replace(/-/g,"+").replace(/_/g,"/")), c => c.charCodeAt(0));
+        sub = await sw.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+        const { endpoint, keys } = sub.toJSON();
+        const userId = window.PetAuth?.currentUser?.id;
+        if (userId && _db) {
+          await _db.from("push_subscriptions").upsert(
+            [{ user_id: userId, endpoint, p256dh: keys.p256dh, auth: keys.auth }],
+            { onConflict: "user_id" }
+          );
+        }
+      }
+    } catch (e) { console.warn("push subscribe failed", e); }
+
+    saveNotifyPref(pet.id, item.key, true);
   };
 
   // 날짜 기본값 = 오늘
