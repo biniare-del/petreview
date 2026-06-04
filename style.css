@@ -3193,6 +3193,20 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   to { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
 
+/* 오프라인 토스트 */
+.offline-toast {
+  position: fixed; bottom: 74px; left: 50%;
+  transform: translateX(-50%);
+  padding: 11px 20px; border-radius: 22px;
+  font-size: 13px; font-weight: 600;
+  z-index: 9998; max-width: 340px; text-align: center;
+  white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  animation: slideUpToast 0.28s ease;
+}
+.offline-toast[hidden] { display: none; }
+.offline-toast--offline { background: #1c1917; color: #fef3c7; }
+.offline-toast--online  { background: #14532d; color: #bbf7d0; }
+
 /* ===== 마이펫 케어 카드 (홈화면) ===== */
 .pet-care-section { margin: 16px 0 0; }
 

@@ -106,6 +106,7 @@
     currentProfile: null,
 
     async init(onAuthChange) {
+      this._initOfflineUX();
       const db = window.supabaseClient;
       if (!db) return;
 
@@ -182,6 +183,37 @@
 
     isLoggedIn() {
       return !!this.currentUser;
+    },
+
+    // ── 오프라인 UX ───────────────────────────────────────
+    _offlineToastEl: null,
+    _initOfflineUX() {
+      const show = (msg, isOnline) => {
+        if (!this._offlineToastEl) {
+          this._offlineToastEl = document.createElement("div");
+          this._offlineToastEl.className = "offline-toast";
+          document.body.appendChild(this._offlineToastEl);
+        }
+        const el = this._offlineToastEl;
+        el.textContent = msg;
+        el.className = `offline-toast ${isOnline ? "offline-toast--online" : "offline-toast--offline"}`;
+        el.hidden = false;
+        if (isOnline) {
+          clearTimeout(el._timer);
+          el._timer = setTimeout(() => { el.hidden = true; }, 2800);
+        }
+      };
+
+      window.addEventListener("offline", () => {
+        show("🔌 오프라인 상태예요 · 캐시된 화면을 표시합니다", false);
+      });
+      window.addEventListener("online", () => {
+        show("✅ 인터넷 연결이 복구됐어요", true);
+      });
+
+      if (!navigator.onLine) {
+        show("🔌 오프라인 상태예요 · 캐시된 화면을 표시합니다", false);
+      }
     },
 
     isAdmin() {
