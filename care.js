@@ -486,20 +486,43 @@ async function showItemHistory(pet, item) {
   overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
 }
 
+// ─── 칼로리 계산 (RER/DER) ────────────────────────────────────
+function calcRER(weightKg) {
+  if (!weightKg || weightKg <= 0) return null;
+  return Math.round(70 * Math.pow(weightKg, 0.75));
+}
+function calcDER(weightKg, species, neutered) {
+  const rer = calcRER(weightKg);
+  if (!rer) return null;
+  const factor = species === "강아지"
+    ? (neutered ? 1.6 : 1.8)
+    : (neutered ? 1.2 : 1.4);
+  return Math.round(rer * factor);
+}
+function getCalSettings(petId) {
+  try { return JSON.parse(localStorage.getItem(`cal_${petId}`) || "{}"); }
+  catch { return {}; }
+}
+function saveCalSettings(petId, obj) {
+  localStorage.setItem(`cal_${petId}`, JSON.stringify(obj));
+}
+
 // ──────────────────────────────────────────────────────────────
 // [식단] 탭
 // ──────────────────────────────────────────────────────────────
 async function renderDietTab(pet, container) {
-  let settings = null, logs = [];
+  let settings = null, logs = [], latestWeight = null;
   try {
-    const [sr, lr] = await Promise.all([
+    const [sr, lr, wr] = await Promise.all([
       _db.from("pet_diet_settings").select("*").eq("pet_id", pet.id).maybeSingle(),
       _db.from("pet_diet_logs").select("*").eq("pet_id", pet.id).gte("logged_at", getTodayKST()).order("logged_at"),
+      _db.from("pet_weights").select("weight").eq("pet_id", pet.id).order("recorded_at", { ascending: false }).limit(1),
     ]);
     settings = sr.data;
     logs = lr.data ?? [];
+    latestWeight = wr.data?.[0]?.weight ?? null;
   } catch { /* tables may not exist */ }
-  renderDietSection(container, pet, settings, logs);
+  renderDietSection(container, pet, settings, logs, latestWeight);
 }
 
 const WATER_LEVELS = [
@@ -514,10 +537,14 @@ function getMealLabels(n) {
   return ["아침", "점심", "저녁"];
 }
 
-function renderDietSection(container, pet, settings, logs) {
+function renderDietSection(container, pet, settings, logs, latestWeight) {
   const mealsPerDay = settings?.meals_per_day ?? 2;
   const foodAmountG = settings?.food_amount_g ?? null;
   const foodName    = settings?.food_name ?? "";
+  const calCfg      = getCalSettings(pet.id);
+  const neutered    = calCfg.neutered ?? true;
+  const kcalPer100g = calCfg.kcal_per_100g ?? 350;
+  const weightKg    = calCfg.weight_kg ?? latestWeight ?? null;
 
   const mealsLogged = new Set(logs.filter(l => l.log_type === "meal").map(l => l.meal_order));
   const snacks      = logs.filter(l => l.log_type === "snack");
@@ -561,9 +588,55 @@ function renderDietSection(container, pet, settings, logs) {
           <label>1회 급여량</label>
           <div class="diet-input-unit"><input type="number" class="diet-input" id="ds-amount" value="${foodAmountG??""}" placeholder="80" min="0" step="5"/><span>g</span></div>
         </div>
+        <hr class="diet-settings-divider"/>
+        <div class="diet-settings-row">
+          <label>체중 (kg)</label>
+          <div class="diet-input-unit"><input type="number" class="diet-input" id="ds-weight" value="${weightKg??""}" placeholder="${latestWeight ?? "3.5"}" min="0" step="0.1"/><span>kg</span></div>
+        </div>
+        <div class="diet-settings-row">
+          <label>중성화</label>
+          <div class="diet-meals-picker">
+            <button class="diet-pick-btn${neutered?" is-active":""}" data-neutered="true">예</button>
+            <button class="diet-pick-btn${!neutered?" is-active":""}" data-neutered="false">아니오</button>
+          </div>
+        </div>
+        <div class="diet-settings-row">
+          <label>사료 열량</label>
+          <div class="diet-input-unit"><input type="number" class="diet-input" id="ds-kcal" value="${kcalPer100g}" placeholder="350" min="100" step="10"/><span>kcal/100g</span></div>
+        </div>
         <button class="diet-save-btn" id="diet-save-btn">저장</button>
       </div>
     </details>
+
+    ${(() => {
+      const der = calcDER(weightKg, pet.species, neutered);
+      const rer = calcRER(weightKg);
+      if (!der) return "";
+      const dailyG    = foodAmountG ? foodAmountG * mealsPerDay : null;
+      const dailyKcal = dailyG ? Math.round(dailyG * kcalPer100g / 100) : null;
+      const pct = dailyKcal ? Math.min(Math.round(dailyKcal / der * 100), 130) : 0;
+      const overFed   = dailyKcal && dailyKcal > der * 1.1;
+      const underFed  = dailyKcal && dailyKcal < der * 0.85;
+      const statusColor = overFed ? "#ef4444" : underFed ? "#f59e0b" : "#16a34a";
+      const statusText  = overFed ? "과급여" : underFed ? "부족" : "적정";
+      return `<div class="diet-cal-block">
+        <div class="diet-cal-header">
+          <span class="diet-cal-title">🔥 권장 열량</span>
+          <span class="diet-cal-der">${der.toLocaleString()} kcal/일</span>
+        </div>
+        <div class="diet-cal-sub">RER ${rer.toLocaleString()} kcal × ${pet.species === "강아지" ? (neutered?"1.6":"1.8") : (neutered?"1.2":"1.4")} (${neutered?"중성화":"미중성화"})</div>
+        ${dailyKcal ? `
+        <div class="diet-cal-compare">
+          <div class="diet-cal-compare-bar-wrap">
+            <div class="diet-cal-compare-bar" style="width:${pct}%;background:${statusColor}"></div>
+          </div>
+          <div class="diet-cal-compare-info">
+            <span>현재 ${dailyKcal.toLocaleString()} kcal</span>
+            <span class="diet-cal-status" style="color:${statusColor}">${statusText} ${pct}%</span>
+          </div>
+        </div>` : `<div class="diet-cal-hint">1회 급여량을 설정하면 비교해 드려요 ↑</div>`}
+      </div>`;
+    })()}
 
     <div class="diet-block">
       <div class="diet-block-header">
@@ -628,7 +701,12 @@ function renderDietSection(container, pet, settings, logs) {
   });
   container.querySelectorAll(".diet-pick-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      container.querySelectorAll(".diet-pick-btn").forEach(b => b.classList.toggle("is-active", b === btn));
+      // 같은 그룹만 토글 (중성화 버튼과 식수 버튼 분리)
+      if (btn.dataset.neutered !== undefined) {
+        container.querySelectorAll("[data-neutered]").forEach(b => b.classList.toggle("is-active", b === btn));
+      } else {
+        container.querySelectorAll(".diet-pick-btn:not([data-neutered])").forEach(b => b.classList.toggle("is-active", b === btn));
+      }
     });
   });
   container.querySelector("#diet-save-btn")?.addEventListener("click", () => saveDietSettings(pet, container));
@@ -656,9 +734,16 @@ async function saveDietSettings(pet, container) {
   const btn = container.querySelector("#diet-save-btn");
   if (btn) { btn.disabled = true; btn.textContent = "저장 중..."; }
 
-  const mealsPerDay = parseInt(container.querySelector(".diet-pick-btn.is-active")?.dataset.n ?? "2");
+  const mealsPerDay = parseInt(container.querySelector(".diet-pick-btn:not([data-neutered]).is-active")?.dataset.n ?? "2");
   const foodName    = container.querySelector("#ds-food-name")?.value.trim() || null;
   const foodAmountG = parseFloat(container.querySelector("#ds-amount")?.value) || null;
+
+  // 칼로리 설정 localStorage 저장
+  const weightKg    = parseFloat(container.querySelector("#ds-weight")?.value) || null;
+  const neuteredBtn = container.querySelector("[data-neutered].is-active");
+  const neutered    = neuteredBtn ? neuteredBtn.dataset.neutered === "true" : true;
+  const kcalPer100g = parseFloat(container.querySelector("#ds-kcal")?.value) || 350;
+  saveCalSettings(pet.id, { weight_kg: weightKg, neutered, kcal_per_100g: kcalPer100g });
 
   const { error } = await _db.from("pet_diet_settings").upsert(
     { user_id: userId, pet_id: pet.id, meals_per_day: mealsPerDay, food_name: foodName, food_amount_g: foodAmountG, updated_at: new Date().toISOString() },

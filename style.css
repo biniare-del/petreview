@@ -4826,6 +4826,36 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .diet-water-bar--mid  { background: linear-gradient(90deg, #fde68a, #facc15); }
 .diet-water-bar--low  { background: linear-gradient(90deg, #fca5a5, #f87171); }
 
+/* 칼로리 계산 블록 */
+.diet-cal-block {
+  background: linear-gradient(135deg, #fff7ed, #fffbeb);
+  margin: 8px 12px 0; border-radius: 16px;
+  padding: 14px 16px; border: 1.5px solid #fde68a;
+  box-shadow: 0 1px 4px rgba(245,158,11,0.08);
+}
+.diet-cal-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px;
+}
+.diet-cal-title { font-size: 15px; font-weight: 800; color: #1a1a1a; }
+.diet-cal-der   { font-size: 15px; font-weight: 800; color: #d97706; }
+.diet-cal-sub   { font-size: 11px; color: #92400e; margin-bottom: 10px; }
+.diet-cal-compare { display: flex; flex-direction: column; gap: 6px; }
+.diet-cal-compare-bar-wrap {
+  height: 8px; background: #f3f4f6; border-radius: 999px; overflow: hidden;
+}
+.diet-cal-compare-bar {
+  height: 100%; border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.diet-cal-compare-info {
+  display: flex; justify-content: space-between; font-size: 12px; color: #666;
+}
+.diet-cal-status { font-weight: 700; }
+.diet-cal-hint   { font-size: 12px; color: #b45309; }
+.diet-settings-divider {
+  border: none; border-top: 1px solid #f0e8e2; margin: 4px 0;
+}
+
 /* =====================================================
    기록 탭
    ===================================================== */
