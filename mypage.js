@@ -723,6 +723,77 @@
     currentHealthPet = null;
   }
 
+  function renderWeightChart(data, container) {
+    const sorted = [...data].reverse().slice(-16); // 오래된 순, 최대 16개
+    if (sorted.length < 2) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const W = 320, H = 130;
+    const PAD = { top: 20, right: 14, bottom: 28, left: 42 };
+    const canvas = document.createElement("canvas");
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.cssText = "width:100%;height:130px;display:block;margin-bottom:14px;";
+    container.prepend(canvas);
+
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    const weights = sorted.map(d => parseFloat(d.weight));
+    const minW = Math.min(...weights), maxW = Math.max(...weights);
+    const range = maxW - minW || 0.5;
+    const padded = range * 0.15;
+    const lo = minW - padded, hi = maxW + padded;
+
+    const cW = W - PAD.left - PAD.right;
+    const cH = H - PAD.top - PAD.bottom;
+    const toX = i => PAD.left + (i / (sorted.length - 1)) * cW;
+    const toY = w => PAD.top + (1 - (w - lo) / (hi - lo)) * cH;
+
+    // 그리드 라인 (3개)
+    ctx.strokeStyle = "#f0e8e2"; ctx.lineWidth = 1;
+    [0, 0.5, 1].forEach(t => {
+      const y = PAD.top + t * cH;
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+    });
+
+    // 그라디언트 fill
+    const grad = ctx.createLinearGradient(0, PAD.top, 0, H - PAD.bottom);
+    grad.addColorStop(0, "rgba(22,163,74,0.18)");
+    grad.addColorStop(1, "rgba(22,163,74,0)");
+
+    ctx.beginPath();
+    sorted.forEach((d, i) => {
+      const x = toX(i), y = toY(parseFloat(d.weight));
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = "#16a34a"; ctx.lineWidth = 2.5;
+    ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.stroke();
+
+    ctx.lineTo(toX(sorted.length - 1), H - PAD.bottom);
+    ctx.lineTo(toX(0), H - PAD.bottom);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+
+    // 점
+    sorted.forEach((d, i) => {
+      const x = toX(i), y = toY(parseFloat(d.weight));
+      ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#fff"; ctx.fill();
+      ctx.strokeStyle = "#16a34a"; ctx.lineWidth = 2; ctx.stroke();
+    });
+
+    // x축 레이블 — 첫/마지막
+    ctx.fillStyle = "#bbb"; ctx.font = `${10 * 1}px -apple-system,sans-serif`;
+    ctx.textAlign = "left";
+    ctx.fillText(sorted[0].recorded_at.slice(5, 10), toX(0) - 10, H - 6);
+    ctx.textAlign = "right";
+    ctx.fillText(sorted[sorted.length - 1].recorded_at.slice(5, 10), toX(sorted.length - 1) + 10, H - 6);
+
+    // y축 레이블 — min/max
+    ctx.textAlign = "right"; ctx.fillStyle = "#aaa";
+    ctx.fillText(maxW + "kg", PAD.left - 5, toY(maxW) + 4);
+    if (minW !== maxW) ctx.fillText(minW + "kg", PAD.left - 5, toY(minW) + 4);
+  }
+
   async function loadWeightLogs(petId) {
     const db = window.supabaseClient;
     const container = document.getElementById("weight-log-list");
@@ -740,9 +811,16 @@
       return;
     }
 
+    // 최근 체중 + 증감 표시
+    const latest = parseFloat(data[0].weight);
+    const prev   = data.length > 1 ? parseFloat(data[1].weight) : null;
+    const diff   = prev !== null ? (latest - prev).toFixed(1) : null;
+    const diffHtml = diff !== null
+      ? `<span style="font-size:12px;margin-left:6px;color:${diff > 0 ? "#e57373" : diff < 0 ? "#16a34a" : "#aaa"};">${diff > 0 ? "▲" : diff < 0 ? "▼" : "─"} ${Math.abs(diff)}kg</span>`
+      : "";
     if (latestBox) {
       latestBox.hidden = false;
-      latestBox.innerHTML = `최근 체중: <strong style="color:#ff7043;font-size:16px;">${data[0].weight} kg</strong> <span style="font-size:11px;color:#aaa;">(${data[0].recorded_at})</span>`;
+      latestBox.innerHTML = `최근 체중: <strong style="font-size:17px;color:#0f6e56;">${latest} kg</strong>${diffHtml} <span style="font-size:11px;color:#aaa;margin-left:4px;">${data[0].recorded_at?.slice(0,10)}</span>`;
     }
 
     container.innerHTML = `
@@ -755,14 +833,16 @@
         <tbody>
           ${data.map((log) => `
             <tr style="border-top:1px solid #f5ede8;">
-              <td style="padding:6px 0;color:#555;">${escapeHtml(log.recorded_at)}</td>
-              <td style="padding:6px 0;text-align:right;font-weight:600;color:#ff7043;">${log.weight} kg</td>
+              <td style="padding:6px 0;color:#555;">${escapeHtml(log.recorded_at?.slice(0,10) ?? "")}</td>
+              <td style="padding:6px 0;text-align:right;font-weight:600;color:#0f6e56;">${log.weight} kg</td>
               <td style="padding:6px 0;text-align:right;">
                 <button class="btn-delete" style="padding:2px 8px;font-size:11px;" data-log-id="${escapeHtml(log.id)}">삭제</button>
               </td>
             </tr>`).join("")}
         </tbody>
       </table>`;
+
+    renderWeightChart(data, container);
 
     container.querySelectorAll(".btn-delete[data-log-id]").forEach((btn) => {
       btn.addEventListener("click", async () => {
