@@ -35,7 +35,7 @@
 ├── api/                ← Vercel 서버리스 함수
 │   ├── ai-care.js      ← AI 케어/식단 조언 (claude-haiku-4-5, 스트리밍)
 │   ├── facilities.js   ← 병원 시설 검색
-│   ├── ocr.js          ← 영수증 OCR
+│   ├── ocr.js          ← 영수증 OCR (구현 완료, 현재 미사용)
 │   ├── push-send.js    ← 웹 푸시 발송
 │   ├── push-cron.js    ← 케어 알림 cron
 │   └── keep-alive.js   ← DB 연결 유지
@@ -116,6 +116,10 @@ DB 컬럼 추가 SQL: supabase/add_cal_settings.sql 참고.
 ## 남은 작업 (우선순위순)
 
 > 계획된 주요 작업 완료. 신규 기능 추가 시 여기에 기록.
+
+## 미사용 기능
+
+* `api/ocr.js` — 영수증 OCR (Claude Vision, ANTHROPIC_API_KEY 필요). 집사영수증 탭에서 UI 연결 전. 당장 사용 계획 없음.
 
 ## 주의사항
 
