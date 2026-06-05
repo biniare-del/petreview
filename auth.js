@@ -101,6 +101,22 @@
     }
   }
 
+  // 토스트 알림 — type: 'success' | 'error' | 'warn' | 'info'
+  let _toastTimer = null;
+  window.showToast = function(msg, type = "success", duration = 2400) {
+    const existing = document.querySelector(".offline-toast:not(.offline-toast--offline):not(.offline-toast--online)");
+    if (existing) existing.remove();
+    const el = document.createElement("div");
+    el.className = `offline-toast offline-toast--${type}`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => {
+      el.style.opacity = "0";
+      setTimeout(() => el.remove(), 300);
+    }, duration);
+  };
+
   // 모달 포커스 트랩 — 열릴 때 호출, 반환값(해제 함수)을 닫을 때 호출
   window.trapFocus = function(modalEl) {
     const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';

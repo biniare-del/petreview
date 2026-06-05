@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  function showToast(msg, type = "success") { window.showToast?.(msg, type); }
+
   function escapeHtml(v) {
     return String(v ?? "")
       .replaceAll("&", "&amp;")
@@ -124,14 +126,14 @@
         // 중복 확인
         const { data: existing } = await db.from("favorites")
           .select("id").eq("user_id", userId).eq("place_name", btn.dataset.placeName).maybeSingle();
-        if (existing) { alert("이미 단골병원으로 등록된 곳입니다."); return; }
+        if (existing) { showToast("이미 등록된 병원이에요.", "info"); return; }
         const { error: favErr } = await db.from("favorites").insert([{
           user_id: userId,
           place_name: btn.dataset.placeName,
           category: btn.dataset.category,
           region: btn.dataset.region,
         }]);
-        if (favErr) { alert("등록 실패: " + favErr.message); return; }
+        if (favErr) { showToast("등록에 실패했어요.", "error"); return; }
         btn.textContent = "✅ 등록됨";
         btn.disabled = true;
       });
@@ -141,7 +143,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("리뷰를 삭제하시겠습니까?")) return;
         const { error: delErr } = await db.from("reviews").delete().eq("id", btn.dataset.reviewId);
-        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        if (delErr) { showToast("삭제에 실패했어요.", "error"); return; }
         btn.closest(".mypage-card").remove();
         if (!container.querySelector(".mypage-card"))
           container.innerHTML = '<p class="placeholder-text">작성한 리뷰가 없습니다.</p>';
@@ -206,7 +208,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("게시글을 삭제하시겠습니까?")) return;
         const { error: delErr } = await db.from("posts").delete().eq("id", btn.dataset.postId);
-        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        if (delErr) { showToast("삭제에 실패했어요.", "error"); return; }
         btn.closest(".mypage-card").remove();
         if (!container.querySelector(".mypage-card"))
           container.innerHTML = '<p class="placeholder-text">작성한 게시글이 없습니다.</p>';
@@ -260,7 +262,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("댓글을 삭제하시겠습니까?")) return;
         const { error: delErr } = await db.from("comments").delete().eq("id", btn.dataset.commentId).eq("user_id", userId);
-        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        if (delErr) { showToast("삭제에 실패했어요.", "error"); return; }
         btn.closest(".mypage-card").remove();
         if (!container.querySelector(".mypage-card"))
           container.innerHTML = '<p class="placeholder-text">작성한 댓글이 없습니다.</p>';
@@ -303,7 +305,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("단골병원 목록에서 삭제하시겠습니까?")) return;
         const { error: delErr } = await db.from("favorites").delete().eq("id", btn.dataset.favId);
-        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        if (delErr) { showToast("삭제에 실패했어요.", "error"); return; }
         btn.closest(".mypage-card").remove();
         if (!container.querySelector(".mypage-card"))
           container.innerHTML = '<p class="placeholder-text">저장된 단골병원이 없습니다.</p>';
@@ -375,7 +377,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("반려동물을 삭제하시겠습니까?")) return;
         const { error: delErr } = await db.from("pets").delete().eq("id", btn.dataset.petId);
-        if (delErr) { alert("삭제 실패: " + delErr.message); return; }
+        if (delErr) { showToast("삭제에 실패했어요.", "error"); return; }
         await loadPets();
       });
     });
@@ -490,16 +492,16 @@
       const neuteredVal = document.getElementById("pet-is-neutered").value;
       const birthVal = document.getElementById("pet-birth-date").value;
 
-      if (!name) { alert("이름을 입력해주세요."); document.getElementById("pet-name").focus(); return; }
-      if (!species) { alert("종류를 선택해주세요."); document.getElementById("pet-species").focus(); return; }
-      if (!gender) { alert("성별을 선택해주세요."); document.getElementById("pet-gender").focus(); return; }
-      if (neuteredVal === "") { alert("중성화 여부를 선택해주세요."); document.getElementById("pet-is-neutered").focus(); return; }
+      if (!name) { showToast("이름을 입력해주세요.", "warn"); document.getElementById("pet-name").focus(); return; }
+      if (!species) { showToast("종류를 선택해주세요.", "warn"); document.getElementById("pet-species").focus(); return; }
+      if (!gender) { showToast("성별을 선택해주세요.", "warn"); document.getElementById("pet-gender").focus(); return; }
+      if (neuteredVal === "") { showToast("중성화 여부를 선택해주세요.", "warn"); document.getElementById("pet-is-neutered").focus(); return; }
 
       if (birthVal) {
         const today = new Date().toISOString().split("T")[0];
         const minD = new Date(); minD.setFullYear(minD.getFullYear() - 35);
-        if (birthVal > today) { alert("생년월일은 오늘 이전 날짜여야 합니다."); document.getElementById("pet-birth-date").focus(); return; }
-        if (birthVal < minD.toISOString().split("T")[0]) { alert("생년월일이 올바르지 않습니다. (최대 35년 이내)"); document.getElementById("pet-birth-date").focus(); return; }
+        if (birthVal > today) { showToast("생년월일은 오늘 이전 날짜여야 합니다.", "warn"); document.getElementById("pet-birth-date").focus(); return; }
+        if (birthVal < minD.toISOString().split("T")[0]) { showToast("생년월일이 올바르지 않습니다. (최대 35년 이내)", "warn"); document.getElementById("pet-birth-date").focus(); return; }
       }
 
       const submitBtn = document.getElementById("pet-submit-btn");
@@ -544,7 +546,7 @@
           ({ error } = await db.from("pets").insert([row]));
         }
 
-        if (error) { alert("저장 실패: " + error.message); return; }
+        if (error) { showToast("저장에 실패했어요.", "error"); return; }
         closePetModal();
         await loadPets();
       } finally {
@@ -657,7 +659,7 @@
       const hospital = document.getElementById("appt-hospital").value.trim();
       const memo = document.getElementById("appt-memo").value.trim();
 
-      if (!date) { alert("예약 날짜를 선택해주세요."); return; }
+      if (!date) { showToast("예약 날짜를 선택해주세요.", "warn"); return; }
 
       const submitBtn = e.target.querySelector("button[type=submit]");
       submitBtn.disabled = true;
@@ -671,7 +673,7 @@
       }]);
       submitBtn.disabled = false;
 
-      if (error) { alert("저장 실패: " + error.message); return; }
+      if (error) { showToast("저장에 실패했어요.", "error"); return; }
       closeApptModal();
       loadUpcomingAppointments();
     });
@@ -857,7 +859,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("체중 기록을 삭제할까요?")) return;
         const { error } = await db.from("pet_weights").delete().eq("id", btn.dataset.logId);
-        if (error) { alert("삭제 실패: " + error.message); return; }
+        if (error) { showToast("삭제에 실패했어요.", "error"); return; }
         loadWeightLogs(petId);
       });
     });
@@ -939,7 +941,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("기록을 삭제할까요?")) return;
         const { error } = await db.from("pet_health_records").delete().eq("id", btn.dataset.hrId);
-        if (error) { alert("삭제 실패: " + error.message); return; }
+        if (error) { showToast("삭제에 실패했어요.", "error"); return; }
         loadHealthRecords(petId, recordType, containerId);
       });
     });
@@ -951,7 +953,7 @@
     const userId = window.PetAuth?.currentUser?.id;
     const date = document.getElementById(dateId)?.value;
     const content = document.getElementById(contentId)?.value?.trim() || "";
-    if (!date) { alert("날짜를 선택해주세요."); return; }
+    if (!date) { showToast("날짜를 선택해주세요.", "warn"); return; }
 
     let next_due_date = null;
     if (nextDueDays && date) {
@@ -969,7 +971,7 @@
       next_due_date,
     }]);
 
-    if (error) { alert("저장 실패: " + error.message); return; }
+    if (error) { showToast("저장에 실패했어요.", "error"); return; }
     if (document.getElementById(contentId)) document.getElementById(contentId).value = "";
     loadHealthRecords(currentHealthPet.id, recordType, listId);
   }
@@ -999,8 +1001,8 @@
       const userId = window.PetAuth?.currentUser?.id;
       const weight = parseFloat(document.getElementById("weight-input").value);
       const date = document.getElementById("weight-date-input").value;
-      if (!weight || weight <= 0) { alert("체중을 입력해주세요."); return; }
-      if (!date) { alert("날짜를 선택해주세요."); return; }
+      if (!weight || weight <= 0) { showToast("체중을 입력해주세요.", "warn"); return; }
+      if (!date) { showToast("날짜를 선택해주세요.", "warn"); return; }
 
       const btn = document.getElementById("weight-add-btn");
       btn.disabled = true;
@@ -1011,7 +1013,7 @@
           weight,
           recorded_at: date,
         }]);
-        if (error) { alert("저장 실패: " + error.message); return; }
+        if (error) { showToast("저장에 실패했어요.", "error"); return; }
         document.getElementById("weight-input").value = "";
         loadWeightLogs(currentHealthPet.id);
       } finally {
@@ -1639,7 +1641,7 @@
   async function deleteExpense(id) {
     if (!confirm("삭제할까요?")) return;
     const { error } = await window.supabaseClient.from("pet_expenses").delete().eq("id", id);
-    if (error) { alert("삭제 실패: " + error.message); return; }
+    if (error) { showToast("삭제에 실패했어요.", "error"); return; }
     loadExpenses();
   }
 
@@ -1677,7 +1679,7 @@
       if (navigator.share) {
         navigator.share({ title: "🐾 연간 펫 리포트", text, url: "https://biniare-del.github.io/petreview/" }).catch(() => {});
       } else {
-        navigator.clipboard.writeText(text).then(() => alert("클립보드에 복사됐어요!")).catch(() => {});
+        navigator.clipboard.writeText(text).then(() => showToast("클립보드에 복사됐어요!", "success")).catch(() => {});
       }
     });
 

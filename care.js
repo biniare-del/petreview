@@ -168,13 +168,8 @@ function saveNotifyPref(petId, careKey, val) {
   localStorage.setItem(`care_notify_${petId}`, JSON.stringify(prefs));
 }
 
-function showToast(msg, duration = 2200) {
-  const el = Object.assign(document.createElement("div"), {
-    className: "offline-toast offline-toast--online",
-    textContent: msg,
-  });
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), duration);
+function showToast(msg, type = "success") {
+  window.showToast?.(msg, type);
 }
 
 // ─── 렌더링 진입점 ────────────────────────────────────────────
@@ -496,10 +491,10 @@ async function submitManageDone() {
   if (!_sheetItem) return;
   const { pet, item } = _sheetItem;
   const userId = window.PetAuth?.currentUser?.id;
-  if (!userId) { alert("로그인이 필요합니다."); return; }
+  if (!userId) { showToast("로그인이 필요합니다.", "warn"); return; }
 
   const dateVal = document.getElementById("care-done-date").value;
-  if (!dateVal) { alert("날짜를 선택해주세요."); return; }
+  if (!dateVal) { showToast("날짜를 선택해주세요.", "warn"); return; }
 
   const doneBtn = document.getElementById("care-sheet-done-btn");
   doneBtn.disabled = true;
@@ -514,7 +509,7 @@ async function submitManageDone() {
     });
 
     if (error) {
-      alert(error.code === "42P01" ? "supabase-care.sql을 먼저 실행해 주세요." : `저장 실패: ${error.message}`);
+      showToast(error.code === "42P01" ? "supabase-care.sql을 먼저 실행해 주세요." : "저장에 실패했어요.", "error");
       doneBtn.disabled = false;
       doneBtn.textContent = "✓ 완료 기록";
       return;
@@ -523,7 +518,7 @@ async function submitManageDone() {
     closeManageSheet();
     await renderActiveArea();
   } catch (e) {
-    alert(`저장 실패: ${e.message}`);
+    showToast("저장에 실패했어요.", "error");
     doneBtn.disabled = false;
     doneBtn.textContent = "✓ 완료 기록";
   }
@@ -845,7 +840,7 @@ async function saveDietSettings(pet, container) {
     { onConflict: "pet_id" }
   );
   if (error) {
-    alert(`저장 실패: ${error.message}`);
+    showToast("저장에 실패했어요.", "error");
     if (btn) { btn.disabled = false; btn.textContent = "저장"; }
     return;
   }
@@ -990,12 +985,12 @@ function showWeightModal(pet) {
     if (!userId) return;
     const weight = parseFloat(overlay.querySelector("#weight-input")?.value);
     const date   = overlay.querySelector("#weight-date")?.value;
-    if (!weight || weight <= 0) { alert("체중을 입력해주세요."); return; }
+    if (!weight || weight <= 0) { showToast("체중을 입력해주세요.", "warn"); return; }
     const saveBtn = overlay.querySelector("#weight-save");
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "저장 중..."; }
     const { error } = await _db.from("pet_weights").insert({ user_id: userId, pet_id: pet.id, weight, recorded_at: date });
     if (error) {
-      alert(`저장 실패: ${error.message}`);
+      showToast("저장에 실패했어요.", "error");
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "저장"; }
       return;
     }
@@ -1036,12 +1031,12 @@ function showHealthRecordModal(pet) {
     const type    = overlay.querySelector("#hr-type")?.value;
     const content = overlay.querySelector("#hr-content")?.value.trim();
     const date    = overlay.querySelector("#hr-date")?.value;
-    if (!content) { alert("내용을 입력해주세요."); return; }
+    if (!content) { showToast("내용을 입력해주세요.", "warn"); return; }
     const saveBtn = overlay.querySelector("#hr-save");
     if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "저장 중..."; }
     const { error } = await _db.from("pet_health_records").insert({ user_id: userId, pet_id: pet.id, record_type: type, content, record_date: date });
     if (error) {
-      alert(`저장 실패: ${error.message}`);
+      showToast("저장에 실패했어요.", "error");
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "저장"; }
       return;
     }

@@ -13,6 +13,7 @@ let visitFavoriteId = null;
 function escH(v) {
   return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
+function showToast(msg, type = "success") { window.showToast?.(msg, type); }
 function formatDate(s) {
   if (!s) return "";
   const d = new Date(s);
@@ -115,7 +116,7 @@ async function loadHospitals() {
 async function deleteHospital(favId) {
   if (!confirm("이 병원을 목록에서 삭제할까요?")) return;
   const { error } = await db.from("favorites").delete().eq("id", favId).eq("user_id", userId);
-  if (error) { alert("삭제 실패: " + error.message); return; }
+  if (error) { showToast("삭제에 실패했어요.", "error"); return; }
   await loadHospitals();
 }
 
@@ -182,7 +183,7 @@ async function saveVisit() {
   const cost    = parseFloat(document.getElementById("v-cost").value) || 0;
   const content = document.getElementById("v-content").value.trim();
   const vet     = document.getElementById("v-vet").value.trim();
-  if (!date) { alert("방문일을 선택해주세요."); return; }
+  if (!date) { showToast("방문일을 선택해주세요.", "warn"); return; }
 
   const btn = document.getElementById("visit-form-save");
   btn.disabled = true; btn.textContent = "저장 중...";
@@ -255,7 +256,7 @@ async function openHospitalDetail(favId, name) {
 async function deleteVisit(visitId, favId, name) {
   if (!confirm("삭제할까요?")) return;
   const { error } = await db.from("hospital_visits").delete().eq("id", visitId);
-  if (error) { alert("삭제 실패: " + error.message); return; }
+  if (error) { showToast("삭제에 실패했어요.", "error"); return; }
   await openHospitalDetail(favId, name);
 }
 

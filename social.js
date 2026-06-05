@@ -7,6 +7,7 @@
   function escH(v) {
     return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
   }
+  function showToast(msg, type = "success") { window.showToast?.(msg, type); }
   function timeAgo(d) {
     const s = Math.floor((Date.now() - new Date(d)) / 1000);
     if (s < 60)    return "방금";
@@ -242,7 +243,7 @@
   async function togglePostLike(postId) {
     if (_likeInFlight.has(postId)) return;
     const userId = window.PetAuth?.currentUser?.id;
-    if (!userId) { alert("좋아요를 누르려면 로그인이 필요해요."); return; }
+    if (!userId) { showToast("좋아요를 누르려면 로그인이 필요해요.", "warn"); return; }
     const liked = userLikedPosts.has(postId);
     // 낙관적 업데이트
     if (liked) { userLikedPosts.delete(postId); postLikeCounts[postId] = Math.max(0, (postLikeCounts[postId]||1)-1); }
@@ -332,7 +333,7 @@
     if (!userId) return;
     btn.disabled = true;
     const { error } = await db.from("comments").insert([{ post_id: currentPostId, user_id: userId, content }]);
-    if (error) { alert("댓글 등록에 실패했습니다."); btn.disabled = false; return; }
+    if (error) { showToast("댓글 등록에 실패했어요.", "error"); btn.disabled = false; return; }
     input.value = "";
     await loadComments(currentPostId);
     btn.disabled = false;
