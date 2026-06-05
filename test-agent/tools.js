@@ -11,7 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 const PROJECT_ROOT = path.resolve(import.meta.dirname, "..");
 const SITE_URL = "https://biniare-del.github.io/petreview";
 const SUPABASE_URL = "https://hguzornmqxayylmagook.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_V_W2cWncw9PB1omx7V1MgQ_7zUfv_da";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_V_W2cWncw9PB1omx7V1MgQ_7zUfv_da";
 
 // ─── A. Code Review Tools ────────────────────────────────────────────────────
 
@@ -19,7 +19,7 @@ export function read_file({ file_path }) {
   const abs = path.join(PROJECT_ROOT, file_path);
   if (!fs.existsSync(abs)) return { error: `File not found: ${file_path}` };
   const content = fs.readFileSync(abs, "utf-8");
-  return { file_path, content: content.slice(0, 30000) }; // cap to avoid token explosion
+  return { file_path, content: content.slice(0, 30000) };
 }
 
 export function list_files({ directory = "", extensions = [] }) {
@@ -30,7 +30,7 @@ export function list_files({ directory = "", extensions = [] }) {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     let files = [];
     for (const e of entries) {
-      if (e.name.startsWith(".") || e.name === "node_modules") continue;
+      if (e.name.startsWith(".") || e.name === "node_modules" || e.name === "test-agent") continue;
       const full = path.join(dir, e.name);
       if (e.isDirectory()) files = files.concat(walk(full));
       else files.push(path.relative(PROJECT_ROOT, full));
@@ -108,6 +108,27 @@ export async function browser_click({ selector, text }) {
   }
 }
 
+export async function browser_fill({ selector, value }) {
+  const page = await getBrowserPage();
+  try {
+    await page.locator(selector).first().fill(value, { timeout: 8000 });
+    await page.waitForTimeout(300);
+    return { filled: selector, value };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+export async function browser_wait_for({ selector, timeout = 8000 }) {
+  const page = await getBrowserPage();
+  try {
+    await page.locator(selector).first().waitFor({ state: "visible", timeout });
+    return { appeared: selector };
+  } catch (e) {
+    return { error: `Timed out waiting for: ${selector}` };
+  }
+}
+
 export async function browser_get_text({ selector }) {
   const page = await getBrowserPage();
   try {
@@ -144,6 +165,47 @@ export async function browser_evaluate({ script }) {
   }
 }
 
+// Supabase 이메일/패스워드로 로그인해서 브라우저 세션에 주입
+export async function browser_login({ email, password }) {
+  const resolvedEmail    = email    || process.env.TEST_EMAIL;
+  const resolvedPassword = password || process.env.TEST_PASSWORD;
+  if (!resolvedEmail || !resolvedPassword) {
+    return { error: "TEST_EMAIL / TEST_PASSWORD 환경변수가 없습니다." };
+  }
+
+  // Supabase REST API로 직접 로그인
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email: resolvedEmail, password: resolvedPassword }),
+    });
+    const session = await resp.json();
+    if (session.error || !session.access_token) {
+      return { error: session.error_description || session.error || "로그인 실패" };
+    }
+
+    // 브라우저 localStorage에 Supabase 세션 주입
+    const page = await getBrowserPage();
+    const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0];
+    const storageKey = `sb-${projectRef}-auth-token`;
+    await page.evaluate(({ key, val }) => {
+      localStorage.setItem(key, JSON.stringify(val));
+    }, { key: storageKey, val: session });
+
+    // 페이지 리로드해서 세션 적용
+    await page.reload({ waitUntil: "networkidle", timeout: 20000 });
+    await page.waitForTimeout(1000);
+
+    return { logged_in: true, email: resolvedEmail };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
 export async function browser_close() {
   if (_browser) {
     await _browser.close();
@@ -160,16 +222,20 @@ function getSupabase() {
 }
 
 export async function db_list_tables() {
-  // Uses information_schema via RPC or known table names
   const knownTables = [
     "pets",
-    "reviews",
-    "hospitals",
-    "brag_posts",
-    "brag_post_likes",
+    "pet_care_logs",
+    "pet_diet_settings",
+    "pet_diet_logs",
+    "pet_weights",
+    "pet_health_records",
     "pet_expenses",
-    "community_posts",
-    "community_comments",
+    "favorites",
+    "push_subscriptions",
+    "posts",
+    "post_likes",
+    "comments",
+    "profiles",
   ];
   const supabase = getSupabase();
   const results = {};
@@ -192,11 +258,13 @@ export async function db_query({ table, select = "*", limit = 5, filters = {} })
 }
 
 export async function db_check_rls({ table }) {
-  // Tries to insert a row without auth — should fail with RLS error
   const supabase = getSupabase();
   const dummyRow = { id: "00000000-0000-0000-0000-000000000000" };
   const { error } = await supabase.from(table).insert(dummyRow);
-  const rlsBlocking = error?.message?.includes("row-level security") || error?.code === "42501" || error?.code === "PGRST301";
+  const rlsBlocking =
+    error?.message?.includes("row-level security") ||
+    error?.code === "42501" ||
+    error?.code === "PGRST301";
   return {
     table,
     rls_blocking_unauthenticated_insert: rlsBlocking,
@@ -216,11 +284,11 @@ export async function storage_list_buckets() {
 export const TOOL_DEFINITIONS = [
   {
     name: "read_file",
-    description: "Read a source file from the petreview project. Use to inspect HTML, JS, CSS, SQL files for code review.",
+    description: "Read a source file from the petreview project.",
     input_schema: {
       type: "object",
       properties: {
-        file_path: { type: "string", description: "Relative path from project root, e.g. 'app.js' or 'brag.html'" },
+        file_path: { type: "string", description: "Relative path from project root, e.g. 'care.js' or 'social.html'" },
       },
       required: ["file_path"],
     },
@@ -231,28 +299,39 @@ export const TOOL_DEFINITIONS = [
     input_schema: {
       type: "object",
       properties: {
-        directory: { type: "string", description: "Subdirectory relative to project root (empty = root)" },
-        extensions: { type: "array", items: { type: "string" }, description: "e.g. ['.js', '.html']" },
+        directory: { type: "string" },
+        extensions: { type: "array", items: { type: "string" } },
       },
     },
   },
   {
     name: "browser_navigate",
-    description: "Navigate the headless browser to a URL. Defaults to the petreview production site.",
+    description: "Navigate the headless browser to a URL.",
     input_schema: {
       type: "object",
       properties: {
-        url: { type: "string", description: "Full URL to navigate to (optional, defaults to production site)" },
+        url: { type: "string" },
+      },
+    },
+  },
+  {
+    name: "browser_login",
+    description: "Supabase 이메일/패스워드로 로그인해서 브라우저 세션에 주입. 로그인이 필요한 기능 테스트 전에 반드시 호출.",
+    input_schema: {
+      type: "object",
+      properties: {
+        email:    { type: "string", description: "테스트 계정 이메일 (미입력시 TEST_EMAIL 환경변수 사용)" },
+        password: { type: "string", description: "테스트 계정 비밀번호 (미입력시 TEST_PASSWORD 환경변수 사용)" },
       },
     },
   },
   {
     name: "browser_screenshot",
-    description: "Take a screenshot of the current browser page and return it as base64 PNG.",
+    description: "Take a screenshot of the current browser page.",
     input_schema: {
       type: "object",
       properties: {
-        label: { type: "string", description: "Label for this screenshot" },
+        label: { type: "string" },
       },
     },
   },
@@ -262,9 +341,33 @@ export const TOOL_DEFINITIONS = [
     input_schema: {
       type: "object",
       properties: {
-        selector: { type: "string", description: "CSS selector" },
-        text: { type: "string", description: "Visible text to find and click" },
+        selector: { type: "string" },
+        text:     { type: "string" },
       },
+    },
+  },
+  {
+    name: "browser_fill",
+    description: "Fill an input field with a value.",
+    input_schema: {
+      type: "object",
+      properties: {
+        selector: { type: "string", description: "CSS selector for the input element" },
+        value:    { type: "string", description: "Value to type into the field" },
+      },
+      required: ["selector", "value"],
+    },
+  },
+  {
+    name: "browser_wait_for",
+    description: "Wait for a CSS selector to appear and be visible.",
+    input_schema: {
+      type: "object",
+      properties: {
+        selector: { type: "string" },
+        timeout:  { type: "number", description: "Milliseconds (default 8000)" },
+      },
+      required: ["selector"],
     },
   },
   {
@@ -273,7 +376,7 @@ export const TOOL_DEFINITIONS = [
     input_schema: {
       type: "object",
       properties: {
-        selector: { type: "string", description: "CSS selector" },
+        selector: { type: "string" },
       },
       required: ["selector"],
     },
@@ -284,25 +387,25 @@ export const TOOL_DEFINITIONS = [
     input_schema: {
       type: "object",
       properties: {
-        selectors: { type: "array", items: { type: "string" }, description: "List of CSS selectors to check" },
+        selectors: { type: "array", items: { type: "string" } },
       },
       required: ["selectors"],
     },
   },
   {
     name: "browser_evaluate",
-    description: "Run a JavaScript expression in the browser page context and return the result.",
+    description: "Run a JavaScript expression in the browser page context.",
     input_schema: {
       type: "object",
       properties: {
-        script: { type: "string", description: "JS expression string, e.g. 'document.title' or 'localStorage.getItem(\"sb-token\")'" },
+        script: { type: "string" },
       },
       required: ["script"],
     },
   },
   {
     name: "db_list_tables",
-    description: "List known Supabase tables and their row counts (using anon key, so RLS applies).",
+    description: "List known Supabase tables and their row counts.",
     input_schema: { type: "object", properties: {} },
   },
   {
@@ -311,10 +414,10 @@ export const TOOL_DEFINITIONS = [
     input_schema: {
       type: "object",
       properties: {
-        table: { type: "string", description: "Table name" },
-        select: { type: "string", description: "Columns to select (default *)" },
-        limit: { type: "number", description: "Max rows (default 5)" },
-        filters: { type: "object", description: "Key-value equality filters" },
+        table:   { type: "string" },
+        select:  { type: "string" },
+        limit:   { type: "number" },
+        filters: { type: "object" },
       },
       required: ["table"],
     },
@@ -342,8 +445,11 @@ export async function runTool(name, input) {
     read_file,
     list_files,
     browser_navigate,
+    browser_login,
     browser_screenshot,
     browser_click,
+    browser_fill,
+    browser_wait_for,
     browser_get_text,
     browser_check_elements,
     browser_evaluate,
