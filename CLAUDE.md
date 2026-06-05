@@ -29,7 +29,7 @@
 ├── auth.js             ← Google OAuth, 세션 관리
 ├── supabase-client.js  ← Supabase 초기화
 ├── sw.js               ← 서비스 워커 (CACHE_NAME: petreview-v7)
-├── app.js              ← 동물병원 찾기/리뷰 (index.html용, 기존 기능)
+├── app.js              ← 동물병원 찾기/커뮤니티 후기 (서브 기능, 메인 메뉴 아님)
 ├── dataProvider.js     ← 병원 데이터 제공
 ├── manifest.json
 ├── api/                ← Vercel 서버리스 함수
@@ -105,17 +105,27 @@ DB 컬럼 추가 SQL: supabase/add_cal_settings.sql 참고.
 - [x] 케어 푸시 알림: Vercel cron + Web Push API, D-day 당일 알림
 - [x] 소셜 UI 개선: FAB·카드 hover·태그바 색상·모달 드래그핸들·본문 미리보기
 - [x] 마이페이지 UI 개선: 프로필 히어로 카드·탭 그린화·펫카드 hover·설정 로그아웃 버튼
-- [x] 병원 후기 탭 접근성: care.html 헤더 상시 링크 + 루틴탭 바로가기 카드 2개
+- [x] 병원 후기 탭 접근성: 루틴탭 바로가기 카드 2개 (헤더 링크는 hospital.html로 변경)
 - [x] AI 조언 고도화: 체중 추이(증감 트렌드) + 건강기록 프롬프트 반영
 - [x] PWA 아이콘: 이모지 텍스트 → 벡터 발바닥 경로(ellipse 5개), sw v8
 - [x] 오프라인 UX: online/offline 이벤트 토스트, auth.js 공통 등록
 - [x] 소셜 이미지 업로드 개선: Canvas 압축(1280px/82%), 진행률 3단계 표시
 - [x] 건강기록 체중 차트: Canvas 라인차트, DPR 대응, 증감 ▲/▼ 표시
 - [x] 식단 칼로리 DB 저장: pet_diet_settings에 weight_kg·neutered·kcal_per_100g 컬럼 추가, localStorage 마이그레이션
+- [x] UX 개선: alert() 전량 토스트 알림으로 교체 (care/mypage/social/hospital.js)
+- [x] 탭 데이터 캐싱: 55초 TTL, 탭 전환 시 DB 재조회 없음, 쓰기 후 force=true로 무효화
+- [x] 스켈레톤 로딩 UI: 캐시 미스 시 탭별 shimmer 스켈레톤 표시
+- [x] 접근성: 모달 role/aria-modal/aria-labelledby, focus trap, Escape 키, 배경클릭 닫기
+- [x] Vercel API 버그 수정: ocr.js 모델명, facilities.js 하드코딩 키 제거, push-send.js VAPID 조건부
+- [x] care.html 헤더 🏥 병원 링크 → hospital.html(단골병원 관리)로 변경
 
 ## 남은 작업 (우선순위순)
 
 > 계획된 주요 작업 완료. 신규 기능 추가 시 여기에 기록.
+
+## 서브 기능 (메인 메뉴 아님)
+
+* `index.html` + `app.js` — 동물병원 커뮤니티 후기/찾기. 사이트 컨셉이 우쭈쭈 마이펫케어로 전환되면서 서브로 격하. index.html은 care.html로 리다이렉트. 접근은 URL 직접 입력만 가능. OCR 영수증 인증 기능 포함되어 있으나 향후 제거 예정.
 
 ## 미사용 기능
 
