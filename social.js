@@ -378,7 +378,8 @@
     document.getElementById("write-photo-previews").hidden = true;
     document.getElementById("write-photo-placeholder").hidden = false;
     document.querySelectorAll(".write-tag-btn").forEach(b => b.classList.toggle("is-active", b.dataset.tag === post.tag));
-    document.getElementById("write-submit-btn").textContent = "수정 완료";
+    const submitBtn = document.getElementById("write-submit-btn");
+    submitBtn.textContent = "수정 완료"; submitBtn.disabled = false;
     document.getElementById("write-modal-title").textContent = "글 수정";
     document.getElementById("write-modal-overlay").hidden = false;
     document.body.style.overflow = "hidden";
@@ -416,10 +417,14 @@
         resultEl.textContent = `📤 업로드 중... (${i + 1}/${total})`;
         const path = `community/${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
         const { error: upErr } = await db.storage.from("pet-photos").upload(path, compressed, { contentType: "image/jpeg" });
-        if (!upErr) {
-          const { data: u } = db.storage.from("pet-photos").getPublicUrl(path);
-          photoUrls.push(u.publicUrl);
+        if (upErr) {
+          resultEl.style.color = "#e57373";
+          resultEl.textContent = `사진 업로드 실패 (${i + 1}번째): ${upErr.message}`;
+          btn.disabled = false; btn.textContent = "등록하기";
+          return;
         }
+        const { data: u } = db.storage.from("pet-photos").getPublicUrl(path);
+        photoUrls.push(u.publicUrl);
       }
       resultEl.textContent = "";
       resultEl.style.color = "";

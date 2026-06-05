@@ -1549,7 +1549,7 @@
 
     // 같은 species 전체 유저 이번달 평균
     const { data } = await db.from("pet_expenses")
-      .select("amount, pets!inner(species)")
+      .select("amount, user_id, pets!inner(species)")
       .eq("pets.species", species)
       .gte("expense_date", from)
       .lte("expense_date", to);
@@ -1558,7 +1558,7 @@
 
     // 유저별 합산 후 평균
     const byUser = {};
-    data.forEach(r => { byUser[r.pets?.user_id || "x"] = (byUser[r.pets?.user_id || "x"] || 0) + r.amount; });
+    data.forEach(r => { byUser[r.user_id || "x"] = (byUser[r.user_id || "x"] || 0) + r.amount; });
     const avg = Math.round(Object.values(byUser).reduce((s,v)=>s+v,0) / Object.keys(byUser).length);
     const myTotal = myRows.reduce((s,r)=>s+r.amount, 0);
     const diff = myTotal - avg;
@@ -1660,9 +1660,11 @@
       content.innerHTML = '<p class="placeholder-text">불러오는 중...</p>';
       shareBtn.hidden = true;
 
+      try {
       const db = window.supabaseClient;
-      const { data: { user } } = await db.auth.getUser();
-      if (!user) { content.innerHTML = '<p class="placeholder-text">로그인이 필요합니다.</p>'; return; }
+      const { data: authData, error: authErr } = await db.auth.getUser();
+      if (authErr || !authData?.user) { content.innerHTML = '<p class="placeholder-text">로그인이 필요합니다.</p>'; return; }
+      const user = authData.user;
 
       const from = `${year}-01-01`;
       const to = `${year}-12-31`;
@@ -1732,6 +1734,9 @@
         ` : `<p class="placeholder-text" style="padding:20px 0;">아직 ${year}년 데이터가 없어요.<br>가계부나 영수증 리뷰를 작성해보세요!</p>`}`;
 
       shareBtn.hidden = !hasData;
+      } catch (e) {
+        content.innerHTML = '<p class="placeholder-text">데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.</p>';
+      }
     }
   })();
 })();

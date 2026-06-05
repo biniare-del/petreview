@@ -759,7 +759,8 @@ function renderDietSection(container, pet, settings, logs, latestWeight) {
   container.querySelector("#diet-water-reset")?.addEventListener("click", async () => {
     const userId = window.PetAuth?.currentUser?.id;
     if (!userId) return;
-    await _db.from("pet_diet_logs").delete().eq("pet_id", pet.id).eq("log_type", "water").gte("logged_at", getTodayKST());
+    const { error } = await _db.from("pet_diet_logs").delete().eq("pet_id", pet.id).eq("log_type", "water").gte("logged_at", getTodayKST());
+    if (error) { showToast("초기화 실패: " + error.message); return; }
     await renderActiveArea();
   });
   container.querySelector("#diet-snack-btn")?.addEventListener("click", () => {
@@ -786,13 +787,14 @@ function renderDietSection(container, pet, settings, logs, latestWeight) {
 async function logDiet(type, pet, mealOrder, waterMl, note) {
   const userId = window.PetAuth?.currentUser?.id;
   if (!userId) return;
-  await _db.from("pet_diet_logs").insert({
+  const { error } = await _db.from("pet_diet_logs").insert({
     user_id: userId, pet_id: pet.id, log_type: type,
     meal_order: mealOrder ?? null,
     water_ml: waterMl ?? null,
     note: note || null,
     logged_at: new Date().toISOString(),
   });
+  if (error) { showToast("기록 저장 실패: " + error.message); return; }
   await renderActiveArea();
 }
 
@@ -891,7 +893,8 @@ async function renderRecordsTab(pet, container) {
     });
     listEl.querySelectorAll(".expense-delete-ok").forEach(btn => {
       btn.addEventListener("click", async () => {
-        await _db.from("pet_health_records").delete().eq("id", btn.dataset.id);
+        const { error } = await _db.from("pet_health_records").delete().eq("id", btn.dataset.id);
+        if (error) { showToast("삭제 실패: " + error.message); return; }
         allRecords = allRecords.filter(r => r.id !== btn.dataset.id);
         confirmDeleteRecordId = null;
         renderRecordList();
@@ -1111,7 +1114,8 @@ async function renderExpenseTab(container) {
     listEl.querySelectorAll(".expense-delete-ok").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
-        await _db.from("pet_expenses").delete().eq("id", id);
+        const { error } = await _db.from("pet_expenses").delete().eq("id", id);
+        if (error) { showToast("삭제 실패: " + error.message); return; }
         allExpenses = allExpenses.filter(r => r.id !== id);
         realPets.forEach(p => { petTotals[p.id] = 0; });
         allExpenses.forEach(r => { petTotals[r.pet_id] = (petTotals[r.pet_id] || 0) + (r.amount || 0); });
@@ -1297,8 +1301,12 @@ async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings, healthData)
   } catch {
     result.textContent = "네트워크 오류가 발생했어요.";
   }
-  btn.disabled = false;
-  btn.textContent = _activeSubtab === "diet" ? "🤖 AI 식단 조언" : "🤖 AI 케어 조언";
+  // tab switch로 DOM이 교체됐을 수 있으므로 ID로 재조회
+  const finalBtn = document.getElementById("ai-advice-btn");
+  if (finalBtn) {
+    finalBtn.disabled = false;
+    finalBtn.textContent = _activeSubtab === "diet" ? "🤖 AI 식단 조언" : "🤖 AI 케어 조언";
+  }
 }
 
 // ──────────────────────────────────────────────────────────────
