@@ -738,7 +738,8 @@
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
 
-    const weights = sorted.map(d => parseFloat(d.weight));
+    const weights = sorted.map(d => parseFloat(d.weight)).filter(w => !isNaN(w));
+    if (weights.length < 2) return;
     const minW = Math.min(...weights), maxW = Math.max(...weights);
     const range = maxW - minW || 0.5;
     const padded = range * 0.15;
