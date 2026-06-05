@@ -101,6 +101,27 @@
     }
   }
 
+  // 모달 포커스 트랩 — 열릴 때 호출, 반환값(해제 함수)을 닫을 때 호출
+  window.trapFocus = function(modalEl) {
+    const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const getEls = () => [...modalEl.querySelectorAll(FOCUSABLE)].filter(n => n.offsetParent !== null);
+    const onKey = (e) => {
+      if (e.key !== "Tab") return;
+      const els = getEls();
+      if (!els.length) return;
+      const first = els[0], last = els[els.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    modalEl.addEventListener("keydown", onKey);
+    // 첫 번째 포커스 가능 요소로 이동
+    requestAnimationFrame(() => { getEls()[0]?.focus(); });
+    return () => modalEl.removeEventListener("keydown", onKey);
+  };
+
   window.PetAuth = {
     currentUser: null,
     currentProfile: null,

@@ -1,3 +1,16 @@
+/* 스크린리더 전용 텍스트 (시각적으로는 숨김) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── 브랜드 색상 변수 ── */
 :root {
   --brand-dark:   #0f6e56;

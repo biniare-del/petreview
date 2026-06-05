@@ -91,6 +91,7 @@ let _dietLogging = false;  // logDiet 중복 실행 방지
 let _activePetIdx = 0;
 let _activeSubtab = "manage";
 let _sheetItem = null; // 현재 열린 시트의 케어 항목
+let _sheetTrapRelease = null; // 포커스 트랩 해제 함수
 
 // ─── 유틸 ────────────────────────────────────────────────────
 function escapeHtml(s) {
@@ -477,13 +478,17 @@ function openManageSheet(pet, item, lastDoneAt, intervalDays) {
   // 날짜 기본값 = 오늘
   document.getElementById("care-done-date").value = todayIso();
 
-  document.getElementById("care-sheet-overlay").classList.add("is-open");
+  const sheetOverlay = document.getElementById("care-sheet-overlay");
+  sheetOverlay.classList.add("is-open");
   document.body.style.overflow = "hidden";
+  _sheetTrapRelease = window.trapFocus?.(sheetOverlay);
 }
 
 function closeManageSheet() {
   document.getElementById("care-sheet-overlay").classList.remove("is-open");
   document.body.style.overflow = "";
+  _sheetTrapRelease?.();
+  _sheetTrapRelease = null;
   _sheetItem = null;
 }
 

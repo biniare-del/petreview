@@ -170,10 +170,11 @@
     }
 
     const TAG_COLORS = {
+      "사진자랑": { bg: "#FDF2FF", color: "#7C3AED" },
       "병원추천": { bg: "#E6F1FB", color: "#0C447C" },
-      "질문": { bg: "#FAEEDA", color: "#854F0B" },
-      "자랑": { bg: "#FBEAF0", color: "#72243E" },
-      "정보": { bg: "#EAF3DE", color: "#27500A" },
+      "질문":     { bg: "#FAEEDA", color: "#854F0B" },
+      "정보":     { bg: "#EAF3DE", color: "#27500A" },
+      "일상":     { bg: "#F0F0F0", color: "#4B5563" },
     };
 
     container.innerHTML = data.map((post) => {
@@ -455,13 +456,18 @@
       submitBtn.textContent = "등록하기";
     }
 
-    document.getElementById("pet-modal").hidden = false;
+    const petModal = document.getElementById("pet-modal");
+    petModal.hidden = false;
     document.body.style.overflow = "hidden";
+    _petModalTrapRelease = window.trapFocus?.(petModal);
   }
 
+  let _petModalTrapRelease = null;
   function closePetModal() {
     document.getElementById("pet-modal").hidden = true;
     document.body.style.overflow = "";
+    _petModalTrapRelease?.();
+    _petModalTrapRelease = null;
   }
 
   function bindPetModal() {

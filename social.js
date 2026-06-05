@@ -5,7 +5,7 @@
 
   // ── 유틸 ──────────────────────────────────────────────
   function escH(v) {
-    return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
   }
   function timeAgo(d) {
     const s = Math.floor((Date.now() - new Date(d)) / 1000);

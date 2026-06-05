@@ -210,7 +210,9 @@ async function openHospitalDetail(favId, name) {
   document.getElementById("hd-name").textContent = name;
   const detailEl = document.getElementById("hospital-detail-content");
   detailEl.innerHTML = '<p style="padding:20px 0;color:#aaa;font-size:13px;">불러오는 중...</p>';
-  document.getElementById("hospital-detail-overlay").classList.add("is-open");
+  const _detailOverlay = document.getElementById("hospital-detail-overlay");
+  _detailOverlay.classList.add("is-open");
+  _detailOverlay.removeAttribute("aria-hidden");
   document.body.style.overflow = "hidden";
 
   let visits = [];
@@ -278,14 +280,19 @@ document.getElementById("visit-form-overlay")?.addEventListener("click", e => {
 });
 document.getElementById("visit-form-save")?.addEventListener("click", saveVisit);
 
-document.getElementById("hospital-detail-close")?.addEventListener("click", () => {
-  document.getElementById("hospital-detail-overlay").classList.remove("is-open");
+function closeHospitalDetail() {
+  const ol = document.getElementById("hospital-detail-overlay");
+  ol.classList.remove("is-open");
+  ol.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
-});
+}
+document.getElementById("hospital-detail-close")?.addEventListener("click", closeHospitalDetail);
 document.getElementById("hospital-detail-overlay")?.addEventListener("click", e => {
-  if (e.target === document.getElementById("hospital-detail-overlay")) {
-    e.currentTarget.classList.remove("is-open");
-    document.body.style.overflow = "";
+  if (e.target === document.getElementById("hospital-detail-overlay")) closeHospitalDetail();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && document.getElementById("hospital-detail-overlay")?.classList.contains("is-open")) {
+    closeHospitalDetail();
   }
 });
 

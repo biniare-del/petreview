@@ -40,7 +40,7 @@
   <div id="care-content" class="care-content"></div>
 
   <!-- 케어 항목 하단 시트 -->
-  <div class="care-sheet-overlay" id="care-sheet-overlay">
+  <div class="care-sheet-overlay" id="care-sheet-overlay" role="dialog" aria-modal="true" aria-labelledby="care-sheet-title">
     <div class="care-sheet" id="care-sheet">
       <div class="care-sheet-handle"></div>
       <div class="care-sheet-header">
@@ -84,7 +84,7 @@
 
   <!-- 하단 탭바 -->
   <nav class="bottom-tab-bar" aria-label="하단 탭 메뉴">
-    <button class="tab-item is-active" aria-label="케어">
+    <button class="tab-item is-active" aria-label="케어" aria-current="page">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1" ry="1"/><path d="M9 12l2 2 4-4"/></svg>
       <span>케어</span>
     </button>

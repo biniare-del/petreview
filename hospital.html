@@ -29,16 +29,16 @@
   </div>
 
   <!-- 병원 추가/수정 모달 -->
-  <div class="modal-overlay" id="hospital-form-overlay" hidden>
+  <div class="modal-overlay" id="hospital-form-overlay" role="dialog" aria-modal="true" aria-labelledby="hospital-form-title" hidden>
     <div class="modal">
-      <button class="modal-close" id="hospital-form-close" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">✕</button>
+      <button class="modal-close" id="hospital-form-close" aria-label="닫기" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">✕</button>
       <h3 class="modal-title" id="hospital-form-title">병원 추가</h3>
       <div class="modal-field">
-        <label>병원 이름 *</label>
+        <label for="h-name">병원 이름 *</label>
         <input type="text" id="h-name" class="diet-input" placeholder="예: 행복 동물병원" maxlength="50" style="width:100%;"/>
       </div>
       <div class="modal-field">
-        <label>종류</label>
+        <label for="h-category">종류</label>
         <select id="h-category" class="diet-input" style="width:100%;">
           <option value="동물병원">동물병원</option>
           <option value="24시간 동물병원">24시간 동물병원</option>
@@ -48,15 +48,15 @@
         </select>
       </div>
       <div class="modal-field">
-        <label>주소</label>
+        <label for="h-address">주소</label>
         <input type="text" id="h-address" class="diet-input" placeholder="예: 서울 강남구 테헤란로 123" maxlength="100" style="width:100%;"/>
       </div>
       <div class="modal-field">
-        <label>전화번호</label>
+        <label for="h-phone">전화번호</label>
         <input type="tel" id="h-phone" class="diet-input" placeholder="02-0000-0000" maxlength="20" style="width:100%;"/>
       </div>
       <div class="modal-field">
-        <label>메모</label>
+        <label for="h-memo">메모</label>
         <textarea id="h-memo" class="diet-input" rows="2" placeholder="특이사항, 담당 수의사 등" style="width:100%;resize:none;"></textarea>
       </div>
       <button class="care-sheet-done-btn" id="hospital-form-save" style="margin-top:12px;">저장</button>
@@ -65,25 +65,25 @@
   </div>
 
   <!-- 방문 기록 추가 모달 -->
-  <div class="modal-overlay" id="visit-form-overlay" hidden>
+  <div class="modal-overlay" id="visit-form-overlay" role="dialog" aria-modal="true" aria-labelledby="visit-form-title" hidden>
     <div class="modal">
-      <button class="modal-close" id="visit-form-close" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">✕</button>
-      <h3 class="modal-title">방문 기록</h3>
+      <button class="modal-close" id="visit-form-close" aria-label="닫기" style="float:right;background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">✕</button>
+      <h3 class="modal-title" id="visit-form-title">방문 기록</h3>
       <div id="visit-hospital-name" style="font-size:13px;color:#888;margin-bottom:14px;"></div>
       <div class="modal-field">
-        <label>방문일 *</label>
+        <label for="v-date">방문일 *</label>
         <input type="date" id="v-date" class="diet-input" style="width:100%;"/>
       </div>
       <div class="modal-field">
-        <label>진료비 (원)</label>
+        <label for="v-cost">진료비 (원)</label>
         <input type="number" id="v-cost" class="diet-input" placeholder="30000" min="0" step="100" style="width:100%;"/>
       </div>
       <div class="modal-field">
-        <label>내용</label>
+        <label for="v-content">내용</label>
         <textarea id="v-content" class="diet-input" rows="3" placeholder="예: 광견병 접종, 링거 처방 등" style="width:100%;resize:none;"></textarea>
       </div>
       <div class="modal-field">
-        <label>담당 수의사</label>
+        <label for="v-vet">담당 수의사</label>
         <input type="text" id="v-vet" class="diet-input" placeholder="예: 홍길동 원장님" maxlength="30" style="width:100%;"/>
       </div>
       <button class="care-sheet-done-btn" id="visit-form-save" style="margin-top:12px;">저장</button>
@@ -91,7 +91,7 @@
   </div>
 
   <!-- 병원 상세 슬라이드업 -->
-  <div class="care-sheet-overlay" id="hospital-detail-overlay">
+  <div class="care-sheet-overlay" id="hospital-detail-overlay" aria-hidden="true">
     <div class="care-sheet" id="hospital-detail-sheet">
       <div class="care-sheet-handle"></div>
       <div class="care-sheet-header">

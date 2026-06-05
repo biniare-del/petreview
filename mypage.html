@@ -274,7 +274,7 @@
   </div>
 
   <!-- 펫 추가/수정 모달 -->
-  <div class="modal-overlay" id="pet-modal" hidden>
+  <div class="modal-overlay" id="pet-modal" role="dialog" aria-modal="true" aria-labelledby="pet-modal-title" hidden>
     <div class="modal pet-modal" style="max-height:90vh;overflow-y:auto;">
       <button class="modal-close" id="pet-modal-close">✕</button>
       <h2 class="modal-title" style="font-size:18px;" id="pet-modal-title">반려동물 등록</h2>
@@ -493,30 +493,30 @@
   </footer>
 
   <!-- 지출 추가 모달 -->
-  <div class="modal-overlay" id="exp-modal" hidden>
+  <div class="modal-overlay" id="exp-modal" role="dialog" aria-modal="true" aria-labelledby="exp-modal-title" hidden>
     <div class="modal-box" style="max-width:400px;">
       <div class="modal-header">
         <h3 id="exp-modal-title">지출 추가</h3>
-        <button class="modal-close" id="exp-modal-close">✕</button>
+        <button class="modal-close" id="exp-modal-close" aria-label="닫기">✕</button>
       </div>
       <div class="form-group">
-        <label>반려동물</label>
+        <label for="exp-pet-select">반려동물</label>
         <select id="exp-pet-select" class="form-control"></select>
       </div>
       <div class="form-group">
-        <label>카테고리</label>
+        <label for="exp-category-select">카테고리</label>
         <select id="exp-category-select" class="form-control"></select>
       </div>
       <div class="form-group">
-        <label>금액 (원)</label>
+        <label for="exp-amount">금액 (원)</label>
         <input type="number" id="exp-amount" class="form-control" placeholder="0" min="0" />
       </div>
       <div class="form-group">
-        <label>날짜</label>
+        <label for="exp-date">날짜</label>
         <input type="date" id="exp-date" class="form-control" />
       </div>
       <div class="form-group">
-        <label>메모 (선택)</label>
+        <label for="exp-memo">메모 (선택)</label>
         <input type="text" id="exp-memo" class="form-control" placeholder="어디서, 무엇을..." maxlength="100" />
       </div>
       <button class="primary-btn" id="exp-save-btn" style="width:100%;margin-top:4px;">저장</button>
@@ -534,14 +534,14 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span>커뮤니티</span>
     </button>
-    <button class="tab-item is-active" aria-label="마이">
+    <button class="tab-item is-active" aria-label="마이" aria-current="page">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <span>마이</span>
     </button>
   </nav>
 
   <!-- 연간 리포트 모달 -->
-  <div class="modal-overlay" id="annual-report-modal" hidden>
+  <div class="modal-overlay" id="annual-report-modal" role="dialog" aria-modal="true" aria-labelledby="ar-title" hidden>
     <div class="modal annual-report-modal">
       <button class="modal-close" id="annual-report-close" aria-label="닫기">✕</button>
       <div class="ar-header">
@@ -550,7 +550,7 @@
           <span class="ar-year-label" id="ar-year-label">2025</span>
           <button class="ar-year-nav" id="ar-next-year">›</button>
         </div>
-        <div class="ar-title">🐾 연간 펫 리포트</div>
+        <div class="ar-title" id="ar-title">🐾 연간 펫 리포트</div>
       </div>
       <div id="ar-content">
         <p class="placeholder-text">불러오는 중...</p>

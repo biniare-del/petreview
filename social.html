@@ -69,11 +69,11 @@
   </div>
 
   <!-- 글쓰기 모달 -->
-  <div class="social-modal-overlay" id="write-modal-overlay" hidden>
+  <div class="social-modal-overlay" id="write-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="write-modal-title" hidden>
     <div class="social-modal">
       <div class="social-modal-header">
         <h3 id="write-modal-title">글쓰기</h3>
-        <button class="social-modal-close" id="write-close-btn">✕</button>
+        <button class="social-modal-close" id="write-close-btn" aria-label="닫기">✕</button>
       </div>
       <div class="write-form-body">
         <!-- 사진 첨부 (선택) -->
@@ -81,19 +81,21 @@
           <div class="write-photo-placeholder" id="write-photo-placeholder">
             <span style="font-size:24px;">📷</span>
             <span>사진 첨부 (선택, 최대 3장)</span>
-            <input type="file" id="write-photo-input" accept="image/*" multiple style="display:none"/>
+            <input type="file" id="write-photo-input" accept="image/*" multiple style="display:none" aria-label="사진 첨부"/>
           </div>
           <div class="write-photo-previews" id="write-photo-previews" hidden></div>
         </div>
         <!-- 태그 선택 -->
-        <div class="write-tag-group" id="tag-select-group">
+        <div class="write-tag-group" id="tag-select-group" role="group" aria-label="태그 선택">
           <button type="button" class="write-tag-btn" data-tag="사진자랑">📸 사진자랑</button>
           <button type="button" class="write-tag-btn" data-tag="병원추천">🏥 병원추천</button>
           <button type="button" class="write-tag-btn" data-tag="질문">❓ 질문</button>
           <button type="button" class="write-tag-btn" data-tag="정보">💡 정보</button>
           <button type="button" class="write-tag-btn" data-tag="일상">💬 일상</button>
         </div>
+        <label for="write-title" class="sr-only">제목</label>
         <input type="text" class="write-title-input" id="write-title" placeholder="제목을 입력하세요" maxlength="100" />
+        <label for="write-content" class="sr-only">내용</label>
         <textarea class="write-content-input" id="write-content" placeholder="내용을 입력하세요."></textarea>
         <button class="write-submit-btn" id="write-submit-btn">등록하기</button>
         <p id="write-result" style="text-align:center;font-size:13px;margin-top:8px;color:#e57373;"></p>
@@ -140,7 +142,7 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1" ry="1"/><path d="M9 12l2 2 4-4"/></svg>
       <span>케어</span>
     </button>
-    <button class="tab-item is-active" aria-label="커뮤니티">
+    <button class="tab-item is-active" aria-label="커뮤니티" aria-current="page">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span>커뮤니티</span>
     </button>
