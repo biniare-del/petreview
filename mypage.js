@@ -223,8 +223,8 @@
     if (!db || !userId) { container.innerHTML = '<p class="placeholder-text">불러올 수 없습니다.</p>'; return; }
 
     const { data, error } = await db
-      .from("review_comments")
-      .select("id, content, created_at, review_id")
+      .from("comments")
+      .select("id, content, created_at, post_id")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
@@ -233,22 +233,21 @@
       return;
     }
 
-    // 리뷰 정보 조회
-    const reviewIds = [...new Set(data.map(c => c.review_id).filter(Boolean))];
-    let reviewMap = {};
-    if (reviewIds.length) {
-      const { data: rv } = await db.from("reviews").select("id, place_name, category").in("id", reviewIds);
-      (rv || []).forEach(r => { reviewMap[r.id] = r; });
+    // 소셜 게시글 정보 조회
+    const postIds = [...new Set(data.map(c => c.post_id).filter(Boolean))];
+    let postMap = {};
+    if (postIds.length) {
+      const { data: pv } = await db.from("posts").select("id, title").in("id", postIds);
+      (pv || []).forEach(p => { postMap[p.id] = p; });
     }
 
     container.innerHTML = data.map(c => {
-      const review = reviewMap[c.review_id];
-      const placeName = review?.place_name || "알 수 없는 업체";
-      const cat = CATEGORY_LABEL[review?.category] || "";
+      const post = postMap[c.post_id];
+      const postTitle = post?.title || "삭제된 게시글";
       return `
         <div class="mypage-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
-            <span style="font-size:12px;color:#ff8a65;font-weight:600;">💬 ${escapeHtml(placeName)}${cat ? ` · ${cat}` : ""}</span>
+            <span style="font-size:12px;color:#ff8a65;font-weight:600;">💬 ${escapeHtml(postTitle)}</span>
             <span style="font-size:11px;color:#bbb;">${(c.created_at || "").slice(0, 10)}</span>
           </div>
           <p style="margin:0 0 10px;font-size:14px;color:#333;line-height:1.5;">${escapeHtml(c.content)}</p>
@@ -259,7 +258,7 @@
     container.querySelectorAll(".btn-delete[data-comment-id]").forEach(btn => {
       btn.addEventListener("click", async () => {
         if (!confirm("댓글을 삭제하시겠습니까?")) return;
-        const { error: delErr } = await db.from("review_comments").delete().eq("id", btn.dataset.commentId).eq("user_id", userId);
+        const { error: delErr } = await db.from("comments").delete().eq("id", btn.dataset.commentId).eq("user_id", userId);
         if (delErr) { alert("삭제 실패: " + delErr.message); return; }
         btn.closest(".mypage-card").remove();
         if (!container.querySelector(".mypage-card"))
@@ -457,14 +456,19 @@
     }
 
     document.getElementById("pet-modal").hidden = false;
+    document.body.style.overflow = "hidden";
   }
 
   function closePetModal() {
     document.getElementById("pet-modal").hidden = true;
+    document.body.style.overflow = "";
   }
 
   function bindPetModal() {
     document.getElementById("pet-modal-close")?.addEventListener("click", closePetModal);
+    document.getElementById("pet-modal")?.addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) closePetModal();
+    });
 
     document.getElementById("pet-form")?.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -482,7 +486,6 @@
 
       if (!name) { alert("이름을 입력해주세요."); document.getElementById("pet-name").focus(); return; }
       if (!species) { alert("종류를 선택해주세요."); document.getElementById("pet-species").focus(); return; }
-      if (!breed) { alert("품종을 입력해주세요."); document.getElementById("pet-breed").focus(); return; }
       if (!gender) { alert("성별을 선택해주세요."); document.getElementById("pet-gender").focus(); return; }
       if (neuteredVal === "") { alert("중성화 여부를 선택해주세요."); document.getElementById("pet-is-neutered").focus(); return; }
 
@@ -1106,7 +1109,7 @@
         db.from("pet_health_records").select("id", { count: "exact", head: true }).eq("user_id", userId),
         db.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", userId),
         db.from("posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
-        db.from("review_comments").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        db.from("comments").select("id", { count: "exact", head: true }).eq("user_id", userId),
       ]);
       reviewCount   = rv.count  || 0;
       verifiedCount = vf.count  || 0;
@@ -1416,7 +1419,11 @@
       loadExpenses();
     });
     document.getElementById("exp-add-btn").addEventListener("click", openExpModal);
-    document.getElementById("exp-modal-close").addEventListener("click", () => { document.getElementById("exp-modal").hidden = true; });
+    const closeExpModal = () => { document.getElementById("exp-modal").hidden = true; document.body.style.overflow = ""; };
+    document.getElementById("exp-modal-close").addEventListener("click", closeExpModal);
+    document.getElementById("exp-modal")?.addEventListener("click", (e) => {
+      if (e.target === e.currentTarget) closeExpModal();
+    });
     document.getElementById("exp-save-btn").addEventListener("click", saveExpense);
 
     // 펫 목록 로드
@@ -1597,6 +1604,7 @@
     dateEl.value = today;
     document.getElementById("exp-modal-msg").textContent = "";
     document.getElementById("exp-modal").hidden = false;
+    document.body.style.overflow = "hidden";
   }
 
   async function saveExpense() {
@@ -1752,4 +1760,20 @@
       }
     }
   })();
+
+  // 모달 Escape 키 닫기
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    const modals = [
+      { id: "pet-modal",    close: () => { document.getElementById("pet-modal").hidden = true; document.body.style.overflow = ""; } },
+      { id: "exp-modal",    close: () => { document.getElementById("exp-modal").hidden = true; document.body.style.overflow = ""; } },
+      { id: "appt-modal",   close: () => { const m = document.getElementById("appt-modal"); if (m) m.hidden = true; } },
+      { id: "health-modal", close: () => { const m = document.getElementById("health-modal"); if (m) m.hidden = true; } },
+      { id: "annual-report-modal", close: () => { const m = document.getElementById("annual-report-modal"); if (m) m.hidden = true; } },
+    ];
+    for (const { id, close } of modals) {
+      const el = document.getElementById(id);
+      if (el && !el.hidden) { close(); break; }
+    }
+  });
 })();

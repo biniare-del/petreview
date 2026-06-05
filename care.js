@@ -1608,6 +1608,12 @@ async function init() {
   document.getElementById("care-sheet-overlay")?.addEventListener("click", e => {
     if (e.target === document.getElementById("care-sheet-overlay")) closeManageSheet();
   });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      const overlay = document.getElementById("care-sheet-overlay");
+      if (overlay?.classList.contains("is-open")) closeManageSheet();
+    }
+  });
 
   // 완료 기록
   document.getElementById("care-sheet-done-btn")?.addEventListener("click", submitManageDone);
