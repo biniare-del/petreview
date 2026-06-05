@@ -994,6 +994,7 @@ async function renderRecordsTab(pet, container, force = false) {
         const { error } = await _db.from("pet_health_records").delete().eq("id", btn.dataset.id);
         if (error) { showToast("삭제 실패: " + error.message); return; }
         allRecords = allRecords.filter(r => r.id !== btn.dataset.id);
+        _clearCache(pet.id); // 삭제 후 records 캐시 무효화
         confirmDeleteRecordId = null;
         renderRecordList();
       });
