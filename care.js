@@ -188,6 +188,46 @@ function showToast(msg, type = "success") {
   window.showToast?.(msg, type);
 }
 
+// ─── 탭별 스켈레톤 HTML ───────────────────────────────────────
+function _skeletonHtml(subtab) {
+  const s = (w, cls = "sk-bar") => `<div class="sk ${cls}" style="width:${w};"></div>`;
+  if (subtab === "manage") return `
+    <div class="sk-wrap">
+      ${s("100%","sk-block")}
+      <div class="sk-grid">
+        ${Array(9).fill(`<div class="sk sk-card"></div>`).join("")}
+      </div>
+      ${s("100%","sk-btn")}
+      <div class="sk-row">${s("48%","sk-block")} ${s("48%","sk-block")}</div>
+    </div>`;
+  if (subtab === "diet") return `
+    <div class="sk-wrap">
+      ${s("100%","sk-btn")}
+      <div class="sk-row">${s("48%","sk-block")} ${s("48%","sk-block")}</div>
+      <div class="sk-row">${s("30%","sk-chip")} ${s("30%","sk-chip")} ${s("30%","sk-chip")}</div>
+      ${s("100%","sk-btn")}
+      ${s("100%","sk-btn")}
+    </div>`;
+  if (subtab === "records") return `
+    <div class="sk-wrap">
+      ${s("100%","sk-block")}
+      <div class="sk-row">${s("30%")} ${s("50%")}</div>
+      ${s("100%","sk-item")} ${s("100%","sk-item")} ${s("80%","sk-item")}
+      <div class="sk-row" style="margin-top:14px;">${s("30%")} ${s("50%")}</div>
+      ${s("100%","sk-item")} ${s("100%","sk-item")}
+    </div>`;
+  if (subtab === "expense") return `
+    <div class="sk-wrap">
+      ${s("100%","sk-block")}
+      <div class="sk-row">${s("20%","sk-chip")} ${s("20%","sk-chip")} ${s("20%","sk-chip")}</div>
+      ${s("90%")} ${s("70%")} ${s("50%")}
+      <div style="margin-top:12px;">
+        ${s("100%","sk-item")} ${s("100%","sk-item")} ${s("100%","sk-item")}
+      </div>
+    </div>`;
+  return `<p class="care-loading">불러오는 중...</p>`;
+}
+
 // ─── 렌더링 진입점 ────────────────────────────────────────────
 // force=true: 캐시 무시하고 DB 재쿼리 (쓰기 작업 후 호출 시)
 async function renderActiveArea(force = false) {
@@ -195,9 +235,9 @@ async function renderActiveArea(force = false) {
   if (!mainArea || !_pets.length) return;
   const pet = _pets[_activePetIdx];
   const cacheKey = _activeSubtab === "expense" ? "expense" : `${_activeSubtab}:${pet.id}`;
-  // 캐시 없을 때만 로딩 표시 (있으면 즉시 렌더로 깜빡임 없애기)
+  // 캐시 없을 때만 스켈레톤 표시 (있으면 즉시 렌더로 깜빡임 없애기)
   if (force || !_getCached(cacheKey)) {
-    mainArea.innerHTML = `<p class="care-loading">불러오는 중...</p>`;
+    mainArea.innerHTML = _skeletonHtml(_activeSubtab);
   }
   if      (_activeSubtab === "manage")  await renderManageTab(pet, mainArea, force);
   else if (_activeSubtab === "diet")    await renderDietTab(pet, mainArea, force);
