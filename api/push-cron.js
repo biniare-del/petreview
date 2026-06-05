@@ -31,7 +31,7 @@ async function sendPush(sub, payload) {
       JSON.stringify(payload)
     );
     return true;
-  } catch { return false; }
+  } catch (e) { console.error("push failed:", sub.endpoint, e.message); return false; }
 }
 
 module.exports = async (req, res) => {

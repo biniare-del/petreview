@@ -8,8 +8,7 @@
 //   /api/facilities?category=hospital&region=마포구
 //   /api/facilities?category=grooming&region=강남구
 
-const KAKAO_REST_API_KEY =
-  process.env.KAKAO_REST_API_KEY || "9e5930005d619cae98c2d710200b768f";
+const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY;
 
 function extractDistrict(address) {
   const addr = String(address || "");
@@ -21,9 +20,8 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (!KAKAO_REST_API_KEY) return res.status(500).json({ error: "KAKAO_REST_API_KEY not configured" });
 
   const category =
     req.query.category === "grooming" ? "grooming" : "hospital";
