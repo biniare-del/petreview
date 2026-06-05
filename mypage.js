@@ -102,7 +102,7 @@
       <div class="mypage-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
           <div>
-            <h3 style="margin:0 0 2px;">${escapeHtml(r.place_name)} <small style="color:#aaa;font-size:13px;">(${CATEGORY_LABEL[r.category] ?? r.category})</small></h3>
+            <h3 style="margin:0 0 2px;">${escapeHtml(r.place_name)} <small style="color:#aaa;font-size:13px;">(${escapeHtml(CATEGORY_LABEL[r.category] ?? r.category)})</small></h3>
             <span style="font-size:11px;color:#ff8a65;font-weight:600;">✍️ 내 ${total - i}번째 리뷰</span>
           </div>
           ${r.is_verified ? '<span class="verified-badge">✔ 영수증 인증</span>' : ""}
@@ -294,7 +294,7 @@
           <h3>${escapeHtml(f.place_name)}</h3>
           <button class="btn-delete" data-fav-id="${escapeHtml(f.id)}">삭제</button>
         </div>
-        <p>${CATEGORY_LABEL[f.category] ?? f.category} · 서울특별시 ${escapeHtml(f.region ?? "")}</p>
+        <p>${escapeHtml(CATEGORY_LABEL[f.category] ?? f.category)} · 서울특별시 ${escapeHtml(f.region ?? "")}</p>
         ${f.address ? `<p class="helper-text">주소: ${escapeHtml(f.address)}</p>` : ""}
         ${f.phone ? `<p><a href="tel:${escapeHtml(f.phone)}" style="color:#ff7043;font-weight:600;text-decoration:none;">📞 ${escapeHtml(f.phone)}</a></p>` : ""}
       </div>`).join("");
@@ -507,10 +507,9 @@
           const { error: upErr } = await db.storage
             .from("pet-photos")
             .upload(fileName, photoFile, { contentType: photoFile.type });
-          if (!upErr) {
-            const { data: urlData } = db.storage.from("pet-photos").getPublicUrl(fileName);
-            photoUrl = urlData.publicUrl;
-          }
+          if (upErr) throw new Error("사진 업로드 실패: " + upErr.message);
+          const { data: urlData } = db.storage.from("pet-photos").getPublicUrl(fileName);
+          photoUrl = urlData.publicUrl;
         }
 
         const weightVal = document.getElementById("pet-weight").value;
@@ -847,7 +846,9 @@
 
     container.querySelectorAll(".btn-delete[data-log-id]").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        await db.from("pet_weights").delete().eq("id", btn.dataset.logId);
+        if (!confirm("체중 기록을 삭제할까요?")) return;
+        const { error } = await db.from("pet_weights").delete().eq("id", btn.dataset.logId);
+        if (error) { alert("삭제 실패: " + error.message); return; }
         loadWeightLogs(petId);
       });
     });
@@ -875,7 +876,7 @@
           <span style="font-weight:600;font-size:14px;color:#2a2520;">${escapeHtml(r.place_name)}</span>
           ${r.is_verified ? '<span class="verified-badge" style="font-size:10px;">✔ 인증</span>' : ""}
         </div>
-        <p style="margin:2px 0;font-size:12px;color:#888;">${CATEGORY_LABEL[r.category] ?? r.category} · ${escapeHtml(r.visit_date ?? "")}</p>
+        <p style="margin:2px 0;font-size:12px;color:#888;">${escapeHtml(CATEGORY_LABEL[r.category] ?? r.category)} · ${escapeHtml(r.visit_date ?? "")}</p>
         <p style="margin:2px 0;font-size:13px;color:#555;">항목: ${escapeHtml(r.service_detail ?? "")}</p>
         <p style="margin:2px 0;font-size:13px;color:#ff7043;font-weight:600;">₩ ${Number(r.total_price ?? 0).toLocaleString("ko-KR")}</p>
       </div>`).join("");
@@ -927,7 +928,9 @@
 
     container.querySelectorAll(".btn-delete[data-hr-id]").forEach(btn => {
       btn.addEventListener("click", async () => {
-        await db.from("pet_health_records").delete().eq("id", btn.dataset.hrId);
+        if (!confirm("기록을 삭제할까요?")) return;
+        const { error } = await db.from("pet_health_records").delete().eq("id", btn.dataset.hrId);
+        if (error) { alert("삭제 실패: " + error.message); return; }
         loadHealthRecords(petId, recordType, containerId);
       });
     });
@@ -992,21 +995,26 @@
 
       const btn = document.getElementById("weight-add-btn");
       btn.disabled = true;
-      const { error } = await db.from("pet_weights").insert([{
-        pet_id: currentHealthPet.id,
-        user_id: userId,
-        weight,
-        recorded_at: date,
-      }]);
-      btn.disabled = false;
-      if (error) { alert("저장 실패: " + error.message); return; }
-      document.getElementById("weight-input").value = "";
-      loadWeightLogs(currentHealthPet.id);
+      try {
+        const { error } = await db.from("pet_weights").insert([{
+          pet_id: currentHealthPet.id,
+          user_id: userId,
+          weight,
+          recorded_at: date,
+        }]);
+        if (error) { alert("저장 실패: " + error.message); return; }
+        document.getElementById("weight-input").value = "";
+        loadWeightLogs(currentHealthPet.id);
+      } finally {
+        btn.disabled = false;
+      }
     });
 
     // 진료/처방 메모 (C3)
-    document.getElementById("health-note-add-btn")?.addEventListener("click", () => {
-      addHealthRecord("진료메모", "health-note-date", "health-note-content", "health-note-list", null);
+    document.getElementById("health-note-add-btn")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget; btn.disabled = true;
+      await addHealthRecord("진료메모", "health-note-date", "health-note-content", "health-note-list", null);
+      btn.disabled = false;
     });
 
     // 심장사상충 (C4) — 다음 투약일 +30일
@@ -1020,17 +1028,19 @@
       }
     });
 
-    document.getElementById("heartworm-add-btn")?.addEventListener("click", () => {
+    document.getElementById("heartworm-add-btn")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget; btn.disabled = true;
       const product = document.getElementById("heartworm-product");
       const contentInput = document.getElementById("heartworm-content");
       const resolvedContent = product?.value === "기타"
         ? (contentInput?.value.trim() || "기타")
         : (product?.value || "");
       if (contentInput) contentInput.value = resolvedContent;
-      addHealthRecord("심장사상충", "heartworm-date", "heartworm-content", "heartworm-list", 30);
+      await addHealthRecord("심장사상충", "heartworm-date", "heartworm-content", "heartworm-list", 30);
       if (product) product.value = "";
       const etcWrap = document.getElementById("heartworm-etc-wrap");
       if (etcWrap) etcWrap.hidden = true;
+      btn.disabled = false;
     });
 
     // 예방접종 preset 버튼
@@ -1042,8 +1052,10 @@
     });
 
     // 예방접종 (C5) — 다음 접종일 +365일
-    document.getElementById("vaccine-add-btn")?.addEventListener("click", () => {
-      addHealthRecord("예방접종", "vaccine-date", "vaccine-content", "vaccine-list", 365);
+    document.getElementById("vaccine-add-btn")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget; btn.disabled = true;
+      await addHealthRecord("예방접종", "vaccine-date", "vaccine-content", "vaccine-list", 365);
+      btn.disabled = false;
     });
   }
 
@@ -1612,7 +1624,8 @@
 
   async function deleteExpense(id) {
     if (!confirm("삭제할까요?")) return;
-    await window.supabaseClient.from("pet_expenses").delete().eq("id", id);
+    const { error } = await window.supabaseClient.from("pet_expenses").delete().eq("id", id);
+    if (error) { alert("삭제 실패: " + error.message); return; }
     loadExpenses();
   }
 

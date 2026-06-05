@@ -87,6 +87,7 @@ const EXPENSE_CATEGORIES = {
 // ─── 상태 ────────────────────────────────────────────────────
 let _pets = [];
 let _db = null;
+let _dietLogging = false;  // logDiet 중복 실행 방지
 let _activePetIdx = 0;
 let _activeSubtab = "manage";
 let _sheetItem = null; // 현재 열린 시트의 케어 항목
@@ -466,9 +467,11 @@ function openManageSheet(pet, item, lastDoneAt, intervalDays) {
           );
         }
       }
-    } catch (e) { console.warn("push subscribe failed", e); }
-
-    saveNotifyPref(pet.id, item.key, true);
+      saveNotifyPref(pet.id, item.key, true);
+    } catch (e) {
+      console.warn("push subscribe failed", e);
+      notifyEl.checked = false;  // 구독 실패 시 토글 원복
+    }
   };
 
   // 날짜 기본값 = 오늘
@@ -497,22 +500,28 @@ async function submitManageDone() {
   doneBtn.disabled = true;
   doneBtn.textContent = "저장 중...";
 
-  const { error } = await _db.from("pet_care_logs").insert({
-    user_id: userId,
-    pet_id: pet.id,
-    care_key: item.key,
-    done_at: new Date(dateVal + "T12:00:00").toISOString(),
-  });
+  try {
+    const { error } = await _db.from("pet_care_logs").insert({
+      user_id: userId,
+      pet_id: pet.id,
+      care_key: item.key,
+      done_at: new Date(dateVal + "T12:00:00").toISOString(),
+    });
 
-  if (error) {
-    alert(error.code === "42P01" ? "supabase-care.sql을 먼저 실행해 주세요." : `저장 실패: ${error.message}`);
+    if (error) {
+      alert(error.code === "42P01" ? "supabase-care.sql을 먼저 실행해 주세요." : `저장 실패: ${error.message}`);
+      doneBtn.disabled = false;
+      doneBtn.textContent = "✓ 완료 기록";
+      return;
+    }
+
+    closeManageSheet();
+    await renderActiveArea();
+  } catch (e) {
+    alert(`저장 실패: ${e.message}`);
     doneBtn.disabled = false;
     doneBtn.textContent = "✓ 완료 기록";
-    return;
   }
-
-  closeManageSheet();
-  await renderActiveArea();
 }
 
 async function showItemHistory(pet, item) {
@@ -785,17 +794,23 @@ function renderDietSection(container, pet, settings, logs, latestWeight) {
 }
 
 async function logDiet(type, pet, mealOrder, waterMl, note) {
+  if (_dietLogging) return;
   const userId = window.PetAuth?.currentUser?.id;
   if (!userId) return;
-  const { error } = await _db.from("pet_diet_logs").insert({
-    user_id: userId, pet_id: pet.id, log_type: type,
-    meal_order: mealOrder ?? null,
-    water_ml: waterMl ?? null,
-    note: note || null,
-    logged_at: new Date().toISOString(),
-  });
-  if (error) { showToast("기록 저장 실패: " + error.message); return; }
-  await renderActiveArea();
+  _dietLogging = true;
+  try {
+    const { error } = await _db.from("pet_diet_logs").insert({
+      user_id: userId, pet_id: pet.id, log_type: type,
+      meal_order: mealOrder ?? null,
+      water_ml: waterMl ?? null,
+      note: note || null,
+      logged_at: new Date().toISOString(),
+    });
+    if (error) { showToast("기록 저장 실패: " + error.message); return; }
+    await renderActiveArea();
+  } finally {
+    _dietLogging = false;
+  }
 }
 
 async function saveDietSettings(pet, container) {
@@ -1216,6 +1231,13 @@ function showExpenseModal(pets, activeFilter = "all") {
       const splitNote = overlay.querySelector("#exp-split-note");
       if (splitNote) splitNote.textContent = selectedPetId === "shared"
         ? `💡 입력한 금액을 ${pets.length}마리에게 균등 분배해서 기록해요.` : "";
+      // 선택된 펫의 종에 맞게 카테고리 목록 업데이트
+      const selPet = pets.find(p => p.id === selectedPetId);
+      if (selPet) {
+        const cats = EXPENSE_CATEGORIES[selPet.species] ?? EXPENSE_CATEGORIES.default;
+        const catEl = overlay.querySelector("#exp-cat");
+        if (catEl) catEl.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join("");
+      }
     });
   });
 
@@ -1259,16 +1281,20 @@ function showExpenseModal(pets, activeFilter = "all") {
 // ──────────────────────────────────────────────────────────────
 async function fetchPetHealthData(petId) {
   if (!_db || !petId || petId === "demo") return null;
-  const [weightsRes, healthRes] = await Promise.all([
-    _db.from("pet_weights").select("weight, recorded_at")
-      .eq("pet_id", petId).order("recorded_at", { ascending: false }).limit(6),
-    _db.from("pet_health_records").select("record_type, content, record_date")
-      .eq("pet_id", petId).order("record_date", { ascending: false }).limit(6),
-  ]);
-  return {
-    weights: weightsRes.data ?? [],
-    healthRecords: healthRes.data ?? [],
-  };
+  try {
+    const [weightsRes, healthRes] = await Promise.all([
+      _db.from("pet_weights").select("weight, recorded_at")
+        .eq("pet_id", petId).order("recorded_at", { ascending: false }).limit(6),
+      _db.from("pet_health_records").select("record_type, content, record_date")
+        .eq("pet_id", petId).order("record_date", { ascending: false }).limit(6),
+    ]);
+    return {
+      weights: weightsRes.data ?? [],
+      healthRecords: healthRes.data ?? [],
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings, healthData) {
@@ -1582,8 +1608,9 @@ async function init() {
   // 항목 기록 보기
   document.getElementById("care-sheet-history-btn")?.addEventListener("click", () => {
     if (!_sheetItem) return;
+    const { pet, item } = _sheetItem;  // closeManageSheet가 _sheetItem을 null로 만들기 전에 캡처
     closeManageSheet();
-    showItemHistory(_sheetItem.pet, _sheetItem.item);
+    showItemHistory(pet, item);
   });
 }
 

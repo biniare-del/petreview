@@ -238,21 +238,32 @@
     }
   }
 
+  const _likeInFlight = new Set();
   async function togglePostLike(postId) {
+    if (_likeInFlight.has(postId)) return;
     const userId = window.PetAuth?.currentUser?.id;
     if (!userId) { alert("좋아요를 누르려면 로그인이 필요해요."); return; }
     const liked = userLikedPosts.has(postId);
-    if (liked) {
-      await db.from("post_likes").delete().eq("post_id", postId).eq("user_id", userId);
-      userLikedPosts.delete(postId);
-      postLikeCounts[postId] = Math.max(0, (postLikeCounts[postId]||1)-1);
-    } else {
-      await db.from("post_likes").insert([{ post_id: postId, user_id: userId }]);
-      userLikedPosts.add(postId);
-      postLikeCounts[postId] = (postLikeCounts[postId]||0)+1;
-    }
+    // 낙관적 업데이트
+    if (liked) { userLikedPosts.delete(postId); postLikeCounts[postId] = Math.max(0, (postLikeCounts[postId]||1)-1); }
+    else        { userLikedPosts.add(postId);    postLikeCounts[postId] = (postLikeCounts[postId]||0)+1; }
     renderDetailLikeButton(postId);
     renderPosts();
+    _likeInFlight.add(postId);
+    try {
+      const { error } = liked
+        ? await db.from("post_likes").delete().eq("post_id", postId).eq("user_id", userId)
+        : await db.from("post_likes").insert([{ post_id: postId, user_id: userId }]);
+      if (error) throw error;
+    } catch {
+      // 실패 시 낙관적 업데이트 롤백
+      if (liked) { userLikedPosts.add(postId);    postLikeCounts[postId] = (postLikeCounts[postId]||0)+1; }
+      else        { userLikedPosts.delete(postId); postLikeCounts[postId] = Math.max(0, (postLikeCounts[postId]||1)-1); }
+      renderDetailLikeButton(postId);
+      renderPosts();
+    } finally {
+      _likeInFlight.delete(postId);
+    }
   }
 
   // ── 댓글 ────────────────────────────────────────────
@@ -321,12 +332,12 @@
     if (!userId) return;
     btn.disabled = true;
     const { error } = await db.from("comments").insert([{ post_id: currentPostId, user_id: userId, content }]);
-    btn.disabled = false;
-    if (error) { alert("댓글 등록에 실패했습니다."); return; }
+    if (error) { alert("댓글 등록에 실패했습니다."); btn.disabled = false; return; }
     input.value = "";
     await loadComments(currentPostId);
+    btn.disabled = false;
     const post = allPosts.find(p => p.id === currentPostId);
-    if (post) { if (!post.comments) post.comments = []; post.comments.push({ id: "t" }); }
+    if (post) { if (!Array.isArray(post.comments)) post.comments = []; post.comments.push({}); }
   }
 
   // ── 이미지 압축 (Canvas API) ─────────────────────────
@@ -574,12 +585,14 @@
   document.getElementById("report-modal-overlay")?.addEventListener("click", e => {
     if (e.target.id === "report-modal-overlay") e.currentTarget.hidden = true;
   });
-  document.getElementById("report-submit-btn")?.addEventListener("click", async () => {
+  document.getElementById("report-submit-btn")?.addEventListener("click", async (e) => {
     const reason = document.querySelector("input[name='comm-report-reason']:checked")?.value;
     if (!reason) { document.getElementById("report-result").textContent = "사유를 선택해주세요."; return; }
     if (!reportTarget) return;
     const userId = window.PetAuth?.currentUser?.id;
     if (!db || !userId) return;
+    const btn = e.currentTarget;
+    btn.disabled = true;
     const resultEl = document.getElementById("report-result");
     let error;
     if (reportTarget.type === "post") {
@@ -590,6 +603,7 @@
     if (error) {
       resultEl.style.color = "#e57373";
       resultEl.textContent = error.code === "23505" ? "이미 신고한 항목입니다." : "신고 처리 중 오류가 발생했습니다.";
+      btn.disabled = false;
     } else {
       resultEl.style.color = "#22c55e";
       resultEl.textContent = "신고가 접수됐습니다.";

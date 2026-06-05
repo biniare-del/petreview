@@ -83,7 +83,7 @@ async function loadHospitals() {
           </div>
           ${fav.phone ? `<div class="hospital-card-phone"><a href="tel:${escH(fav.phone)}" onclick="event.stopPropagation()">📞 ${escH(fav.phone)}</a></div>` : ""}
         </div>
-        <button class="hospital-card-delete" onclick="deleteHospital('${escH(fav.id)}')">🗑</button>
+        <button class="hospital-card-delete" data-fav-id="${escH(fav.id)}">🗑</button>
       </div>
       <div class="hospital-card-stats">
         <div class="hospital-stat"><span class="hospital-stat-label">방문</span><span class="hospital-stat-val">${vm.count}회</span></div>
@@ -92,16 +92,30 @@ async function loadHospitals() {
       </div>
       ${fav.memo ? `<div class="hospital-card-memo">${escH(fav.memo)}</div>` : ""}
       <div class="hospital-card-actions">
-        <button class="hospital-action-btn" onclick="openVisitForm('${escH(fav.id)}', '${escH(fav.place_name)}')">📅 방문 기록</button>
-        <button class="hospital-action-btn hospital-action-btn--outline" onclick="openHospitalDetail('${escH(fav.id)}', '${escH(fav.place_name)}')">📋 기록 보기</button>
+        <button class="hospital-action-btn" data-fav-id="${escH(fav.id)}" data-action="visit">📅 방문 기록</button>
+        <button class="hospital-action-btn hospital-action-btn--outline" data-fav-id="${escH(fav.id)}" data-action="detail">📋 기록 보기</button>
       </div>
     </div>`;
   }).join("");
+
+  // data-* 속성으로 이벤트 위임 (inline onclick의 단따옴표 XSS 방지)
+  listEl.querySelectorAll(".hospital-card-delete[data-fav-id]").forEach(btn => {
+    btn.addEventListener("click", () => deleteHospital(btn.dataset.favId));
+  });
+  listEl.querySelectorAll("[data-action='visit']").forEach(btn => {
+    const fav = favorites.find(f => f.id === btn.dataset.favId);
+    if (fav) btn.addEventListener("click", () => openVisitForm(fav.id, fav.place_name));
+  });
+  listEl.querySelectorAll("[data-action='detail']").forEach(btn => {
+    const fav = favorites.find(f => f.id === btn.dataset.favId);
+    if (fav) btn.addEventListener("click", () => openHospitalDetail(fav.id, fav.place_name));
+  });
 }
 
 async function deleteHospital(favId) {
   if (!confirm("이 병원을 목록에서 삭제할까요?")) return;
-  await db.from("favorites").delete().eq("id", favId).eq("user_id", userId);
+  const { error } = await db.from("favorites").delete().eq("id", favId).eq("user_id", userId);
+  if (error) { alert("삭제 실패: " + error.message); return; }
   await loadHospitals();
 }
 
