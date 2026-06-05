@@ -11,7 +11,7 @@ let editingId = null;
 let visitFavoriteId = null;
 
 function escH(v) {
-  return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(v ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 function formatDate(s) {
   if (!s) return "";
@@ -232,7 +232,7 @@ async function openHospitalDetail(favId, name) {
         <div style="font-size:16px;font-weight:800;color:#1a1a1a;">${totalCost ? totalCost.toLocaleString()+"원" : "-"}</div>
       </div>
     </div>
-    <button class="care-sheet-done-btn" onclick="openVisitForm('${escH(favId)}', '${escH(name)}')" style="margin-bottom:16px;">+ 방문 기록 추가</button>
+    <button class="care-sheet-done-btn" id="hd-add-visit-btn" style="margin-bottom:16px;">+ 방문 기록 추가</button>
     ${visits.length ? visits.map(v => `
       <div style="background:#faf7f5;border-radius:10px;padding:12px;margin-bottom:8px;position:relative;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -241,16 +241,20 @@ async function openHospitalDetail(favId, name) {
         </div>
         ${v.content ? `<div style="font-size:13px;color:#444;line-height:1.4;">${escH(v.content)}</div>` : ""}
         ${v.vet_name ? `<div style="font-size:11px;color:#888;margin-top:3px;">담당: ${escH(v.vet_name)}</div>` : ""}
-        <button onclick="deleteVisit('${escH(v.id)}')" style="position:absolute;right:10px;top:10px;background:none;border:none;font-size:13px;cursor:pointer;color:#ccc;">✕</button>
+        <button data-visit-id="${escH(v.id)}" class="hd-delete-visit-btn" style="position:absolute;right:10px;top:10px;background:none;border:none;font-size:13px;cursor:pointer;color:#ccc;">✕</button>
       </div>`).join("") : `<p style="font-size:13px;color:#aaa;padding:12px 0;">아직 방문 기록이 없어요.</p>`}`;
+
+  detailEl.querySelector("#hd-add-visit-btn")?.addEventListener("click", () => openVisitForm(favId, name));
+  detailEl.querySelectorAll(".hd-delete-visit-btn").forEach(btn => {
+    btn.addEventListener("click", () => deleteVisit(btn.dataset.visitId, favId, name));
+  });
 }
 
-async function deleteVisit(visitId) {
+async function deleteVisit(visitId, favId, name) {
   if (!confirm("삭제할까요?")) return;
-  await db.from("hospital_visits").delete().eq("id", visitId);
-  const name = document.getElementById("hd-name").textContent;
-  const fav  = favorites.find(f => f.place_name === name);
-  if (fav) await openHospitalDetail(fav.id, name);
+  const { error } = await db.from("hospital_visits").delete().eq("id", visitId);
+  if (error) { alert("삭제 실패: " + error.message); return; }
+  await openHospitalDetail(favId, name);
 }
 
 // ── 이벤트 바인딩 ──────────────────────────────────────────────

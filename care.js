@@ -1339,10 +1339,17 @@ async function fetchAiAdvice(pet, careItems, dietLogs, dietSettings, healthData)
 // 비로그인 데모 렌더
 async function renderDemoArea(demoPet, container) {
   if (!container) return;
+  const _ago = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
   const demoLogs = {
-    bath: "2025-05-05", heartworm: "2025-04-01", vaccine: "2025-01-10",
-    grooming: "2025-05-12", teeth: null, ear: "2025-04-20",
-    nail: "2025-04-28", deworming: "2025-02-15", checkup: "2024-12-01",
+    bath:       _ago(5),    // 14일 주기 → D-9
+    heartworm:  _ago(25),   // 30일 주기 → D-5
+    vaccine:    _ago(200),  // 365일 주기 → D-165
+    grooming:   _ago(0),    // 42일 주기 → 오늘 완료
+    teeth:      _ago(0),    // 1일 주기 → 오늘 완료
+    ear:        _ago(35),   // 30일 주기 → D+5 (살짝 지남)
+    nail:       _ago(18),   // 21일 주기 → D-3
+    deworming:  _ago(60),   // 90일 주기 → D-30
+    checkup:    _ago(300),  // 365일 주기 → D-65
   };
   if (_activeSubtab === "manage") {
     const items = CARE_ITEMS.dog;
