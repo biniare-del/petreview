@@ -166,6 +166,15 @@ function saveNotifyPref(petId, careKey, val) {
   localStorage.setItem(`care_notify_${petId}`, JSON.stringify(prefs));
 }
 
+function showToast(msg, duration = 2200) {
+  const el = Object.assign(document.createElement("div"), {
+    className: "offline-toast offline-toast--online",
+    textContent: msg,
+  });
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), duration);
+}
+
 // ─── 렌더링 진입점 ────────────────────────────────────────────
 async function renderActiveArea() {
   const mainArea = document.getElementById("care-main-area");
@@ -374,6 +383,11 @@ async function renderManageTab(pet, container) {
 // ─── 케어 시트 ──────────────────────────────────────────────
 function openManageSheet(pet, item, lastDoneAt, intervalDays) {
   _sheetItem = { pet, item, lastDoneAt, intervalDays };
+
+  // 이전 저장 중 상태로 남아있을 수 있으므로 리셋
+  const _doneBtn = document.getElementById("care-sheet-done-btn");
+  _doneBtn.disabled = false;
+  _doneBtn.textContent = "✓ 완료 기록";
 
   document.getElementById("care-sheet-icon").textContent  = item.icon;
   document.getElementById("care-sheet-title").textContent = item.label;
@@ -813,7 +827,13 @@ async function saveDietSettings(pet, container) {
     if (btn) { btn.disabled = false; btn.textContent = "저장"; }
     return;
   }
-  await renderActiveArea();
+  showToast("식단 설정이 저장되었어요 ✓");
+  try {
+    await renderActiveArea();
+  } catch {
+    // 렌더링 실패 시 버튼 복원 (btn이 아직 DOM에 있는 경우)
+    if (btn?.isConnected) { btn.disabled = false; btn.textContent = "저장"; }
+  }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -948,7 +968,14 @@ function showWeightModal(pet) {
     const weight = parseFloat(overlay.querySelector("#weight-input")?.value);
     const date   = overlay.querySelector("#weight-date")?.value;
     if (!weight || weight <= 0) { alert("체중을 입력해주세요."); return; }
-    await _db.from("pet_weights").insert({ user_id: userId, pet_id: pet.id, weight, recorded_at: date });
+    const saveBtn = overlay.querySelector("#weight-save");
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "저장 중..."; }
+    const { error } = await _db.from("pet_weights").insert({ user_id: userId, pet_id: pet.id, weight, recorded_at: date });
+    if (error) {
+      alert(`저장 실패: ${error.message}`);
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "저장"; }
+      return;
+    }
     overlay.remove();
     await renderActiveArea();
   });
@@ -987,7 +1014,14 @@ function showHealthRecordModal(pet) {
     const content = overlay.querySelector("#hr-content")?.value.trim();
     const date    = overlay.querySelector("#hr-date")?.value;
     if (!content) { alert("내용을 입력해주세요."); return; }
-    await _db.from("pet_health_records").insert({ user_id: userId, pet_id: pet.id, record_type: type, content, record_date: date });
+    const saveBtn = overlay.querySelector("#hr-save");
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "저장 중..."; }
+    const { error } = await _db.from("pet_health_records").insert({ user_id: userId, pet_id: pet.id, record_type: type, content, record_date: date });
+    if (error) {
+      alert(`저장 실패: ${error.message}`);
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "저장"; }
+      return;
+    }
     overlay.remove();
     await renderActiveArea();
   });
