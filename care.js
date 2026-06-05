@@ -93,6 +93,22 @@ let _activeSubtab = "manage";
 let _sheetItem = null; // 현재 열린 시트의 케어 항목
 let _sheetTrapRelease = null; // 포커스 트랩 해제 함수
 
+// ─── 탭 데이터 캐시 (탭 전환 시 DB 재쿼리 방지) ─────────────
+const _tabCache = new Map();
+const _CACHE_TTL = 55_000; // 55초
+
+function _getCached(key) {
+  const e = _tabCache.get(key);
+  if (!e || Date.now() - e.ts > _CACHE_TTL) { _tabCache.delete(key); return null; }
+  return e.data;
+}
+function _setCached(key, data) { _tabCache.set(key, { data, ts: Date.now() }); }
+function _clearCache(petId) {
+  for (const k of [..._tabCache.keys()]) {
+    if (!petId || k.endsWith(`:${petId}`) || k === "expense") _tabCache.delete(k);
+  }
+}
+
 // ─── 유틸 ────────────────────────────────────────────────────
 function escapeHtml(s) {
   return String(s ?? "")
@@ -173,58 +189,70 @@ function showToast(msg, type = "success") {
 }
 
 // ─── 렌더링 진입점 ────────────────────────────────────────────
-async function renderActiveArea() {
+// force=true: 캐시 무시하고 DB 재쿼리 (쓰기 작업 후 호출 시)
+async function renderActiveArea(force = false) {
   const mainArea = document.getElementById("care-main-area");
   if (!mainArea || !_pets.length) return;
   const pet = _pets[_activePetIdx];
-  mainArea.innerHTML = `<p class="care-loading">불러오는 중...</p>`;
-  if      (_activeSubtab === "manage")  await renderManageTab(pet, mainArea);
-  else if (_activeSubtab === "diet")    await renderDietTab(pet, mainArea);
-  else if (_activeSubtab === "records") await renderRecordsTab(pet, mainArea);
-  else if (_activeSubtab === "expense") await renderExpenseTab(mainArea);
+  const cacheKey = _activeSubtab === "expense" ? "expense" : `${_activeSubtab}:${pet.id}`;
+  // 캐시 없을 때만 로딩 표시 (있으면 즉시 렌더로 깜빡임 없애기)
+  if (force || !_getCached(cacheKey)) {
+    mainArea.innerHTML = `<p class="care-loading">불러오는 중...</p>`;
+  }
+  if      (_activeSubtab === "manage")  await renderManageTab(pet, mainArea, force);
+  else if (_activeSubtab === "diet")    await renderDietTab(pet, mainArea, force);
+  else if (_activeSubtab === "records") await renderRecordsTab(pet, mainArea, force);
+  else if (_activeSubtab === "expense") await renderExpenseTab(mainArea, force);
 }
 
 // ──────────────────────────────────────────────────────────────
 // [관리] 탭
 // ──────────────────────────────────────────────────────────────
-async function renderManageTab(pet, container) {
+async function renderManageTab(pet, container, force = false) {
   const realPets = _pets.filter(p => p.id !== "demo");
   const multiPet = realPets.length > 1;
   const items = CARE_ITEMS[speciesKey(pet.species)] ?? CARE_ITEMS.dog;
 
-  // 현재 펫 케어 로그
-  let lastDoneMap = {};
-  try {
-    const { data: logs } = await _db.from("pet_care_logs").select("care_key, done_at")
-      .eq("pet_id", pet.id).order("done_at", { ascending: false });
-    (logs ?? []).forEach(l => { if (!lastDoneMap[l.care_key]) lastDoneMap[l.care_key] = l.done_at; });
-  } catch { /* table may not exist */ }
+  const cacheKey = `manage:${pet.id}`;
+  let lastDoneMap = {}, allSummary = null;
 
-  // 복수 펫 전체 현황 데이터
-  let allSummary = null;
-  if (multiPet) {
+  const hit = force ? null : _getCached(cacheKey);
+  if (hit) {
+    ({ lastDoneMap, allSummary } = hit);
+  } else {
+    // 현재 펫 케어 로그
     try {
-      const results = await Promise.all(
-        realPets.map(p => _db.from("pet_care_logs").select("care_key, done_at").eq("pet_id", p.id).order("done_at", { ascending: false }))
-      );
-      allSummary = realPets.map((p, i) => {
-        const logMap = {};
-        (results[i].data ?? []).forEach(l => { if (!logMap[l.care_key]) logMap[l.care_key] = l.done_at; });
-        const petItems = CARE_ITEMS[speciesKey(p.species)] ?? CARE_ITEMS.dog;
-        const done = petItems.filter(it => isTodayKST(logMap[it.key])).length;
-        const urgent = petItems
-          .map(it => {
-            const last = logMap[it.key] ?? null;
-            const doneToday = isTodayKST(last);
-            const iv = getIntervalDays(p.id, it.key, it.default_days);
-            const dday = doneToday ? null : calcDday(last, iv);
-            return { it, dday, doneToday };
-          })
-          .filter(({ dday, doneToday }) => !doneToday && dday !== null && dday <= 1)
-          .sort((a, b) => a.dday - b.dday);
-        return { pet: p, done, total: petItems.length, urgent };
-      });
-    } catch { /* ignore */ }
+      const { data: logs } = await _db.from("pet_care_logs").select("care_key, done_at")
+        .eq("pet_id", pet.id).order("done_at", { ascending: false });
+      (logs ?? []).forEach(l => { if (!lastDoneMap[l.care_key]) lastDoneMap[l.care_key] = l.done_at; });
+    } catch { /* table may not exist */ }
+
+    // 복수 펫 전체 현황 데이터
+    if (multiPet) {
+      try {
+        const results = await Promise.all(
+          realPets.map(p => _db.from("pet_care_logs").select("care_key, done_at").eq("pet_id", p.id).order("done_at", { ascending: false }))
+        );
+        allSummary = realPets.map((p, i) => {
+          const logMap = {};
+          (results[i].data ?? []).forEach(l => { if (!logMap[l.care_key]) logMap[l.care_key] = l.done_at; });
+          const petItems = CARE_ITEMS[speciesKey(p.species)] ?? CARE_ITEMS.dog;
+          const done = petItems.filter(it => isTodayKST(logMap[it.key])).length;
+          const urgent = petItems
+            .map(it => {
+              const last = logMap[it.key] ?? null;
+              const doneToday = isTodayKST(last);
+              const iv = getIntervalDays(p.id, it.key, it.default_days);
+              const dday = doneToday ? null : calcDday(last, iv);
+              return { it, dday, doneToday };
+            })
+            .filter(({ dday, doneToday }) => !doneToday && dday !== null && dday <= 1)
+            .sort((a, b) => a.dday - b.dday);
+          return { pet: p, done, total: petItems.length, urgent };
+        });
+      } catch { /* ignore */ }
+    }
+    _setCached(cacheKey, { lastDoneMap, allSummary });
   }
 
   const cards = items.map(item => {
@@ -346,8 +374,9 @@ async function renderManageTab(pet, container) {
   // 품종 맞춤 주기 일괄 적용
   container.querySelector("#breed-hint-apply-all")?.addEventListener("click", () => {
     Object.entries(breedIvsAll).forEach(([key, days]) => saveCustomInterval(pet.id, key, days));
+    _clearCache(pet.id); // 품종별 주기 변경 → manage 캐시 무효화
     container.querySelector("#breed-hint-banner")?.remove();
-    renderActiveArea();
+    renderActiveArea(true);
   });
   container.querySelector("#breed-hint-close")?.addEventListener("click", () => {
     // 닫기 시 빈 객체라도 저장해서 다시 안 뜨게
@@ -516,7 +545,7 @@ async function submitManageDone() {
     }
 
     closeManageSheet();
-    await renderActiveArea();
+    await renderActiveArea(true);
   } catch (e) {
     showToast("저장에 실패했어요.", "error");
     doneBtn.disabled = false;
@@ -583,18 +612,25 @@ function migrateCalSettingsFromStorage(petId) {
 // ──────────────────────────────────────────────────────────────
 // [식단] 탭
 // ──────────────────────────────────────────────────────────────
-async function renderDietTab(pet, container) {
+async function renderDietTab(pet, container, force = false) {
   let settings = null, logs = [], latestWeight = null;
-  try {
-    const [sr, lr, wr] = await Promise.all([
-      _db.from("pet_diet_settings").select("*").eq("pet_id", pet.id).maybeSingle(),
-      _db.from("pet_diet_logs").select("*").eq("pet_id", pet.id).gte("logged_at", getTodayKST()).order("logged_at"),
-      _db.from("pet_weights").select("weight").eq("pet_id", pet.id).order("recorded_at", { ascending: false }).limit(1),
-    ]);
-    settings = sr.data;
-    logs = lr.data ?? [];
-    latestWeight = wr.data?.[0]?.weight ?? null;
-  } catch { /* tables may not exist */ }
+  const cacheKey = `diet:${pet.id}`;
+  const hit = force ? null : _getCached(cacheKey);
+  if (hit) {
+    ({ settings, logs, latestWeight } = hit);
+  } else {
+    try {
+      const [sr, lr, wr] = await Promise.all([
+        _db.from("pet_diet_settings").select("*").eq("pet_id", pet.id).maybeSingle(),
+        _db.from("pet_diet_logs").select("*").eq("pet_id", pet.id).gte("logged_at", getTodayKST()).order("logged_at"),
+        _db.from("pet_weights").select("weight").eq("pet_id", pet.id).order("recorded_at", { ascending: false }).limit(1),
+      ]);
+      settings = sr.data;
+      logs = lr.data ?? [];
+      latestWeight = wr.data?.[0]?.weight ?? null;
+    } catch { /* tables may not exist */ }
+    _setCached(cacheKey, { settings, logs, latestWeight });
+  }
   renderDietSection(container, pet, settings, logs, latestWeight);
 }
 
@@ -770,7 +806,7 @@ function renderDietSection(container, pet, settings, logs, latestWeight) {
     if (!userId) return;
     const { error } = await _db.from("pet_diet_logs").delete().eq("pet_id", pet.id).eq("log_type", "water").gte("logged_at", getTodayKST());
     if (error) { showToast("초기화 실패: " + error.message); return; }
-    await renderActiveArea();
+    await renderActiveArea(true);
   });
   container.querySelector("#diet-snack-btn")?.addEventListener("click", () => {
     const note = container.querySelector("#diet-snack-input")?.value.trim();
@@ -807,7 +843,7 @@ async function logDiet(type, pet, mealOrder, waterMl, note) {
       logged_at: new Date().toISOString(),
     });
     if (error) { showToast("기록 저장 실패: " + error.message); return; }
-    await renderActiveArea();
+    await renderActiveArea(true);
   } finally {
     _dietLogging = false;
   }
@@ -846,7 +882,7 @@ async function saveDietSettings(pet, container) {
   }
   showToast("식단 설정이 저장되었어요 ✓");
   try {
-    await renderActiveArea();
+    await renderActiveArea(true);
   } catch {
     // 렌더링 실패 시 버튼 복원 (btn이 아직 DOM에 있는 경우)
     if (btn?.isConnected) { btn.disabled = false; btn.textContent = "저장"; }
@@ -856,21 +892,28 @@ async function saveDietSettings(pet, container) {
 // ──────────────────────────────────────────────────────────────
 // [기록] 탭
 // ──────────────────────────────────────────────────────────────
-async function renderRecordsTab(pet, container) {
+async function renderRecordsTab(pet, container, force = false) {
   const realPets = _pets.filter(p => p.id !== "demo");
   const multiPet = realPets.length > 1;
 
   let weights = [], allRecords = [];
-  try {
-    const queries = [
-      _db.from("pet_weights").select("id, weight, recorded_at").eq("pet_id", pet.id).order("recorded_at", { ascending: false }).limit(20),
-      ...realPets.map(p => _db.from("pet_health_records").select("id, pet_id, record_type, content, record_date").eq("pet_id", p.id).order("record_date", { ascending: false }).limit(50)),
-    ];
-    const [wr, ...rrs] = await Promise.all(queries);
-    weights = wr.data ?? [];
-    allRecords = rrs.flatMap((r, i) => (r.data ?? []).map(rec => ({ ...rec, petName: realPets[i].name })));
-    allRecords.sort((a, b) => (b.record_date ?? "").localeCompare(a.record_date ?? ""));
-  } catch { /* tables may not exist */ }
+  const cacheKey = `records:${pet.id}`;
+  const hit = force ? null : _getCached(cacheKey);
+  if (hit) {
+    ({ weights, allRecords } = hit);
+  } else {
+    try {
+      const queries = [
+        _db.from("pet_weights").select("id, weight, recorded_at").eq("pet_id", pet.id).order("recorded_at", { ascending: false }).limit(20),
+        ...realPets.map(p => _db.from("pet_health_records").select("id, pet_id, record_type, content, record_date").eq("pet_id", p.id).order("record_date", { ascending: false }).limit(50)),
+      ];
+      const [wr, ...rrs] = await Promise.all(queries);
+      weights = wr.data ?? [];
+      allRecords = rrs.flatMap((r, i) => (r.data ?? []).map(rec => ({ ...rec, petName: realPets[i].name })));
+      allRecords.sort((a, b) => (b.record_date ?? "").localeCompare(a.record_date ?? ""));
+    } catch { /* tables may not exist */ }
+    _setCached(cacheKey, { weights, allRecords });
+  }
 
   const latestWeight = weights[0];
   const weightTrend  = weights.length >= 2 ? (weights[0].weight - weights[1].weight).toFixed(1) : null;
@@ -995,7 +1038,7 @@ function showWeightModal(pet) {
       return;
     }
     overlay.remove();
-    await renderActiveArea();
+    await renderActiveArea(true);
   });
 }
 
@@ -1041,14 +1084,14 @@ function showHealthRecordModal(pet) {
       return;
     }
     overlay.remove();
-    await renderActiveArea();
+    await renderActiveArea(true);
   });
 }
 
 // ──────────────────────────────────────────────────────────────
 // [집사영수증] 탭
 // ──────────────────────────────────────────────────────────────
-async function renderExpenseTab(container) {
+async function renderExpenseTab(container, force = false) {
   const now   = new Date();
   const year  = now.getFullYear();
   const month = now.getMonth() + 1;
@@ -1057,16 +1100,23 @@ async function renderExpenseTab(container) {
 
   const realPets = _pets.filter(p => p.id !== "demo");
   let allExpenses = [];
-  try {
-    if (realPets.length) {
-      const { data } = await _db.from("pet_expenses")
-        .select("id, pet_id, category, amount, expense_date, memo")
-        .in("pet_id", realPets.map(p => p.id))
-        .gte("expense_date", from).lte("expense_date", to)
-        .order("expense_date", { ascending: false });
-      allExpenses = data ?? [];
-    }
-  } catch { /* table may not exist yet */ }
+  const cacheKey = "expense";
+  const hit = force ? null : _getCached(cacheKey);
+  if (hit) {
+    ({ allExpenses } = hit);
+  } else {
+    try {
+      if (realPets.length) {
+        const { data } = await _db.from("pet_expenses")
+          .select("id, pet_id, category, amount, expense_date, memo")
+          .in("pet_id", realPets.map(p => p.id))
+          .gte("expense_date", from).lte("expense_date", to)
+          .order("expense_date", { ascending: false });
+        allExpenses = data ?? [];
+      }
+    } catch { /* table may not exist yet */ }
+    _setCached(cacheKey, { allExpenses });
+  }
 
   const petById = {};
   const petTotals = {};
@@ -1268,7 +1318,7 @@ function showExpenseModal(pets, activeFilter = "all") {
         await _db.from("pet_expenses").insert({ user_id: userId, pet_id: selectedPetId ?? pets[0]?.id, category, amount, memo, expense_date: date, source: "manual" });
       }
       overlay.remove();
-      await renderActiveArea();
+      await renderActiveArea(true);
     } catch (err) {
       errEl.textContent = err.message || "저장 실패. 다시 시도해주세요.";
       saveBtn.disabled = false; saveBtn.textContent = "저장";
