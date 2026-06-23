@@ -254,17 +254,20 @@ async function renderManageTab(pet, container, force = false) {
   const items = CARE_ITEMS[speciesKey(pet.species)] ?? CARE_ITEMS.dog;
 
   const cacheKey = `manage:${pet.id}`;
-  let lastDoneMap = {}, allSummary = null;
+  let lastDoneMap = {}, allSummary = null, weights = [];
 
   const hit = force ? null : _getCached(cacheKey);
   if (hit) {
-    ({ lastDoneMap, allSummary } = hit);
+    ({ lastDoneMap, allSummary, weights } = hit);
   } else {
-    // 현재 펫 케어 로그
+    // 현재 펫 케어 로그 + 최근 체중 2건(증감 표시용)
     try {
-      const { data: logs } = await _db.from("pet_care_logs").select("care_key, done_at")
-        .eq("pet_id", pet.id).order("done_at", { ascending: false });
-      (logs ?? []).forEach(l => { if (!lastDoneMap[l.care_key]) lastDoneMap[l.care_key] = l.done_at; });
+      const [lr, wr] = await Promise.all([
+        _db.from("pet_care_logs").select("care_key, done_at").eq("pet_id", pet.id).order("done_at", { ascending: false }),
+        _db.from("pet_weights").select("weight, recorded_at").eq("pet_id", pet.id).order("recorded_at", { ascending: false }).limit(2),
+      ]);
+      (lr.data ?? []).forEach(l => { if (!lastDoneMap[l.care_key]) lastDoneMap[l.care_key] = l.done_at; });
+      weights = wr.data ?? [];
     } catch { /* table may not exist */ }
 
     // 복수 펫 전체 현황 데이터
@@ -292,8 +295,17 @@ async function renderManageTab(pet, container, force = false) {
         });
       } catch { /* ignore */ }
     }
-    _setCached(cacheKey, { lastDoneMap, allSummary });
+    _setCached(cacheKey, { lastDoneMap, allSummary, weights });
   }
+
+  const latestWeight = weights[0]?.weight ?? null;
+  const weightTrend  = weights.length >= 2 ? +(weights[0].weight - weights[1].weight).toFixed(1) : null;
+  const weightLineHtml = latestWeight !== null ? `
+  <button class="manage-weight-line" id="manage-weight-line">
+    <span>⚖️ 현재 체중 <strong>${latestWeight}kg</strong></span>
+    ${weightTrend !== null ? `<span class="${weightTrend > 0 ? "manage-weight-up" : weightTrend < 0 ? "manage-weight-down" : "manage-weight-flat"}">${weightTrend > 0 ? "▲" : weightTrend < 0 ? "▼" : "–"} ${Math.abs(weightTrend)}kg</span>` : ""}
+    <span class="manage-weight-arrow">건강기록 보기 ›</span>
+  </button>` : "";
 
   const cards = items.map(item => {
     const lastDoneAt   = lastDoneMap[item.key] ?? null;
@@ -333,7 +345,7 @@ async function renderManageTab(pet, container, force = false) {
     </div>` : ""}
   </div>` : "";
 
-  let html = summaryHtml + `
+  let html = weightLineHtml + summaryHtml + `
   <div class="manage-progress">
     <div class="manage-progress-text">
       <span>${doneCount === totalCount ? "🎉 오늘 케어 완료!" : `오늘 ${doneCount} / ${totalCount} 완료`}</span>
@@ -410,6 +422,12 @@ async function renderManageTab(pet, container, force = false) {
   </div>`;
 
   container.innerHTML = html;
+
+  // 체중 한줄요약 → 건강기록 탭으로 이동
+  container.querySelector("#manage-weight-line")?.addEventListener("click", () => {
+    const recordsTabBtn = document.querySelector('.care-subtab[data-subtab="records"]');
+    recordsTabBtn?.click();
+  });
 
   // 품종 맞춤 주기 일괄 적용
   container.querySelector("#breed-hint-apply-all")?.addEventListener("click", () => {
@@ -1465,6 +1483,11 @@ async function renderDemoArea(demoPet, container) {
     const doneCount = cards.filter((_, i) => isTodayKST(demoLogs[items[i].key])).length;
     const pct = Math.round(doneCount / items.length * 100);
     container.innerHTML = `
+      <button class="manage-weight-line demo-card">
+        <span>⚖️ 현재 체중 <strong>3.2kg</strong></span>
+        <span class="manage-weight-down">▼ 0.1kg</span>
+        <span class="manage-weight-arrow">건강기록 보기 ›</span>
+      </button>
       <div class="manage-progress">
         <div class="manage-progress-text">오늘 ${doneCount} / ${items.length} 완료</div>
         <div class="manage-progress-track"><div class="manage-progress-fill" style="width:${pct}%"></div></div>
@@ -1586,8 +1609,6 @@ async function init() {
         <div class="care-welcome-features">
           <div class="care-welcome-feature"><span>🐾</span> 케어루틴 · 목욕·접종·산책 주기 관리</div>
           <div class="care-welcome-feature"><span>📋</span> 건강기록 · 체중 추적 · 진료 이력</div>
-          <div class="care-welcome-feature"><span>🍚</span> 식습관 · 식사·수분 섭취 체크</div>
-          <div class="care-welcome-feature"><span>💰</span> 집사영수증 · 월별 지출 관리</div>
         </div>
         <button class="care-welcome-login-btn" id="demo-login-btn">
           <svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
@@ -1643,8 +1664,6 @@ async function init() {
         <div class="care-onboarding-features">
           <div class="care-onboarding-feature">🐾 케어루틴 · 목욕·접종·산책 주기 알림</div>
           <div class="care-onboarding-feature">📋 건강기록 · 체중 추적 · 진료 이력</div>
-          <div class="care-onboarding-feature">🍚 식습관 · 식사·수분 섭취 체크</div>
-          <div class="care-onboarding-feature">💰 집사영수증 · 월별 지출 관리</div>
         </div>
         <a class="care-onboarding-btn" href="mypage.html?tab=pets">+ 반려동물 등록하기</a>
       </div>

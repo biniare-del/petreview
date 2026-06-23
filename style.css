@@ -4626,6 +4626,26 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* =====================================================
+   체중 한줄요약 (케어루틴 탭 상단)
+   ===================================================== */
+.manage-weight-line {
+  width: calc(100% - 24px);
+  margin: 10px 12px 0;
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: #fff; border-radius: 16px;
+  border: 1.5px solid #e2f0ea;
+  box-shadow: 0 1px 4px rgba(22,163,74,0.06);
+  font-size: 14px; font-weight: 700; color: #1a1a1a;
+  cursor: pointer;
+}
+.manage-weight-line strong { color: var(--brand); }
+.manage-weight-up   { color: #dc2626; font-weight: 700; font-size: 13px; }
+.manage-weight-down { color: #2563eb; font-weight: 700; font-size: 13px; }
+.manage-weight-flat { color: #6b7280; font-weight: 700; font-size: 13px; }
+.manage-weight-arrow { font-size: 12px; color: #9ca3af; font-weight: 600; margin-left: auto; }
+
+/* =====================================================
    관리 그리드 (9-button care grid)
    ===================================================== */
 .manage-progress {
