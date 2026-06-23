@@ -1,4 +1,4 @@
-const CACHE_NAME = "petreview-v8";
+const CACHE_NAME = "petreview-v9";
 
 const PRECACHE_ASSETS = [
   "/petreview/care.html",
@@ -7,8 +7,8 @@ const PRECACHE_ASSETS = [
   "/petreview/auth.js",
   "/petreview/supabase-client.js",
   "/petreview/manifest.json",
-  "/petreview/icons/icon-192.svg",
-  "/petreview/icons/icon-512.svg",
+  "/petreview/icons/icon-192.png",
+  "/petreview/icons/icon-512.png",
 ];
 
 const STATIC_EXTS = [".css", ".js", ".svg", ".png", ".jpg", ".webp", ".ico"];
@@ -82,8 +82,8 @@ self.addEventListener("push", e => {
   const title = data.title || "우쭈쭈";
   const options = {
     body: data.body || "",
-    icon: "/petreview/icons/icon-192.svg",
-    badge: "/petreview/icons/icon-192.svg",
+    icon: "/petreview/icons/icon-192.png",
+    badge: "/petreview/icons/icon-192.png",
     data: { url: data.url || "/petreview/" },
     vibrate: [200, 100, 200],
   };
