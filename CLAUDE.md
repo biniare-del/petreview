@@ -119,6 +119,20 @@ DB 컬럼 추가 SQL: supabase/add_cal_settings.sql 참고.
 - [x] Vercel API 버그 수정: ocr.js 모델명, facilities.js 하드코딩 키 제거, push-send.js VAPID 조건부
 - [x] care.html 헤더 🏥 병원 링크 → hospital.html(단골병원 관리)로 변경
 
+## 플레이스토어 MVP 작업 (진행 중)
+
+* 목표: 케어에만 집중한 초심플 MVP → 플레이스토어 업로드
+* 방식: PWA를 PWABuilder(TWA)로 패키징 — 코드 변경 없이 기존 웹앱 그대로 안드로이드 셸에 패키징
+* 진행 상태:
+  - [x] care.html 서브탭 4개 → 2개로 축소 (🐾루틴 / 📋건강기록만 노출, 🍚식습관·💰집사영수증은 `hidden` 처리만 — 코드/DB 로직은 그대로 유지, 추후 복원 가능)
+  - [x] 케어루틴 탭 상단에 체중 한줄요약 배너 추가 (최근 체중 + 증감, 클릭 시 건강기록 탭 이동)
+  - [x] PWA 아이콘 SVG→PNG 변환 (maskable 포함), manifest.json에 `id` 필드 추가, sw.js 캐시 v9
+  - [x] PWABuilder.com에서 Android 패키지(AAB) 다운로드 완료 — signing.keystore 백업 진행 중
+  - [ ] `assetlinks.json`을 `/.well-known/assetlinks.json` 경로에 배포 (Digital Asset Links, TWA 주소창 제거용)
+  - [ ] Google Play Console 앱 등록 + AAB 업로드 + 스토어 등록정보 작성
+  - [ ] UI 전격 개편 (다음 작업)
+* 주의: signing.keystore 분실 시 앱 업데이트 영구 불가 — 키 생성은 빈느님이 PWABuilder에서 직접 진행, 컨테이너에는 보관하지 않음
+
 ## 남은 작업 (우선순위순)
 
 > 계획된 주요 작업 완료. 신규 기능 추가 시 여기에 기록.
