@@ -96,15 +96,15 @@ body {
 .back-btn:hover { background: #f0ebe6; }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #22c55e, #15803d);
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #4ade80, #16a34a 55%, #15803d);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 21px;
-  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+  font-size: 23px;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
   flex-shrink: 0;
 }
 
@@ -2764,7 +2764,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 58px;
+  height: 64px;
   background: rgba(255,255,255,0.97);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -2782,29 +2782,40 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   background: none;
   border: none;
   cursor: pointer;
-  color: #bbb;
-  font-size: 10px;
+  color: #b7c4bd;
+  font-size: 11px;
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 700;
   padding: 0;
   transition: color 0.15s;
   text-decoration: none;
+  position: relative;
+}
+
+.tab-item-icon-wrap {
+  width: 38px; height: 30px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.25s cubic-bezier(0.34,1.56,0.64,1);
 }
 
 .tab-item svg {
+  width: 24px; height: 24px;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.15s;
 }
 
 .tab-item:hover { color: #1d9e75; }
 .tab-item.is-active {
-  color: #1d9e75;
+  color: var(--brand-dark);
+}
+.tab-item.is-active .tab-item-icon-wrap {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
 }
 .tab-item.is-active svg {
-  transform: scale(1.15) translateY(-1px);
+  transform: scale(1.1);
 }
 .tab-item span {
   position: relative;
@@ -2812,9 +2823,9 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 .tab-item.is-active span::after {
   content: '';
   display: block; position: absolute;
-  bottom: -3px; left: 50%; transform: translateX(-50%);
+  bottom: -4px; left: 50%; transform: translateX(-50%);
   width: 4px; height: 4px; border-radius: 50%;
-  background: #1d9e75;
+  background: var(--brand);
 }
 
 /* ===== 리뷰 상세 모달 ===== */
@@ -4149,7 +4160,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 .care-pet-tab:active { transform: scale(0.93); }
 .care-pet-tab.is-active {
-  background: var(--brand-dark); color: #fff;
+  background: linear-gradient(135deg, #22c55e, var(--brand-dark)); color: #fff;
   border-color: var(--brand-dark);
   box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
   transform: scale(1.05);
@@ -4453,7 +4464,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   white-space: nowrap; font-family: inherit;
 }
 .care-subtab.is-active {
-  color: #fff; background: var(--brand-dark);
+  color: #fff; background: linear-gradient(135deg, #22c55e, var(--brand-dark));
   border-color: var(--brand-dark);
   box-shadow: 0 2px 8px rgba(15,110,86,0.25);
   transform: scale(1.03);
@@ -4633,17 +4644,18 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   margin: 10px 12px 0;
   padding: 12px 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  background: #fff; border-radius: 16px;
-  border: 1.5px solid #e2f0ea;
-  box-shadow: 0 1px 4px rgba(22,163,74,0.06);
-  font-size: 14px; font-weight: 700; color: #1a1a1a;
+  background: linear-gradient(135deg, #fef9ec, #fff);
+  border-radius: 18px;
+  border: 1.5px solid #fde9b8;
+  box-shadow: 0 2px 8px rgba(252, 211, 77, 0.18);
+  font-size: 15px; font-weight: 700; color: #1a1a1a;
   cursor: pointer;
 }
-.manage-weight-line strong { color: var(--brand); }
-.manage-weight-up   { color: #dc2626; font-weight: 700; font-size: 13px; }
-.manage-weight-down { color: #2563eb; font-weight: 700; font-size: 13px; }
-.manage-weight-flat { color: #6b7280; font-weight: 700; font-size: 13px; }
-.manage-weight-arrow { font-size: 12px; color: #9ca3af; font-weight: 600; margin-left: auto; }
+.manage-weight-line strong { color: var(--brand); font-size: 16px; }
+.manage-weight-up   { color: #dc2626; font-weight: 800; font-size: 13px; background: #fee2e2; padding: 3px 8px; border-radius: 999px; }
+.manage-weight-down { color: #2563eb; font-weight: 800; font-size: 13px; background: #dbeafe; padding: 3px 8px; border-radius: 999px; }
+.manage-weight-flat { color: #6b7280; font-weight: 800; font-size: 13px; background: #f3f4f6; padding: 3px 8px; border-radius: 999px; }
+.manage-weight-arrow { font-size: 12px; color: #d1a93b; font-weight: 700; margin-left: auto; }
 
 /* =====================================================
    관리 그리드 (9-button care grid)
@@ -4678,45 +4690,46 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 .manage-card {
   display: flex; flex-direction: column; align-items: center;
-  gap: 8px; padding: 16px 8px 12px;
-  background: #fff; border-radius: 18px;
+  gap: 8px; padding: 18px 8px 14px;
+  background: #fff; border-radius: 20px;
   border: 1.5px solid #f0e8e2;
   cursor: pointer;
   transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s;
   text-align: center; outline: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 .manage-card:active { transform: scale(0.91); }
 .manage-card-icon {
-  font-size: 26px; line-height: 1;
-  width: 52px; height: 52px; border-radius: 50%;
+  font-size: 30px; line-height: 1;
+  width: 58px; height: 58px; border-radius: 50%;
   background: #f4f0ec;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,0.04);
 }
-.manage-card-name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.manage-card-name { font-size: 13px; font-weight: 800; color: #1a1a1a; }
 .manage-card-badge {
-  font-size: 10px; font-weight: 700;
-  padding: 3px 8px; border-radius: 20px; white-space: nowrap;
+  font-size: 10px; font-weight: 800;
+  padding: 3px 9px; border-radius: 20px; white-space: nowrap;
 }
 
 /* card states */
 .manage-card--overdue { border-color: #fca5a5; background: #fff8f8; }
-.manage-card--overdue .manage-card-icon { background: #fee2e2; }
+.manage-card--overdue .manage-card-icon { background: linear-gradient(145deg, #fee2e2, #fecaca); }
 .manage-card--overdue .manage-card-badge { background: #fee2e2; color: #dc2626; }
 .manage-card--today   { border-color: #fdba74; background: #fffaf6; }
-.manage-card--today   .manage-card-icon { background: #fed7aa; }
+.manage-card--today   .manage-card-icon { background: linear-gradient(145deg, #fed7aa, #fdba74); }
 .manage-card--today   .manage-card-badge { background: #fed7aa; color: #c2410c; }
 .manage-card--soon    { border-color: #fde68a; background: #fffdf0; }
-.manage-card--soon    .manage-card-icon { background: #fef9c3; }
+.manage-card--soon    .manage-card-icon { background: linear-gradient(145deg, #fef9c3, #fde68a); }
 .manage-card--soon    .manage-card-badge { background: #fef9c3; color: #854d0e; }
 .manage-card--ok      { border-color: #bbf7d0; background: #f0fdf4; }
-.manage-card--ok      .manage-card-icon { background: #d1fae5; }
+.manage-card--ok      .manage-card-icon { background: linear-gradient(145deg, #d1fae5, #a7f3d0); }
 .manage-card--ok      .manage-card-badge { background: #dcfce7; color: #166534; }
 .manage-card--unset   { border-color: #e5e7eb; background: #fafafa; }
 .manage-card--unset   .manage-card-icon { background: #f3f4f6; }
 .manage-card--unset   .manage-card-badge { background: #f3f4f6; color: #9ca3af; }
-.manage-card--done    { border-color: #bbf7d0; background: #f0fdf4; opacity: 0.75; }
-.manage-card--done    .manage-card-icon { background: #d1fae5; }
+.manage-card--done    { border-color: #bbf7d0; background: #f0fdf4; opacity: 0.8; }
+.manage-card--done    .manage-card-icon { background: linear-gradient(145deg, #d1fae5, #86efac); }
 .manage-card--done    .manage-card-badge { background: #dcfce7; color: #16a34a; }
 
 /* =====================================================
@@ -5433,7 +5446,12 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
 }
 .care-shortcut-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.09); border-color: #a7f3d0; transform: translateY(-1px); }
 .care-shortcut-card:active { transform: scale(0.97); }
-.care-shortcut-icon { font-size: 28px; flex-shrink: 0; }
+.care-shortcut-icon {
+  font-size: 24px; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 14px;
+  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
+  display: flex; align-items: center; justify-content: center;
+}
 .care-shortcut-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
 .care-shortcut-sub { font-size: 11px; color: #aaa; }
 
