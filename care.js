@@ -3,6 +3,7 @@
 // ─── 케어 항목 정의 (9종) ────────────────────────────────────────
 const CARE_ITEMS = {
   dog: [
+    { key: "walk",       label: "산책",     icon: "🚶", default_days: 1   },
     { key: "bath",       label: "목욕",     icon: "🛁", default_days: 14  },
     { key: "heartworm",  label: "심장사상충", icon: "💊", default_days: 30  },
     { key: "vaccine",    label: "예방접종",  icon: "💉", default_days: 365 },
@@ -10,10 +11,12 @@ const CARE_ITEMS = {
     { key: "teeth",      label: "양치",     icon: "🦷", default_days: 1   },
     { key: "ear",        label: "귀청소",   icon: "👂", default_days: 30  },
     { key: "nail",       label: "발톱",     icon: "💅", default_days: 21  },
+    { key: "anal_gland", label: "항문낭관리", icon: "🧻", default_days: 30  },
     { key: "deworming",  label: "구충제",   icon: "🧪", default_days: 90  },
     { key: "checkup",    label: "건강검진",  icon: "🏥", default_days: 365 },
   ],
   cat: [
+    { key: "walk",       label: "산책",     icon: "🚶", default_days: 1   },
     { key: "bath",       label: "목욕",     icon: "🛁", default_days: 30  },
     { key: "heartworm",  label: "심장사상충", icon: "💊", default_days: 30  },
     { key: "vaccine",    label: "예방접종",  icon: "💉", default_days: 365 },
@@ -21,6 +24,7 @@ const CARE_ITEMS = {
     { key: "teeth",      label: "양치",     icon: "🦷", default_days: 1   },
     { key: "ear",        label: "귀청소",   icon: "👂", default_days: 30  },
     { key: "nail",       label: "발톱",     icon: "💅", default_days: 14  },
+    { key: "anal_gland", label: "항문낭관리", icon: "🧻", default_days: 30  },
     { key: "deworming",  label: "구충제",   icon: "🧪", default_days: 90  },
     { key: "checkup",    label: "건강검진",  icon: "🏥", default_days: 365 },
   ],
@@ -92,6 +96,7 @@ let _activePetIdx = 0;
 let _activeSubtab = "manage";
 let _sheetItem = null; // 현재 열린 시트의 케어 항목
 let _sheetTrapRelease = null; // 포커스 트랩 해제 함수
+let _clockTimer = null; // 홈 헤더 시계 인터벌
 
 // ─── 탭 데이터 캐시 (탭 전환 시 DB 재쿼리 방지) ─────────────
 const _tabCache = new Map();
@@ -184,8 +189,39 @@ function saveNotifyPref(petId, careKey, val) {
   localStorage.setItem(`care_notify_${petId}`, JSON.stringify(prefs));
 }
 
-function showToast(msg, type = "success") {
-  window.showToast?.(msg, type);
+// ─── 홈 헤더: 날짜/시간/지역명 ─────────────────────────────
+function startClockAndLocation(container) {
+  const dateEl = container.querySelector("#home-date");
+  const timeEl = container.querySelector("#home-time");
+  if (!dateEl || !timeEl) return;
+
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"];
+  function tick() {
+    const now = new Date();
+    dateEl.textContent = `${now.getMonth() + 1}월 ${now.getDate()}일 (${weekday[now.getDay()]})`;
+    timeEl.textContent = now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+  }
+  tick();
+  if (_clockTimer) clearInterval(_clockTimer);
+  _clockTimer = setInterval(tick, 30_000);
+
+  const locEl = container.querySelector("#home-location");
+  if (!locEl) return;
+  const cached = sessionStorage.getItem("home_location_name");
+  if (cached) { locEl.textContent = cached; return; }
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const { latitude, longitude } = pos.coords;
+      const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=ko`);
+      const data = await res.json();
+      const name = data.locality || data.city || data.principalSubdivision || "";
+      if (name) {
+        locEl.textContent = `📍 ${name}`;
+        sessionStorage.setItem("home_location_name", `📍 ${name}`);
+      }
+    } catch { /* 위치명 조회 실패 시 표시 생략 */ }
+  }, () => {}, { timeout: 5000 });
 }
 
 // ─── 탭별 스켈레톤 HTML ───────────────────────────────────────
@@ -251,7 +287,7 @@ async function renderActiveArea(force = false) {
 async function renderManageTab(pet, container, force = false) {
   const realPets = _pets.filter(p => p.id !== "demo");
   const multiPet = realPets.length > 1;
-  const items = CARE_ITEMS[speciesKey(pet.species)] ?? CARE_ITEMS.dog;
+  const items = (CARE_ITEMS[speciesKey(pet.species)] ?? CARE_ITEMS.dog).filter(it => isItemActive(pet.id, it.key));
 
   const cacheKey = `manage:${pet.id}`;
   let lastDoneMap = {}, allSummary = null, weights = [];
@@ -279,7 +315,7 @@ async function renderManageTab(pet, container, force = false) {
         allSummary = realPets.map((p, i) => {
           const logMap = {};
           (results[i].data ?? []).forEach(l => { if (!logMap[l.care_key]) logMap[l.care_key] = l.done_at; });
-          const petItems = CARE_ITEMS[speciesKey(p.species)] ?? CARE_ITEMS.dog;
+          const petItems = (CARE_ITEMS[speciesKey(p.species)] ?? CARE_ITEMS.dog).filter(it => isItemActive(p.id, it.key));
           const done = petItems.filter(it => isTodayKST(logMap[it.key])).length;
           const urgent = petItems
             .map(it => {
@@ -345,7 +381,25 @@ async function renderManageTab(pet, container, force = false) {
     </div>` : ""}
   </div>` : "";
 
-  let html = weightLineHtml + summaryHtml + `
+  const todayCards    = cards.filter(c => c.doneToday || c.dday === null || c.dday <= 0);
+  const upcomingCards = cards.filter(c => !c.doneToday && c.dday !== null && c.dday > 0);
+
+  function cardBadge({ lastDoneAt, doneToday, dday }) {
+    if (doneToday) return { stateClass: "manage-card--done", badgeText: "✓ 오늘 완료" };
+    if (lastDoneAt === null) return { stateClass: "manage-card--unset", badgeText: "기록 없음" };
+    if (dday !== null && dday < 0) return { stateClass: "manage-card--overdue", badgeText: `${Math.abs(dday)}일 지남 ⚠️` };
+    if (dday === 0) return { stateClass: "manage-card--today", badgeText: "오늘!" };
+    return { stateClass: "manage-card--ok", badgeText: "설정됨" };
+  }
+
+  let html = `
+  <div class="home-header">
+    <div class="home-header-main">
+      <div class="home-header-date" id="home-date"></div>
+      <div class="home-header-time" id="home-time"></div>
+    </div>
+    <div class="home-header-location" id="home-location"></div>
+  </div>` + weightLineHtml + summaryHtml + `
   <div class="manage-progress">
     <div class="manage-progress-text">
       <span>${doneCount === totalCount ? "🎉 오늘 케어 완료!" : `오늘 ${doneCount} / ${totalCount} 완료`}</span>
@@ -353,38 +407,32 @@ async function renderManageTab(pet, container, force = false) {
     </div>
     <div class="manage-progress-track"><div class="manage-progress-fill" style="width:${pct}%"></div></div>
   </div>
+  <div class="home-section-title">🐾 오늘 할 루틴</div>
   <div class="manage-grid">`;
 
-  cards.forEach(({ item, lastDoneAt, intervalDays, doneToday, dday }) => {
-    let stateClass = "manage-card--unset";
-    let badgeText  = "첫 기록 없음";
-    if (doneToday) {
-      stateClass = "manage-card--done";
-      badgeText  = "✓ 오늘 완료";
-    } else if (lastDoneAt === null) {
-      stateClass = "manage-card--unset";
-      badgeText  = "기록 없음";
-    } else if (dday !== null && dday < 0) {
-      stateClass = "manage-card--overdue";
-      badgeText  = `${Math.abs(dday)}일 지남 ⚠️`;
-    } else if (dday === 0) {
-      stateClass = "manage-card--today";
-      badgeText  = "오늘!";
-    } else if (dday !== null && dday <= 7) {
-      stateClass = "manage-card--soon";
-      badgeText  = `D-${dday}`;
-    } else {
-      stateClass = "manage-card--ok";
-      badgeText  = dday !== null ? `D-${dday}` : "설정됨";
-    }
-
+  todayCards.forEach(c => {
+    const { stateClass, badgeText } = cardBadge(c);
     html += `
-    <button class="manage-card ${stateClass}" data-key="${escapeHtml(item.key)}">
-      <div class="manage-card-icon">${item.icon}</div>
-      <div class="manage-card-name">${escapeHtml(item.label)}</div>
+    <button class="manage-card ${stateClass}" data-key="${escapeHtml(c.item.key)}">
+      <div class="manage-card-icon">${c.item.icon}</div>
+      <div class="manage-card-name">${escapeHtml(c.item.label)}</div>
       <div class="manage-card-badge">${badgeText}</div>
     </button>`;
   });
+  html += `</div>`;
+
+  if (upcomingCards.length) {
+    html += `
+    <div class="home-section-title">📅 다가오는 케어</div>
+    <div class="home-upcoming-list">
+      ${upcomingCards.map(c => `
+        <button class="home-upcoming-item" data-key="${escapeHtml(c.item.key)}">
+          <span class="home-upcoming-icon">${c.item.icon}</span>
+          <span class="home-upcoming-name">${escapeHtml(c.item.label)}</span>
+          <span class="home-upcoming-dday">D-${c.dday}</span>
+        </button>`).join("")}
+    </div>`;
+  }
 
   // 품종 맞춤 주기 일괄 배너 (저장된 커스텀 설정 없을 때만)
   const breedIvsAll = getBreedIntervals(pet.species, pet.breed);
@@ -398,30 +446,15 @@ async function renderManageTab(pet, container, force = false) {
     <button class="breed-hint-banner-close" id="breed-hint-close">✕</button>
   </div>` : "";
 
-  html += `</div>
+  html += `
   ${breedBanner}
   <div class="ai-advice-block" id="ai-advice-block">
     <button class="ai-advice-btn" id="ai-advice-btn">🤖 AI 케어 조언</button>
     <div class="ai-advice-result" id="ai-advice-result" hidden></div>
-  </div>
-  <div class="care-hospital-shortcuts">
-    <a class="care-shortcut-card" href="index.html">
-      <span class="care-shortcut-icon">🏥</span>
-      <div>
-        <div class="care-shortcut-title">동물병원 찾기</div>
-        <div class="care-shortcut-sub">후기 · 가격 비교</div>
-      </div>
-    </a>
-    <a class="care-shortcut-card" href="hospital.html">
-      <span class="care-shortcut-icon">⭐</span>
-      <div>
-        <div class="care-shortcut-title">단골병원 관리</div>
-        <div class="care-shortcut-sub">즐겨찾기 · 예약 메모</div>
-      </div>
-    </a>
   </div>`;
 
   container.innerHTML = html;
+  startClockAndLocation(container);
 
   // 체중 한줄요약 → 건강기록 탭으로 이동
   container.querySelector("#manage-weight-line")?.addEventListener("click", () => {
@@ -443,7 +476,7 @@ async function renderManageTab(pet, container, force = false) {
   });
 
   // 카드 클릭 → 시트 열기
-  container.querySelectorAll(".manage-card").forEach(card => {
+  container.querySelectorAll(".manage-card, .home-upcoming-item").forEach(card => {
     card.addEventListener("click", () => {
       const key  = card.dataset.key;
       const item = items.find(i => i.key === key);
@@ -1577,6 +1610,304 @@ function promptLogin(featureName) {
   overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
 }
 
+// ─── 케어 항목 on/off (localStorage) ────────────────────────
+function getActiveMap(petId) {
+  try { return JSON.parse(localStorage.getItem(`care_active_${petId}`) || "{}"); }
+  catch { return {}; }
+}
+function isItemActive(petId, careKey) {
+  return getActiveMap(petId)[careKey] !== false; // 저장된 적 없으면 기본 활성
+}
+
+// ─── 온보딩 마법사 (반려동물 최초 등록) ──────────────────────
+let _wiz = null;
+
+function startOnboardingWizard(container) {
+  _wiz = { step: "species", pet: {}, addedCount: 0 };
+  renderWizardStep(container);
+}
+
+function _wizItems() {
+  return CARE_ITEMS[speciesKey(_wiz.pet.species)] ?? CARE_ITEMS.dog;
+}
+
+function renderWizardStep(container) {
+  const w = _wiz;
+
+  if (w.step === "species") {
+    container.innerHTML = `
+      <div class="onb-wrap">
+        <div class="onb-eyebrow">${w.addedCount > 0 ? `${w.addedCount}번째 반려동물 등록 중` : "반려동물 등록 1/4"}</div>
+        <h2 class="onb-title">어떤 아이인가요?</h2>
+        <div class="onb-species-grid">
+          <button class="onb-species-btn" data-species="강아지"><span class="onb-species-emoji">🐕</span>강아지</button>
+          <button class="onb-species-btn" data-species="고양이"><span class="onb-species-emoji">🐈</span>고양이</button>
+        </div>
+      </div>`;
+    container.querySelectorAll(".onb-species-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        w.pet.species = btn.dataset.species;
+        w.step = "profile";
+        renderWizardStep(container);
+      });
+    });
+    return;
+  }
+
+  if (w.step === "profile") {
+    container.innerHTML = `
+      <div class="onb-wrap">
+        <div class="onb-eyebrow">반려동물 등록 2/4</div>
+        <h2 class="onb-title">${speciesEmoji(w.pet.species)} 우리 아이 정보</h2>
+        <div class="onb-form">
+          <div class="form-group">
+            <label for="onb-name">이름 *</label>
+            <input type="text" id="onb-name" placeholder="예: 뭉치" maxlength="20"/>
+          </div>
+          <div class="form-group">
+            <label for="onb-birth">생일 *</label>
+            <input type="date" id="onb-birth"/>
+          </div>
+          <div class="form-group">
+            <label for="onb-gender">성별 *</label>
+            <select id="onb-gender">
+              <option value="">선택하세요</option>
+              <option value="수컷">수컷 (남아)</option>
+              <option value="암컷">암컷 (여아)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="onb-neutered">중성화 여부</label>
+            <select id="onb-neutered">
+              <option value="">선택 안 함</option>
+              <option value="true">완료</option>
+              <option value="false">미완료</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="onb-breed">품종</label>
+            <input type="text" id="onb-breed" placeholder="예: 말티즈 (선택)"/>
+          </div>
+          <div class="form-group">
+            <label for="onb-regno">등록번호</label>
+            <input type="text" id="onb-regno" placeholder="동물등록번호 (선택)"/>
+          </div>
+          <div class="form-group">
+            <label for="onb-hospital">단골병원</label>
+            <input type="text" id="onb-hospital" placeholder="자주 가는 병원 이름 (선택)"/>
+          </div>
+        </div>
+        <div class="onb-actions">
+          <button class="onb-back-btn" id="onb-back">이전</button>
+          <button class="onb-next-btn" id="onb-next">다음</button>
+        </div>
+      </div>`;
+
+    if (w.pet.name) document.getElementById("onb-name").value = w.pet.name;
+    if (w.pet.birth_date) document.getElementById("onb-birth").value = w.pet.birth_date;
+    if (w.pet.gender) document.getElementById("onb-gender").value = w.pet.gender;
+    if (w.pet.is_neutered != null) document.getElementById("onb-neutered").value = String(w.pet.is_neutered);
+    if (w.pet.breed) document.getElementById("onb-breed").value = w.pet.breed;
+    if (w.pet.registration_no) document.getElementById("onb-regno").value = w.pet.registration_no;
+    if (w.pet.hospital_name) document.getElementById("onb-hospital").value = w.pet.hospital_name;
+
+    document.getElementById("onb-back").addEventListener("click", () => {
+      w.step = "species";
+      renderWizardStep(container);
+    });
+    document.getElementById("onb-next").addEventListener("click", () => {
+      const name = document.getElementById("onb-name").value.trim();
+      const birth = document.getElementById("onb-birth").value;
+      const gender = document.getElementById("onb-gender").value;
+      if (!name) { showToast("이름을 입력해주세요.", "warn"); return; }
+      if (!birth) { showToast("생일을 입력해주세요.", "warn"); return; }
+      if (birth > new Date().toISOString().split("T")[0]) { showToast("생일은 오늘 이전 날짜여야 합니다.", "warn"); return; }
+      if (!gender) { showToast("성별을 선택해주세요.", "warn"); return; }
+
+      const neuteredVal = document.getElementById("onb-neutered").value;
+      w.pet.name = name;
+      w.pet.birth_date = birth;
+      w.pet.gender = gender;
+      w.pet.is_neutered = neuteredVal === "" ? null : neuteredVal === "true";
+      w.pet.breed = document.getElementById("onb-breed").value.trim() || null;
+      w.pet.registration_no = document.getElementById("onb-regno").value.trim() || null;
+      w.pet.hospital_name = document.getElementById("onb-hospital").value.trim() || null;
+
+      const breedIvs = getBreedIntervals(w.pet.species, w.pet.breed);
+      w.pet.routines = _wizItems().reduce((acc, item) => {
+        acc[item.key] = { active: true, days: breedIvs[item.key] ?? item.default_days };
+        return acc;
+      }, {});
+
+      w.step = "routine";
+      renderWizardStep(container);
+    });
+    return;
+  }
+
+  if (w.step === "routine") {
+    const items = _wizItems();
+    container.innerHTML = `
+      <div class="onb-wrap">
+        <div class="onb-eyebrow">반려동물 등록 3/4</div>
+        <h2 class="onb-title">어떤 루틴을 관리할까요?</h2>
+        <p class="onb-desc">필요 없는 항목은 꺼주세요. 주기는 나중에도 바꿀 수 있어요.</p>
+        <div class="onb-routine-list">
+          ${items.map(item => `
+            <div class="onb-routine-row">
+              <label class="toggle-switch onb-routine-toggle">
+                <input type="checkbox" class="onb-routine-check" data-key="${escapeHtml(item.key)}" ${w.pet.routines[item.key].active ? "checked" : ""}/>
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="onb-routine-icon">${item.icon}</span>
+              <span class="onb-routine-name">${escapeHtml(item.label)}</span>
+              <select class="onb-routine-iv" data-key="${escapeHtml(item.key)}" ${w.pet.routines[item.key].active ? "" : "disabled"}>
+                ${INTERVAL_PRESETS.some(p => p.days === w.pet.routines[item.key].days) ? "" : `<option value="${w.pet.routines[item.key].days}" selected>${w.pet.routines[item.key].days}일</option>`}
+                ${INTERVAL_PRESETS.map(p => `<option value="${p.days}" ${p.days === w.pet.routines[item.key].days ? "selected" : ""}>${p.label}</option>`).join("")}
+              </select>
+            </div>`).join("")}
+        </div>
+        <div class="onb-actions">
+          <button class="onb-back-btn" id="onb-back">이전</button>
+          <button class="onb-next-btn" id="onb-next">다음</button>
+        </div>
+      </div>`;
+
+    container.querySelectorAll(".onb-routine-check").forEach(chk => {
+      chk.addEventListener("change", () => {
+        const key = chk.dataset.key;
+        w.pet.routines[key].active = chk.checked;
+        container.querySelector(`.onb-routine-iv[data-key="${key}"]`).disabled = !chk.checked;
+      });
+    });
+    container.querySelectorAll(".onb-routine-iv").forEach(sel => {
+      sel.addEventListener("change", () => {
+        w.pet.routines[sel.dataset.key].days = Number(sel.value);
+      });
+    });
+    document.getElementById("onb-back").addEventListener("click", () => {
+      w.step = "profile";
+      renderWizardStep(container);
+    });
+    document.getElementById("onb-next").addEventListener("click", () => {
+      w.step = "photo";
+      renderWizardStep(container);
+    });
+    return;
+  }
+
+  if (w.step === "photo") {
+    container.innerHTML = `
+      <div class="onb-wrap">
+        <div class="onb-eyebrow">반려동물 등록 4/4</div>
+        <h2 class="onb-title">사진을 등록할까요?</h2>
+        <p class="onb-desc">나중에도 등록할 수 있어요</p>
+        <label class="onb-photo-picker" id="onb-photo-picker">
+          <span id="onb-photo-preview">📷</span>
+          <input type="file" id="onb-photo-input" accept="image/*" hidden/>
+        </label>
+        <div class="onb-actions">
+          <button class="onb-back-btn" id="onb-back">이전</button>
+          <button class="onb-next-btn" id="onb-finish">완료</button>
+        </div>
+        <button class="onb-skip-btn" id="onb-skip">건너뛰기</button>
+      </div>`;
+
+    document.getElementById("onb-photo-picker").addEventListener("click", () => {
+      document.getElementById("onb-photo-input").click();
+    });
+    document.getElementById("onb-photo-input").addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      w.pet.photoFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById("onb-photo-preview").innerHTML = `<img src="${reader.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>`;
+      };
+      reader.readAsDataURL(file);
+    });
+    document.getElementById("onb-back").addEventListener("click", () => {
+      w.step = "routine";
+      renderWizardStep(container);
+    });
+    document.getElementById("onb-skip").addEventListener("click", () => savePetAndContinue(container));
+    document.getElementById("onb-finish").addEventListener("click", () => savePetAndContinue(container));
+    return;
+  }
+
+  if (w.step === "loop") {
+    container.innerHTML = `
+      <div class="onb-wrap onb-wrap--center">
+        <div class="onb-done-icon">🎉</div>
+        <h2 class="onb-title">${escapeHtml(w.pet.name)} 등록 완료!</h2>
+        <p class="onb-desc">다른 반려동물도 등록할까요?</p>
+        <div class="onb-actions onb-actions--col">
+          <button class="onb-next-btn" id="onb-add-more">+ 반려동물 추가 등록</button>
+          <button class="onb-back-btn" id="onb-finish-all">아니요, 시작할래요</button>
+        </div>
+      </div>`;
+    document.getElementById("onb-add-more").addEventListener("click", () => {
+      _wiz = { step: "species", pet: {}, addedCount: w.addedCount + 1 };
+      renderWizardStep(container);
+    });
+    document.getElementById("onb-finish-all").addEventListener("click", () => location.reload());
+    return;
+  }
+}
+
+async function savePetAndContinue(container) {
+  const w = _wiz;
+  const finishBtn = document.getElementById("onb-finish") || document.getElementById("onb-skip");
+  if (finishBtn) { finishBtn.disabled = true; finishBtn.textContent = "저장 중..."; }
+
+  const userId = window.PetAuth?.currentUser?.id;
+  if (!_db || !userId) { showToast("로그인이 필요해요.", "error"); return; }
+
+  try {
+    let photoUrl = null;
+    if (w.pet.photoFile) {
+      const ext = w.pet.photoFile.name.split(".").pop() || "jpg";
+      const fileName = `${userId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await _db.storage.from("pet-photos").upload(fileName, w.pet.photoFile, { contentType: w.pet.photoFile.type });
+      if (upErr) throw new Error("사진 업로드 실패: " + upErr.message);
+      const { data: urlData } = _db.storage.from("pet-photos").getPublicUrl(fileName);
+      photoUrl = urlData.publicUrl;
+    }
+
+    const row = {
+      user_id: userId,
+      name: w.pet.name,
+      species: w.pet.species,
+      breed: w.pet.breed,
+      gender: w.pet.gender,
+      birth_date: w.pet.birth_date,
+      is_neutered: w.pet.is_neutered,
+      registration_no: w.pet.registration_no,
+    };
+    if (photoUrl) row.photo_url = photoUrl;
+
+    const { data: inserted, error } = await _db.from("pets").insert([row]).select("id").single();
+    if (error) throw error;
+
+    const activeMap = {};
+    Object.entries(w.pet.routines).forEach(([key, cfg]) => {
+      activeMap[key] = cfg.active;
+      if (cfg.active) saveCustomInterval(inserted.id, key, cfg.days);
+    });
+    localStorage.setItem(`care_active_${inserted.id}`, JSON.stringify(activeMap));
+
+    if (w.pet.hospital_name) {
+      await _db.from("favorites").insert([{ user_id: userId, name: w.pet.hospital_name }]);
+    }
+
+    w.step = "loop";
+    renderWizardStep(container);
+  } catch (err) {
+    showToast(err.message || "저장에 실패했어요.", "error");
+    if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = "완료"; }
+  }
+}
+
 // 초기화
 // ──────────────────────────────────────────────────────────────
 async function init() {
@@ -1614,7 +1945,6 @@ async function init() {
           <svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 6.294C4.672 4.167 6.656 3.58 9 3.58z"/></svg>
           구글로 시작하기
         </button>
-        <a class="care-welcome-hospital-link" href="index.html">🏥 동물병원 찾기 · 후기 보기</a>
       </div>
       <div class="care-demo-label">아래는 데모 미리보기</div>
       <div class="care-pet-tabs" id="care-pet-tabs">
@@ -1640,34 +1970,8 @@ async function init() {
   _pets = pets ?? [];
 
   if (!_pets.length) {
-    content.innerHTML = `<div class="care-onboarding">
-      <div class="care-onboarding-steps">
-        <div class="care-onboarding-step is-done">
-          <div class="care-onboarding-step-circle">✓</div>
-          <div class="care-onboarding-step-label">로그인</div>
-        </div>
-        <div class="care-onboarding-step-line"></div>
-        <div class="care-onboarding-step is-current">
-          <div class="care-onboarding-step-circle">2</div>
-          <div class="care-onboarding-step-label">반려동물 등록</div>
-        </div>
-        <div class="care-onboarding-step-line"></div>
-        <div class="care-onboarding-step">
-          <div class="care-onboarding-step-circle">3</div>
-          <div class="care-onboarding-step-label">케어 시작</div>
-        </div>
-      </div>
-      <div class="care-onboarding-card">
-        <div class="care-onboarding-icon">🐾</div>
-        <h2 class="care-onboarding-title">반려동물을 등록해주세요</h2>
-        <p class="care-onboarding-desc">등록하면 바로 시작할 수 있어요</p>
-        <div class="care-onboarding-features">
-          <div class="care-onboarding-feature">🐾 케어루틴 · 목욕·접종·산책 주기 알림</div>
-          <div class="care-onboarding-feature">📋 건강기록 · 체중 추적 · 진료 이력</div>
-        </div>
-        <a class="care-onboarding-btn" href="mypage.html?tab=pets">+ 반려동물 등록하기</a>
-      </div>
-    </div>`;
+    content.innerHTML = `<div class="care-onboarding"></div>`;
+    startOnboardingWizard(content.querySelector(".care-onboarding"));
     return;
   }
 

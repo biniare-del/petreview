@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-title" content="우쭈쭈"/>
   <link rel="apple-touch-icon" href="/petreview/icons/icon-192.svg"/>
 </head>
-<body class="has-tabbar care-page">
+<body class="care-page">
 
   <header class="site-header">
     <div class="logo-area">
@@ -22,7 +22,6 @@
       <div class="logo-text"><h1>우쭈쭈</h1></div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <a class="care-hospital-link" href="hospital.html" aria-label="단골병원 관리">🏥 병원</a>
       <div class="header-auth" id="header-auth">
         <button class="auth-login-btn" id="care-login-btn" hidden onclick="location.href='hospital.html'">로그인</button>
       </div>
@@ -82,19 +81,11 @@
     </div>
   </div>
 
-  <!-- 하단 탭바 -->
-  <nav class="bottom-tab-bar" aria-label="하단 탭 메뉴">
+  <!-- 하단 탭바: 심플 MVP 방침으로 숨김 (커뮤니티/마이 진입점 제거) -->
+  <nav class="bottom-tab-bar" aria-label="하단 탭 메뉴" hidden>
     <button class="tab-item is-active" aria-label="케어" aria-current="page">
       <span class="tab-item-icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1" ry="1"/><path d="M9 12l2 2 4-4"/></svg></span>
       <span>케어</span>
-    </button>
-    <button class="tab-item" onclick="location.href='social.html'" aria-label="커뮤니티">
-      <span class="tab-item-icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-      <span>커뮤니티</span>
-    </button>
-    <button class="tab-item" onclick="location.href='mypage.html'" aria-label="마이">
-      <span class="tab-item-icon-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-      <span>마이</span>
     </button>
   </nav>
 
