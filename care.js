@@ -1,34 +1,59 @@
 "use strict";
 
 // ─── 케어 항목 정의 (9종) ────────────────────────────────────────
+// icon 필드는 이모지 대신 CARE_ICONS 룩업 키로 item.key를 그대로 사용 (careIconSvg 참고)
 const CARE_ITEMS = {
   dog: [
-    { key: "walk",       label: "산책",     icon: "🚶", default_days: 1   },
-    { key: "bath",       label: "목욕",     icon: "🛁", default_days: 14  },
-    { key: "heartworm",  label: "심장사상충", icon: "💊", default_days: 30  },
-    { key: "vaccine",    label: "예방접종",  icon: "💉", default_days: 365 },
-    { key: "grooming",   label: "미용",     icon: "✂️", default_days: 42  },
-    { key: "teeth",      label: "양치",     icon: "🦷", default_days: 1   },
-    { key: "ear",        label: "귀청소",   icon: "👂", default_days: 30  },
-    { key: "nail",       label: "발톱",     icon: "💅", default_days: 21  },
-    { key: "anal_gland", label: "항문낭관리", icon: "🧻", default_days: 30  },
-    { key: "deworming",  label: "구충제",   icon: "🧪", default_days: 90  },
-    { key: "checkup",    label: "건강검진",  icon: "🏥", default_days: 365 },
+    { key: "walk",       label: "산책",     default_days: 1   },
+    { key: "bath",       label: "목욕",     default_days: 14  },
+    { key: "heartworm",  label: "심장사상충", default_days: 30  },
+    { key: "vaccine",    label: "예방접종",  default_days: 365 },
+    { key: "grooming",   label: "미용",     default_days: 42  },
+    { key: "teeth",      label: "양치",     default_days: 1   },
+    { key: "ear",        label: "귀청소",   default_days: 30  },
+    { key: "nail",       label: "발톱",     default_days: 21  },
+    { key: "anal_gland", label: "항문낭관리", default_days: 30  },
+    { key: "deworming",  label: "구충제",   default_days: 90  },
+    { key: "checkup",    label: "건강검진",  default_days: 365 },
   ],
   cat: [
-    { key: "walk",       label: "산책",     icon: "🚶", default_days: 1   },
-    { key: "bath",       label: "목욕",     icon: "🛁", default_days: 30  },
-    { key: "heartworm",  label: "심장사상충", icon: "💊", default_days: 30  },
-    { key: "vaccine",    label: "예방접종",  icon: "💉", default_days: 365 },
-    { key: "grooming",   label: "미용",     icon: "✂️", default_days: 60  },
-    { key: "teeth",      label: "양치",     icon: "🦷", default_days: 1   },
-    { key: "ear",        label: "귀청소",   icon: "👂", default_days: 30  },
-    { key: "nail",       label: "발톱",     icon: "💅", default_days: 14  },
-    { key: "anal_gland", label: "항문낭관리", icon: "🧻", default_days: 30  },
-    { key: "deworming",  label: "구충제",   icon: "🧪", default_days: 90  },
-    { key: "checkup",    label: "건강검진",  icon: "🏥", default_days: 365 },
+    { key: "walk",       label: "산책",     default_days: 1   },
+    { key: "bath",       label: "목욕",     default_days: 30  },
+    { key: "heartworm",  label: "심장사상충", default_days: 30  },
+    { key: "vaccine",    label: "예방접종",  default_days: 365 },
+    { key: "grooming",   label: "미용",     default_days: 60  },
+    { key: "teeth",      label: "양치",     default_days: 1   },
+    { key: "ear",        label: "귀청소",   default_days: 30  },
+    { key: "nail",       label: "발톱",     default_days: 14  },
+    { key: "anal_gland", label: "항문낭관리", default_days: 30  },
+    { key: "deworming",  label: "구충제",   default_days: 90  },
+    { key: "checkup",    label: "건강검진",  default_days: 365 },
   ],
 };
+
+// ─── 케어 항목 SVG 아이콘 (카테고리별 컬러는 style.css --care-* 변수 참고) ──
+const CARE_ICONS = {
+  walk: `<path d="M4 17c2-1 3-3 3-5"/><circle cx="8" cy="9" r="1.3"/><path d="M11 19c2-1 3-3 3-5"/><circle cx="15" cy="11" r="1.3"/><path d="M18 7.5c1 .7 1.6 1.7 1.8 3"/>`,
+  bath: `<path d="M4 12h16v2.5A5.5 5.5 0 0 1 14.5 20h-5A5.5 5.5 0 0 1 4 14.5V12Z"/><path d="M4 12V8a2 2 0 0 1 2-2h1.2"/><circle cx="7.6" cy="7.4" r="1"/><path d="M2.5 12h19"/>`,
+  heartworm: `<path d="M12 20s-6.8-4.2-9.2-8.6C1.3 8.3 2.2 4.6 6 4.4c2-.1 3.4 1 4 2.3.6-1.3 2-2.4 4-2.3 3.8.2 4.7 3.9 3.2 7-2.4 4.4-9.2 8.6-9.2 8.6Z"/><path d="M5.5 11.5h3l1.4-2.6 1.8 4.4 1.4-2.6h3.9"/>`,
+  vaccine: `<g transform="rotate(45 12 12)"><rect x="9" y="2" width="6" height="9" rx="1.5"/><line x1="12" y1="2" x2="12" y2="0.5"/><line x1="9" y1="5" x2="7.5" y2="5"/><line x1="9" y1="7.5" x2="7.5" y2="7.5"/><line x1="12" y1="11" x2="12" y2="20"/><path d="M11 20l1 2 1-2"/></g>`,
+  grooming: `<circle cx="6" cy="6" r="2.8"/><circle cx="6" cy="18" r="2.8"/><line x1="20" y1="4" x2="8.1" y2="15.9"/><line x1="14.5" y1="14.5" x2="20" y2="20"/><line x1="8.1" y1="8.1" x2="12" y2="12"/>`,
+  teeth: `<path d="M12 3C8.5 3 5.5 5.3 5.5 9c0 2.6.8 4.3 1 7 .1 1.7.9 3 2 3 .9 0 1.4-1.6 1.8-3.4.3-1.3 1.1-1.3 1.4 0C12.1 17.4 12.6 19 13.5 19c1.1 0 1.9-1.3 2-3 .2-2.7 1-4.4 1-7C16.5 5.3 15.5 3 12 3Z"/>`,
+  ear: `<path d="M8.5 12.3a4.5 4.5 0 0 1 4.7-4.5c2.7.2 4.3 2.5 4.1 5.2-.1 1.8-1 3-1.1 4.8-.1 1.2-1 2.2-2.2 2.1"/><path d="M8.5 12.3c-.1 1.8.5 2.9 1.8 3.7"/>`,
+  nail: `<path d="M12 3.5c-2.8 2.8-4.6 5.8-4.6 8.7a4.6 4.6 0 0 0 9.2 0c0-2.9-1.8-5.9-4.6-8.7Z"/><path d="M9 12.2h6"/>`,
+  anal_gland: `<path d="M12 3.2l6.5 2.6v4.6c0 4.6-2.8 7.9-6.5 9.4-3.7-1.5-6.5-4.8-6.5-9.4V5.8L12 3.2Z"/><path d="M9 12l2 2 3.5-4"/>`,
+  deworming: `<rect x="3" y="9.5" width="18" height="5" rx="2.5"/><line x1="12" y1="9.5" x2="12" y2="14.5"/>`,
+  checkup: `<path d="M8.5 4.5h2a1.5 1.5 0 0 1 3 0h2A1.2 1.2 0 0 1 16.7 5.7v13a1.2 1.2 0 0 1-1.2 1.2H8.5a1.2 1.2 0 0 1-1.2-1.2v-13A1.2 1.2 0 0 1 8.5 4.5Z"/><path d="M9.5 12.3l1.8 1.8 3.2-3.6"/>`,
+};
+
+function careIconSvg(key) {
+  const inner = CARE_ICONS[key] || CARE_ICONS.checkup;
+  return `<svg class="care-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+}
+
+function careIconBadge(key, extraClass) {
+  return `<span class="care-icon-badge${extraClass ? " " + extraClass : ""}" data-care="${key}">${careIconSvg(key)}</span>`;
+}
 
 // ─── 품종별 맞춤 케어 주기 (기본값과 다른 항목만 정의) ──────────
 const BREED_INTERVALS = {
@@ -373,7 +398,7 @@ async function renderManageTab(pet, container, force = false) {
       <div class="manage-urgent-title">⚡ 지금 필요한 케어</div>
       ${allUrgent.slice(0, 4).map(({ it, dday, petName }) => `
         <div class="manage-urgent-item">
-          <span class="manage-urgent-who">${escapeHtml(petName)} · ${it.icon} ${escapeHtml(it.label)}</span>
+          <span class="manage-urgent-who">${escapeHtml(petName)} · ${careIconBadge(it.key, "care-icon-badge--inline")} ${escapeHtml(it.label)}</span>
           <span class="${dday < 0 ? "manage-urgent-badge-overdue" : dday === 0 ? "manage-urgent-badge-today" : "manage-urgent-badge-soon"}">
             ${dday < 0 ? `${Math.abs(dday)}일 지남` : dday === 0 ? "오늘!" : `D-${dday}`}
           </span>
@@ -414,7 +439,7 @@ async function renderManageTab(pet, container, force = false) {
     const { stateClass, badgeText } = cardBadge(c);
     html += `
     <button class="manage-card ${stateClass}" data-key="${escapeHtml(c.item.key)}">
-      <div class="manage-card-icon">${c.item.icon}</div>
+      <div class="manage-card-icon">${careIconBadge(c.item.key)}</div>
       <div class="manage-card-name">${escapeHtml(c.item.label)}</div>
       <div class="manage-card-badge">${badgeText}</div>
     </button>`;
@@ -427,7 +452,7 @@ async function renderManageTab(pet, container, force = false) {
     <div class="home-upcoming-list">
       ${upcomingCards.map(c => `
         <button class="home-upcoming-item" data-key="${escapeHtml(c.item.key)}">
-          <span class="home-upcoming-icon">${c.item.icon}</span>
+          <span class="home-upcoming-icon">${careIconBadge(c.item.key)}</span>
           <span class="home-upcoming-name">${escapeHtml(c.item.label)}</span>
           <span class="home-upcoming-dday">D-${c.dday}</span>
         </button>`).join("")}
@@ -506,7 +531,7 @@ function openManageSheet(pet, item, lastDoneAt, intervalDays) {
   _doneBtn.disabled = false;
   _doneBtn.textContent = "✓ 완료 기록";
 
-  document.getElementById("care-sheet-icon").textContent  = item.icon;
+  document.getElementById("care-sheet-icon").innerHTML = careIconBadge(item.key);
   document.getElementById("care-sheet-title").textContent = item.label;
   document.getElementById("care-sheet-last-date").textContent =
     lastDoneAt ? formatDate(lastDoneAt) : "기록 없음";
@@ -645,7 +670,7 @@ async function submitManageDone() {
 }
 
 async function showItemHistory(pet, item) {
-  let html = `<div class="care-hist-header"><span>${item.icon} ${escapeHtml(item.label)} 기록</span></div><div class="care-hist-list">`;
+  let html = `<div class="care-hist-header"><span>${careIconBadge(item.key, "care-icon-badge--inline")} ${escapeHtml(item.label)} 기록</span></div><div class="care-hist-list">`;
   try {
     const { data: logs } = await _db.from("pet_care_logs").select("done_at")
       .eq("pet_id", pet.id).eq("care_key", item.key)
@@ -1508,7 +1533,7 @@ async function renderDemoArea(demoPet, container) {
       else if (dday !== null && dday <= 7)     { stateClass = "manage-card--soon";    badgeText = `D-${dday}`; }
       else                                     { stateClass = "manage-card--ok";      badgeText = dday !== null ? `D-${dday}` : "설정됨"; }
       return `<button class="manage-card ${stateClass} demo-card">
-        <div class="manage-card-icon">${item.icon}</div>
+        <div class="manage-card-icon">${careIconBadge(item.key)}</div>
         <div class="manage-card-name">${item.label}</div>
         <div class="manage-card-badge">${badgeText}</div>
       </button>`;
@@ -1759,7 +1784,7 @@ function renderWizardStep(container) {
                 <input type="checkbox" class="onb-routine-check" data-key="${escapeHtml(item.key)}" ${w.pet.routines[item.key].active ? "checked" : ""}/>
                 <span class="toggle-slider"></span>
               </label>
-              <span class="onb-routine-icon">${item.icon}</span>
+              <span class="onb-routine-icon">${careIconBadge(item.key)}</span>
               <span class="onb-routine-name">${escapeHtml(item.label)}</span>
               <select class="onb-routine-iv" data-key="${escapeHtml(item.key)}" ${w.pet.routines[item.key].active ? "" : "disabled"}>
                 ${INTERVAL_PRESETS.some(p => p.days === w.pet.routines[item.key].days) ? "" : `<option value="${w.pet.routines[item.key].days}" selected>${w.pet.routines[item.key].days}일</option>`}
