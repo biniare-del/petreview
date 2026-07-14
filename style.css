@@ -2804,6 +2804,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
   z-index: 1000;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
+.bottom-tab-bar[hidden] { display: none !important; }
 
 .tab-item {
   flex: 1;
@@ -4527,6 +4528,7 @@ body[data-theme="grooming"] #review-list-section .category-tab-btn.is-active {
    식단 섹션 (care.html 서브탭)
    ===================================================== */
 
+.care-subtabs[hidden] { display: none !important; }
 .care-subtabs {
   display: flex; gap: 6px;
   background: #f4faf7; border-bottom: 1px solid #e2f0ea;

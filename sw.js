@@ -1,4 +1,4 @@
-const CACHE_NAME = "petreview-v11";
+const CACHE_NAME = "petreview-v12";
 
 const PRECACHE_ASSETS = [
   "/petreview/care.html",
