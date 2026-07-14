@@ -1,5 +1,4 @@
-/* 디스플레이 폰트 (제목/숫자 전용, 본문은 기존 Noto Sans KR 유지) */
-@import url("https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap");
+/* 디스플레이 폰트(Do Hyeon)는 각 HTML의 <link>로 로드함 (CSS @import는 렌더링 블로킹이라 제외) */
 
 /* 스크린리더 전용 텍스트 (시각적으로는 숨김) */
 .sr-only {
